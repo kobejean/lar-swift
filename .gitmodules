@@ -1,0 +1,3 @@
+[submodule "Sources/GeoARCore"]
+	path = Sources/C++
+	url = https://github.com/kobejean/GeoARCore.git
