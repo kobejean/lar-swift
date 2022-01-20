@@ -8,7 +8,7 @@
 import XCTest
 import ARKit
 import simd
-@testable import GeoAR
+@testable import GeoARExtra
 
 final class GeoARNavigationGraphTests: XCTestCase {
     

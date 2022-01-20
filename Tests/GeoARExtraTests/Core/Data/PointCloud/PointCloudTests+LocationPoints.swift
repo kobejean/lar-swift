@@ -8,7 +8,7 @@
 import XCTest
 import CoreLocation
 import simd
-@testable import GeoAR
+@testable import GeoARExtra
 
 extension PointCloudTests {
     

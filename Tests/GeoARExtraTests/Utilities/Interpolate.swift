@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import GeoAR
+@testable import GeoARExtra
 
 final class InterpolateTests: XCTestCase {
     

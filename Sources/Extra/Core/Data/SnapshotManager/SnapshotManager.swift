@@ -9,6 +9,7 @@ import Foundation
 import ARKit
 import MobileCoreServices
 import opencv2
+import GeoARObjC
 
 class SnapshotManager {
     

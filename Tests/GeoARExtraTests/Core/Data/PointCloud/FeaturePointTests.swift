@@ -7,7 +7,7 @@
 
 import XCTest
 import simd
-@testable import GeoAR
+@testable import GeoARExtra
 
 final class FeaturePointTests: XCTestCase {
     

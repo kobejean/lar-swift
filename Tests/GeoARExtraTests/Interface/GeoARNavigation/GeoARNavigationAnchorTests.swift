@@ -9,7 +9,7 @@
 import XCTest
 import Foundation
 import simd
-@testable import GeoAR
+@testable import GeoARExtra
 
 final class GeoARNavigationAnchorTests: XCTestCase {
     

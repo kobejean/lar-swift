@@ -12,7 +12,8 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "GeoAR",
-            targets: ["GeoAR"]),
+            targets: ["GeoAR"]
+        )
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -35,12 +36,21 @@ let package = Package(
         .target(
             name: "GeoAR",
             dependencies: [
+                .target(name: "GeoARObjC"),
+                .target(name: "GeoARExtra", condition: .when(platforms: [.iOS]))
+            ],
+            path: "Sources/Swift"
+        ),
+        .target(
+            name: "GeoARExtra",
+            dependencies: [
                 .product(name: "Collections", package: "swift-collections"),
                 .product(name: "LANumerics", package: "LANumerics"),
                 .target(name: "GeoARObjC"),
                 .target(name: "opencv2")
             ],
-            path: "Sources/Swift"),
+            path: "Sources/Extra"
+        ),
         
         .target(
             name: "GeoARObjC",
@@ -82,8 +92,8 @@ let package = Package(
         ),
         
         .testTarget(
-            name: "GeoARTests",
+            name: "GeoARExtraTests",
             dependencies: ["GeoAR"]
-        ),
+        )
     ]
 )

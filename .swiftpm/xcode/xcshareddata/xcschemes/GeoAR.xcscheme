@@ -32,9 +32,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GeoARTests"
-               BuildableName = "GeoARTests"
-               BlueprintName = "GeoARTests"
+               BlueprintIdentifier = "GeoARExtraTests"
+               BuildableName = "GeoARExtraTests"
+               BlueprintName = "GeoARExtraTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>

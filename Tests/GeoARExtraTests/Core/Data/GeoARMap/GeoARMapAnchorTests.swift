@@ -8,7 +8,7 @@
 import XCTest
 import simd
 import CoreLocation
-@testable import GeoAR
+@testable import GeoARExtra
 
 final class GeoARMapAnchorTests: XCTestCase {
     

@@ -13,12 +13,6 @@
 
 #import "MapProcessing.h"
 
-@interface MapProcessing ()
-
-@property (nonatomic,readonly) geoar::MapProcessing _internal;
-
-@end
-
 @implementation MapProcessing
 
 - (void)createMap:(NSString*)directory {
