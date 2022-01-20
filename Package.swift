@@ -67,13 +67,13 @@ let package = Package(
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
         .binaryTarget(
             name: "geoar",
-            url: "https://github.com/kobejean/GeoARCore/releases/download/v1.0.0-alpha.0/geoar.xcframework.zip",
-            checksum: "2f07698faa79abe0ca3332840013e15f9b43d58e8447425c824ddb9b9c610a1a"
+            url: "https://github.com/kobejean/GeoARCore/releases/download/v1.0.0-alpha.3/geoar.xcframework.zip",
+            checksum: "2a8e43bdf6750fee3a20ea621dc381b28f1447b64af80eac2cd05e8d3d08c466"
         ),
         .binaryTarget(
             name: "g2o",
-            url: "https://github.com/kobejean/GeoARCore/releases/download/v1.0.0-alpha.0/g2o.xcframework.zip",
-            checksum: "c7d2cfe60242aeba87fe1c1521a086b71cbe962fb14f070d00b6a56b177db396"
+            url: "https://github.com/kobejean/GeoARCore/releases/download/v1.0.0-alpha.3/g2o.xcframework.zip",
+            checksum: "ff7df99e9aeeb8b45a374359b814764fec7f2fbfd41fbb204694ba9e761de675"
         ),
         .binaryTarget(
             name: "opencv2",
