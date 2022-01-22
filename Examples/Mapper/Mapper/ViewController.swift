@@ -140,7 +140,17 @@ class ViewController: UIViewController {
     @IBAction func saveExperience(_ button: UIButton) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self = self else { return }
-            self.sceneView.tracker.save()
+            let path = self.sceneView.tracker.save()
+            guard let mapPath = path?.appendingPathComponent("map.json").path,
+                  let frame = self.sceneView.session.currentFrame
+            else { return }
+            let map = Map(fromFile: mapPath)
+            let tracker = Tracking(map: map)
+            let positions = map.landmarks.map { landmark in landmark.position }
+            guard let transform = tracker.localize(frame: frame) else { return }
+            print("transform: \(transform)")
+            print("positions.count: \(positions.count)")
+            print("positions[0]: \(positions[0])")
         }
     }
     

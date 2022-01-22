@@ -7,6 +7,7 @@
 
 import Foundation
 import ARKit
+import GeoARObjC
 
 public class GeoARTracker {
     public var debugString = ""
@@ -45,7 +46,7 @@ public class GeoARTracker {
         internalTracker.snapFrame()
     }
     
-    public func save() {
-        internalTracker.snapshotManager.save()
+    public func save() -> URL? {
+        return internalTracker.snapshotManager.save()
     }
 }

@@ -7,12 +7,19 @@
 
 #pragma once
 
+//#if __APPLE__
+//    #include "TargetConditionals.h"
+//    #if TARGET_OS_IPHONE
+//        #import <ARKit/ARKit.h>
+//    #endif
+//#endif
+
 #ifdef __cplusplus
-#import <opencv2/core.hpp>
-#import <geoar/tracking/tracking.h>
+    #import <opencv2/core.hpp>
+    #import <geoar/tracking/tracking.h>
 #endif
 
-#include <opencv2/Mat.h>
+#import <opencv2/Mat.h>
 #import <Foundation/Foundation.h>
 
 #import "Map.h"
@@ -22,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface Tracking: NSObject
 
 #ifdef __cplusplus
-@property(nonatomic,readonly) geoar::Tracking* _internal;
+    @property(nonatomic,readonly) geoar::Tracking* _internal;
 #endif
 
 @property(readonly) Map* map;

@@ -6,10 +6,7 @@
 //
 
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
 #import <geoar/process/map_processing.h>
-#pragma clang diagnostic pop
 
 #import "MapProcessing.h"
 

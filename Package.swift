@@ -65,6 +65,7 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("c++"),
                 .linkedFramework("Accelerate"),
+                .linkedFramework("ARKit", .when(platforms: [.iOS])),
                 .linkedFramework("OpenCL", .when(platforms: [.macOS]))
             ]
         ),

@@ -5,19 +5,7 @@
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
-#include <stdint.h>
-
-#include <iostream>
-#include <fstream>
-
-#include <opencv2/opencv.hpp>
-
-#include "geoar/core/utils/json.h"
 #import <geoar/tracking/tracking.h>
-#pragma clang diagnostic pop
 
 #import "Tracking.h"
 
@@ -44,7 +32,6 @@
 
 - (void)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform {
     self._internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef);
-    std::cout << "transform:" << transform.nativeRef << std::endl;
 }
 
 @end

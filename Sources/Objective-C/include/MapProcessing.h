@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-#import <geoar/process/map_processing.h>
+    #import <geoar/process/map_processing.h>
 #endif
 
 #import <Foundation/Foundation.h>
@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MapProcessing: NSObject
 
 #ifdef __cplusplus
-@property(nonatomic,readonly) geoar::MapProcessing _internal;
+    @property(nonatomic,readonly) geoar::MapProcessing _internal;
 #endif
 
 

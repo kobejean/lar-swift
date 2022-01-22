@@ -61,7 +61,7 @@ class SnapshotManager {
         metadata.coordinateMeasurements.append(contentsOf: locationPoints)
     }
     
-    func save() {
+    func save() -> URL? {
         do {
             let path = sessionDirectory.appendingPathComponent("metadata.json")
             let encoder = JSONEncoder()
@@ -71,9 +71,11 @@ class SnapshotManager {
             
             let processor = MapProcessing()
             processor.createMap(sessionDirectory.path)
+            return sessionDirectory
         } catch {
             fatalError("Can't get file save URL: \(error.localizedDescription)")
         }
+        return nil
     }
     
     private func _saveBufferTiff(_ buffer: CVPixelBuffer, type: OSType, name: String, cvType: Int32) throws {
