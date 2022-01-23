@@ -1,4 +1,4 @@
-@_exported import GeoARObjC
+@_exported import LocalARObjC
 #if os(iOS)
     @_exported import GeoARExtra
 #endif

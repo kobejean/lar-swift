@@ -8,7 +8,7 @@
 
 import Foundation
 import MapKit
-import GeoAR
+import LocalAR
 
 extension ViewController: MKMapViewDelegate {
     

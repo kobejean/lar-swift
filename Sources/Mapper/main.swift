@@ -5,7 +5,7 @@
 //  Created by Jean Flaherty on 2021/12/27.
 //
 
-import GeoAR
+import LocalAR
 //import opencv2
 
 let processor = MapProcessing()

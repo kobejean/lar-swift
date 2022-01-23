@@ -1,5 +1,5 @@
 //
-//  Map.mm
+//  LARMap.mm
 //  
 //
 //  Created by Jean Flaherty on 2021/12/26.
@@ -8,15 +8,15 @@
 #import <fstream>
 #import "geoar/core/utils/json.h"
 
-#import "Map.h"
+#import "LARMap.h"
 
-@interface Map ()
+@interface LARMap ()
 
 @property(nonatomic,readwrite) geoar::Map _internal;
 
 @end
 
-@implementation Map
+@implementation LARMap
 
 - (id)initFromFile:(NSString*)filepath {
     self = [super init];
@@ -24,11 +24,11 @@
     return self;
 }
 
-- (NSArray<Landmark*>*)landmarks {
+- (NSArray<LARLandmark*>*)landmarks {
     int size = (int)self._internal.landmarks.size();
-    NSMutableArray<Landmark *> *landmarks = [[NSMutableArray<Landmark*> alloc] initWithCapacity: size];
+    NSMutableArray<LARLandmark *> *landmarks = [[NSMutableArray<LARLandmark*> alloc] initWithCapacity: size];
     for (int i=0; i<size; i++) {
-        Landmark *landmark = [[Landmark alloc] initWithInternal: &self._internal.landmarks[i]];
+        LARLandmark *landmark = [[LARLandmark alloc] initWithInternal: &self._internal.landmarks[i]];
         [landmarks addObject: landmark];
     }
     return [landmarks copy];

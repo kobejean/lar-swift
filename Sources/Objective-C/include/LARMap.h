@@ -1,5 +1,5 @@
 //
-//  Map.h
+//  LARMap.h
 //  
 //
 //  Created by Jean Flaherty on 2021/12/26.
@@ -12,17 +12,17 @@
 #endif
 
 #import <Foundation/Foundation.h>
-#import "Landmark.h"
+#import "LARLandmark.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Map: NSObject
+@interface LARMap: NSObject
 
 #ifdef __cplusplus
     @property(nonatomic,readonly) geoar::Map _internal;
 #endif
 
-@property(nonatomic,readonly) NSArray<Landmark*> *landmarks;
+@property(nonatomic,readonly) NSArray<LARLandmark*> *landmarks;
 
 - (id)initFromFile:(NSString*)filepath;
 

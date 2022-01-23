@@ -9,7 +9,7 @@ import Foundation
 import ARKit
 import MobileCoreServices
 import opencv2
-import GeoARObjC
+import LocalARObjC
 
 class SnapshotManager {
     
@@ -44,7 +44,7 @@ class SnapshotManager {
                          type: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,
                          name: String(format: "%08d_image", frameCount))
         metadata.frames.append(FrameMetadata(id: frameCount, frame: frame))
-        
+
         if #available(iOS 14.0, *), let depthData = frame.smoothedSceneDepth {
             try _saveBufferTiff(depthData.depthMap,
                                 type: kCVPixelFormatType_DepthFloat32,
@@ -69,7 +69,7 @@ class SnapshotManager {
             let data = try encoder.encode(metadata)
             try data.write(to: path, options: [.atomic])
             
-            let processor = MapProcessing()
+            let processor = LARMapProcessing()
             processor.createMap(sessionDirectory.path)
             return sessionDirectory
         } catch {

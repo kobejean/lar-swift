@@ -1,5 +1,5 @@
 //
-//  Landmark.h
+//  LARLandmark.h
 //
 //
 //  Created by Jean Flaherty on 2021/12/26.
@@ -16,7 +16,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Landmark: NSObject
+@interface LARLandmark: NSObject
 
 #ifdef __cplusplus
     @property(nonatomic,readonly) geoar::Landmark* _internal;

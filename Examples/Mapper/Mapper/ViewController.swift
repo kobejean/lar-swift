@@ -9,7 +9,7 @@ import UIKit
 import MapKit
 import SceneKit
 import ARKit
-import GeoAR
+import LocalAR
 
 class ViewController: UIViewController {
     // MARK: - IBOutlets
@@ -144,8 +144,8 @@ class ViewController: UIViewController {
             guard let mapPath = path?.appendingPathComponent("map.json").path,
                   let frame = self.sceneView.session.currentFrame
             else { return }
-            let map = Map(fromFile: mapPath)
-            let tracker = Tracking(map: map)
+            let map = LARMap(fromFile: mapPath)
+            let tracker = LARTracking(map: map)
             let positions = map.landmarks.map { landmark in landmark.position }
             guard let transform = tracker.localize(frame: frame) else { return }
             print("transform: \(transform)")
@@ -223,7 +223,7 @@ class ViewController: UIViewController {
         guard let hitTestResult = sceneView
             .hitTest(sender.location(in: sceneView), types: [.existingPlaneUsingGeometry, .estimatedHorizontalPlane])
             .first
-            else { return }
+        else { return }
         let navigationAnchor = GeoARNavigationAnchor(transform: hitTestResult.worldTransform)
         if navigationGraph.start == nil {
             navigationGraph.start = navigationAnchor.identifier

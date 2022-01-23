@@ -1,5 +1,5 @@
 //
-//  Tracking.mm
+//  LARTracking.mm
 //  
 //
 //  Created by Jean Flaherty on 2021/12/26.
@@ -7,18 +7,18 @@
 
 #import <geoar/tracking/tracking.h>
 
-#import "Tracking.h"
+#import "LARTracking.h"
 
-@interface Tracking ()
+@interface LARTracking ()
 
 @property(nonatomic,readwrite) geoar::Tracking* _internal;
-@property(nonatomic,retain,readwrite) Map* map;
+@property(nonatomic,retain,readwrite) LARMap* map;
 
 @end
 
-@implementation Tracking
+@implementation LARTracking
 
-- (id)initWithMap:(Map*)map {
+- (id)initWithMap:(LARMap*)map {
     self = [super init];
     self._internal = new geoar::Tracking(map._internal);
     self.map = map;

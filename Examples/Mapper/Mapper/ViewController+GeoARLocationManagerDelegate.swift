@@ -8,7 +8,7 @@
 
 import Foundation
 import MapKit
-import GeoAR
+import LocalAR
 import CoreLocation
 
 extension ViewController: GeoARLocationManagerDelegate {

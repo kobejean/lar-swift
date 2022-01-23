@@ -8,9 +8,9 @@
 #if os(iOS)
 
 import ARKit
-import GeoARObjC
+import LocalARObjC
 
-public extension Tracking {
+public extension LARTracking {
     
     func localize(frame: ARFrame) -> simd_double4x4? {
         let buffer = frame.capturedImage

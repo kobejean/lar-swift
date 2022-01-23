@@ -10,7 +10,7 @@
 		111DC86920ACAB690037F7B1 /* RoundedButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111DC86820ACAB690037F7B1 /* RoundedButton.swift */; };
 		112FE5671F4F95A200BF85EA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 112FE5661F4F95A200BF85EA /* Assets.xcassets */; };
 		11E9720A209A355F006E3D26 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E97209209A355F006E3D26 /* Utilities.swift */; };
-		3D37D168278706240046A168 /* GeoAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D37D167278706240046A168 /* GeoAR */; };
+		3D37D1B0279D70FB0046A168 /* LocalAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D37D1AF279D70FB0046A168 /* LocalAR */; };
 		3D49504F2661A22F00776FCE /* ShareScanViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D49504E2661A22F00776FCE /* ShareScanViewController.swift */; };
 		3D4950512661DBF200776FCE /* ViewController+ARSCNViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D4950502661DBF200776FCE /* ViewController+ARSCNViewDelegate.swift */; };
 		3D4950532661DE8900776FCE /* ViewController+ARSessionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D4950522661DE8900776FCE /* ViewController+ARSessionDelegate.swift */; };
@@ -56,7 +56,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3DFD559026ADCEC200FC0438 /* MapKit.framework in Frameworks */,
-				3D37D168278706240046A168 /* GeoAR in Frameworks */,
+				3D37D1B0279D70FB0046A168 /* LocalAR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,7 +147,7 @@
 			);
 			name = Mapper;
 			packageProductDependencies = (
-				3D37D167278706240046A168 /* GeoAR */,
+				3D37D1AF279D70FB0046A168 /* LocalAR */,
 			);
 			productName = ARMultiuser;
 			productReference = 842316DC1F2030C300D189D1 /* Mapper.app */;
@@ -294,7 +294,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -346,7 +346,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -366,7 +366,7 @@
 				DEVELOPMENT_TEAM = Q74A2VY23K;
 				GCC_OPTIMIZATION_LEVEL = s;
 				INFOPLIST_FILE = "$(SRCROOT)/Mapper/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -392,7 +392,7 @@
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = Q74A2VY23K;
 				INFOPLIST_FILE = "$(SRCROOT)/Mapper/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -432,9 +432,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3D37D167278706240046A168 /* GeoAR */ = {
+		3D37D1AF279D70FB0046A168 /* LocalAR */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = GeoAR;
+			productName = LocalAR;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

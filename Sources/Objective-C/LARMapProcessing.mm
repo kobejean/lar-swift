@@ -1,16 +1,16 @@
 //
-//  MapProcessing.mm
+//  LARMapProcessing.mm
 //  
 //
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
 
-#import <geoar/process/map_processing.h>
+#import <geoar/processing/map_processing.h>
 
-#import "MapProcessing.h"
+#import "LARMapProcessing.h"
 
-@implementation MapProcessing
+@implementation LARMapProcessing
 
 - (void)createMap:(NSString*)directory {
     std::string directory_string = std::string([directory UTF8String]);

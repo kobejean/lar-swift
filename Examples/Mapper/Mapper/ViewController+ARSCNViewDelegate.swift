@@ -9,7 +9,7 @@
 import Foundation
 import SceneKit
 import ARKit
-import GeoAR
+import LocalAR
 
 extension ViewController: ARSCNViewDelegate {
     
