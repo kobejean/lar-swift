@@ -7,28 +7,32 @@
 
 #include <filesystem>
 
-#import <geoar/collection/collection.h>
+#import <geoar/mapping/mapper.h>
 
 #import "Helpers/LARConversion.h"
-#import "LARCollection.h"
+#import "LARMapper.h"
+#import "LARMapperData.h"
 
 
 namespace fs = std::filesystem;
 
-@interface LARCollection ()
+@interface LARMapper ()
 
-@property(nonatomic,readwrite) geoar::Collection* _internal;
+@property(nonatomic,readwrite) geoar::Mapper* _internal;
 @property(nonatomic,retain,readwrite) NSURL* directory;
+@property(nonatomic,readwrite) LARMapperData* data;
+
 
 @end
 
-@implementation LARCollection
+@implementation LARMapper
 
 - (id)initWithDirectory:(NSURL*)directory {
     fs::path path = [[directory path] UTF8String];
     self = [super init];
-    self._internal = new geoar::Collection(path);
+    self._internal = new geoar::Mapper(path);
     self.directory = directory;
+    self.data = [[LARMapperData alloc] initWithInternal:&self._internal->data];
     return self;
 }
 
@@ -49,13 +53,12 @@ namespace fs = std::filesystem;
     cv::Mat image = [LARConversion matFromBuffer:imageBuffer planeIndex:0 type: CV_8UC1];
     cv::Mat depth = [LARConversion matFromBuffer:depthBuffer planeIndex:0 type: CV_32FC1];
     cv::Mat confidence = [LARConversion matFromBuffer:confidenceBuffer planeIndex:0 type: CV_8UC1];
-    geoar::Collection::FrameMetadata metadata{
-        .timestamp=[LARConversion timestampFromInterval:frame.timestamp],
-        .intrinsics=[LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>(),
-        .extrinsics=[LARConversion eigenFromSIMD4:frame.camera.transform].cast<double>(),
-    };
+    geoar::Frame aFrame;
+    aFrame.timestamp = [LARConversion timestampFromInterval:frame.timestamp];
+    aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
+    aFrame.extrinsics = [LARConversion eigenFromSIMD4:frame.camera.transform].cast<double>();
     
-    self._internal->addFrame(image, depth, confidence, metadata);
+    self._internal->addFrame(aFrame, image, depth, confidence);
     
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
@@ -63,15 +66,21 @@ namespace fs = std::filesystem;
 }
 
 
-- (void)addGPSObservation:(CLLocation*)location position:(simd_float3)position {
-    geoar::Collection::GPSObservation observation{
-        .timestamp=(long int)round(location.timestamp.timeIntervalSince1970 * 1e3),
-        .relative{ position.x, position.y, position.z },
-        .global{ location.coordinate.latitude, location.coordinate.longitude, location.altitude },
-        .accuracy{ location.horizontalAccuracy, location.horizontalAccuracy, location.verticalAccuracy }
-    };
-    
-    self._internal->addGPSObservation(observation);
+- (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp {
+    long long time = (long long)round(1000 * timestamp.timeIntervalSince1970);
+    self._internal->addPosition({ position.x, position.y, position.z }, time);
+}
+
+
+- (void)addLocation:(CLLocation*)location {
+    long long time = (long long)round(1000 * location.timestamp.timeIntervalSince1970);
+    Eigen::Vector3d loc{location.coordinate.latitude, location.coordinate.longitude, location.altitude};
+    Eigen::Vector3d acc{location.horizontalAccuracy, location.horizontalAccuracy, location.verticalAccuracy};
+    self._internal->addLocation(loc, acc, time);
+}
+
+- (void)writeMetadata {
+    self._internal->writeMetadata();
 }
 
 @end

@@ -69,7 +69,7 @@ class SnapshotManager {
             let data = try encoder.encode(metadata)
             try data.write(to: path, options: [.atomic])
             
-            let processor = LARMapProcessing()
+            let processor = LARMapProcessor()
             processor.createMap(sessionDirectory.path)
             return sessionDirectory
         } catch {

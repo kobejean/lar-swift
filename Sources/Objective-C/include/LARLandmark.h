@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-    #import <geoar/tracking/tracking.h>
+    #import <geoar/core/landmark.h>
 #endif
 
 #import <Foundation/Foundation.h>
@@ -23,10 +23,13 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(readonly) simd_double3 position;
+@property(readonly) long long lastSeen;
 
 #ifdef __cplusplus
     - (id)initWithInternal:(geoar::Landmark*)landmark;
 #endif
+
+- (bool)isUsable;
 
 @end
 

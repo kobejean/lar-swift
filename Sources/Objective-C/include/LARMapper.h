@@ -16,27 +16,32 @@
 #endif
 
 #ifdef __cplusplus
-    #import <geoar/collection/collection.h>
+    #import <geoar/mapping/mapper.h>
 #endif
 
+#import "LARMapperData.h"
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LARCollection: NSObject
+@interface LARMapper: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::Collection* _internal;
+    @property(nonatomic,readonly) geoar::Mapper* _internal;
 #endif
 
 @property(nonatomic,readonly) NSURL* directory;
+@property(nonatomic,readonly) LARMapperData* data;
 
 - (id)initWithDirectory:(NSURL*)directory;
 
 #if TARGET_OS_IPHONE
-    - (void)addFrame:(ARFrame*)frame;
-    - (void)addGPSObservation:(CLLocation*)location position:(simd_float3)position;
+    - (void)addFrame:(ARFrame*)frame NS_SWIFT_NAME( add(frame:) );
+    - (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp NS_SWIFT_NAME( add(position:timestamp:) );
+    - (void)addLocation:(CLLocation*)location  NS_SWIFT_NAME( add(location:) );
 #endif
+
+- (void)writeMetadata;
 
 @end
 

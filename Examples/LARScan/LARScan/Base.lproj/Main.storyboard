@@ -22,7 +22,8 @@
                             </arscnView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="km6-wS-6s9">
                                 <rect key="frame" x="178.5" y="808" width="57" height="31"/>
-                                <state key="normal" title="Button"/>
+                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                <state key="normal" title="Snap"/>
                                 <buttonConfiguration key="configuration" style="filled" title="Snap"/>
                                 <connections>
                                     <action selector="snapFrame:" destination="BV1-FR-VrT" eventType="touchUpInside" id="zfB-YB-wvN"/>

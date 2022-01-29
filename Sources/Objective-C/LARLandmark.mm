@@ -28,4 +28,13 @@
     return simd_make_double3(position.x(), position.y(), position.z());
 }
 
+- (long long)lastSeen {
+    return self._internal->last_seen;
+}
+
+
+- (bool)isUsable {
+    return self._internal->isUseable();
+}
+
 @end

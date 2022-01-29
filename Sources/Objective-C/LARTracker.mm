@@ -1,26 +1,26 @@
 //
-//  LARTracking.mm
+//  LARTracker.mm
 //  
 //
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
-#import <geoar/tracking/tracking.h>
+#import <geoar/tracking/tracker.h>
 
-#import "LARTracking.h"
+#import "LARTracker.h"
 
-@interface LARTracking ()
+@interface LARTracker ()
 
-@property(nonatomic,readwrite) geoar::Tracking* _internal;
+@property(nonatomic,readwrite) geoar::Tracker* _internal;
 @property(nonatomic,retain,readwrite) LARMap* map;
 
 @end
 
-@implementation LARTracking
+@implementation LARTracker
 
 - (id)initWithMap:(LARMap*)map {
     self = [super init];
-    self._internal = new geoar::Tracking(map._internal);
+    self._internal = new geoar::Tracker(*map._internal);
     self.map = map;
     return self;
 }

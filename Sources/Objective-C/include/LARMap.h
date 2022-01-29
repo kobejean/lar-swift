@@ -19,12 +19,16 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LARMap: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::Map _internal;
+    @property(nonatomic,readonly) geoar::Map* _internal;
 #endif
 
 @property(nonatomic,readonly) NSArray<LARLandmark*> *landmarks;
 
-- (id)initFromFile:(NSString*)filepath;
+- (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
+
+#ifdef __cplusplus
+    - (id)initWithInternal:(geoar::Map*)map;
+#endif
 
 @end
 

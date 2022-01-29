@@ -1,5 +1,5 @@
 //
-//  Tracking.swift
+//  LARTracker.swift
 //  
 //
 //  Created by Jean Flaherty on 2022/01/21.
@@ -10,7 +10,7 @@
 import ARKit
 import LocalARObjC
 
-public extension LARTracking {
+public extension LARTracker {
     
     func localize(frame: ARFrame) -> simd_double4x4? {
         let buffer = frame.capturedImage

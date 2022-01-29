@@ -1,0 +1,32 @@
+//
+//  LARMapProcessor.h
+//  
+//
+//  Created by Jean Flaherty on 2021/12/26.
+//
+
+#pragma once
+
+#ifdef __cplusplus
+    #import <geoar/processing/map_processor.h>
+#endif
+
+#import "LARMapperData.h"
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface LARMapProcessor: NSObject
+
+#ifdef __cplusplus
+    @property(nonatomic,readonly) geoar::MapProcessor* _internal;
+#endif
+
+- (id)initWithMapperData:(LARMapperData*)data;
+
+- (void)process;
+- (void)createMap:(NSString*)directory;
+
+@end
+
+NS_ASSUME_NONNULL_END

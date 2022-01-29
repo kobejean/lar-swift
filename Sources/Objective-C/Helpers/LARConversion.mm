@@ -7,7 +7,7 @@
 
 #import <CoreVideo/CoreVideo.h>
 
-#import <geoar/tracking/tracking.h>
+#import <geoar/tracking/tracker.h>
 
 #import "Helpers/LARConversion.h"
 
