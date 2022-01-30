@@ -5,19 +5,19 @@
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
-#import "geoar/core/landmark.h"
+#import "lar/core/landmark.h"
 
 #import "LARLandmark.h"
 
 @interface LARLandmark ()
 
-@property(nonatomic,readwrite) geoar::Landmark* _internal;
+@property(nonatomic,readwrite) lar::Landmark* _internal;
 
 @end
 
 @implementation LARLandmark
 
-- (id)initWithInternal:(geoar::Landmark*)landmark {
+- (id)initWithInternal:(lar::Landmark*)landmark {
     self = [super init];
     self._internal = landmark;
     return self;

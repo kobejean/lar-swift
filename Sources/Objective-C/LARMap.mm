@@ -7,13 +7,13 @@
 
 #import <iostream>
 #import <fstream>
-#import "geoar/core/utils/json.h"
+#import "lar/core/utils/json.h"
 
 #import "LARMap.h"
 
 @interface LARMap ()
 
-@property(nonatomic,readwrite) geoar::Map* _internal;
+@property(nonatomic,readwrite) lar::Map* _internal;
 
 @end
 
@@ -22,13 +22,13 @@
 - (id)initWithContentsOf:(NSString*)filepath {
     self = [super init];
     nlohmann::json json = nlohmann::json::parse(std::ifstream([filepath UTF8String]));
-    geoar::Map* map = new geoar::Map();
-    geoar::from_json(json, *map);
+    lar::Map* map = new lar::Map();
+    lar::from_json(json, *map);
     self._internal = map;
     return self;
 }
 
-- (id)initWithInternal:(geoar::Map*)map {
+- (id)initWithInternal:(lar::Map*)map {
     self = [super init];
     self._internal = map;
     return self;

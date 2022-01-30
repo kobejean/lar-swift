@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-    #import <geoar/mapping/mapper.h>
+    #import <lar/mapping/mapper.h>
 #endif
 
 #import "LARMap.h"
@@ -24,9 +24,9 @@ NS_SWIFT_NAME(LARMapper.Data)
 @property(nonatomic,readonly) NSArray<LARGPSObservation*>* gps_observations;
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::Mapper::Data* _internal;
+    @property(nonatomic,readonly) lar::Mapper::Data* _internal;
 
-    - (id)initWithInternal:(geoar::Mapper::Data*)data;
+    - (id)initWithInternal:(lar::Mapper::Data*)data;
 #endif
 
 

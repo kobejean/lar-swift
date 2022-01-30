@@ -5,20 +5,20 @@
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
-#import <geoar/mapping/mapper.h>
+#import <lar/mapping/mapper.h>
 
 #import "LARMapperData.h"
 
 @interface LARMapperData ()
 
-@property(nonatomic,readwrite) geoar::Mapper::Data* _internal;
+@property(nonatomic,readwrite) lar::Mapper::Data* _internal;
 @property(nonatomic,readwrite) LARMap* map;
 
 @end
 
 @implementation LARMapperData
 
-- (id)initWithInternal:(geoar::Mapper::Data*)data {
+- (id)initWithInternal:(lar::Mapper::Data*)data {
     self = [super init];
     self._internal = data;
     self.map = [[LARMap alloc] initWithInternal:&self._internal->map];

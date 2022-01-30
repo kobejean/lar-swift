@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-    #import <geoar/core/map.h>
+    #import <lar/core/map.h>
 #endif
 
 #import <Foundation/Foundation.h>
@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LARMap: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::Map* _internal;
+    @property(nonatomic,readonly) lar::Map* _internal;
 #endif
 
 @property(nonatomic,readonly) NSArray<LARLandmark*> *landmarks;
@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
 
 #ifdef __cplusplus
-    - (id)initWithInternal:(geoar::Map*)map;
+    - (id)initWithInternal:(lar::Map*)map;
 #endif
 
 @end

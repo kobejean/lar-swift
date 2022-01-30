@@ -9,7 +9,7 @@ import Foundation
 import ARKit
 import MobileCoreServices
 import opencv2
-import LocalARObjC
+import LocalizeARObjC
 
 class SnapshotManager {
     

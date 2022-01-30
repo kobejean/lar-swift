@@ -5,10 +5,10 @@
 //  Created by Jean Flaherty on 2021/12/27.
 //
 
-import LocalAR
+import LocalizeAR
 //import opencv2
 
-let processor = MapProcessing()
+let processor = LARMapProcessor()
 processor.createMap("/Users/kobejean/Developer/GitHub/GeoARCore/input/snapshot")
 
 
@@ -23,7 +23,7 @@ try intrinsics.put(row: 2, col: 2, data: [1.0])
 
 var transform = Mat()
 
-let map = Map(fromFile: "/Users/kobejean/Developer/GitHub/GeoARCore/input/snapshot/map.json")
-let tracker = Tracking(map: map)
+let map = LARMap(contentsOf: "/Users/kobejean/Developer/GitHub/GeoARCore/input/snapshot/map.json")
+let tracker = LARTracker(map: map)
 tracker.localize(image, intrinsics: intrinsics, transform: transform)
 print(transform)

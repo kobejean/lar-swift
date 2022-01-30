@@ -8,7 +8,7 @@
 #if os(iOS)
 
 import ARKit
-import LocalARObjC
+import LocalizeARObjC
 
 public extension LARTracker {
     
@@ -25,6 +25,7 @@ public extension LARTracker {
         
         return transform.toSIMD()
     }
+    
 }
 
 #endif

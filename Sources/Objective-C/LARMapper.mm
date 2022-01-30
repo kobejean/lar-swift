@@ -7,7 +7,7 @@
 
 #include <filesystem>
 
-#import <geoar/mapping/mapper.h>
+#import <lar/mapping/mapper.h>
 
 #import "Helpers/LARConversion.h"
 #import "LARMapper.h"
@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 
 @interface LARMapper ()
 
-@property(nonatomic,readwrite) geoar::Mapper* _internal;
+@property(nonatomic,readwrite) lar::Mapper* _internal;
 @property(nonatomic,retain,readwrite) NSURL* directory;
 @property(nonatomic,readwrite) LARMapperData* data;
 
@@ -30,7 +30,7 @@ namespace fs = std::filesystem;
 - (id)initWithDirectory:(NSURL*)directory {
     fs::path path = [[directory path] UTF8String];
     self = [super init];
-    self._internal = new geoar::Mapper(path);
+    self._internal = new lar::Mapper(path);
     self.directory = directory;
     self.data = [[LARMapperData alloc] initWithInternal:&self._internal->data];
     return self;
@@ -40,6 +40,12 @@ namespace fs = std::filesystem;
     delete self._internal;
 }
 
+- (void)writeMetadata {
+    self._internal->writeMetadata();
+}
+
+
+#if TARGET_OS_IPHONE
 
 - (void)addFrame:(ARFrame*)frame {
     CVPixelBufferRef imageBuffer = frame.capturedImage;
@@ -53,7 +59,7 @@ namespace fs = std::filesystem;
     cv::Mat image = [LARConversion matFromBuffer:imageBuffer planeIndex:0 type: CV_8UC1];
     cv::Mat depth = [LARConversion matFromBuffer:depthBuffer planeIndex:0 type: CV_32FC1];
     cv::Mat confidence = [LARConversion matFromBuffer:confidenceBuffer planeIndex:0 type: CV_8UC1];
-    geoar::Frame aFrame;
+    lar::Frame aFrame;
     aFrame.timestamp = [LARConversion timestampFromInterval:frame.timestamp];
     aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
     aFrame.extrinsics = [LARConversion eigenFromSIMD4:frame.camera.transform].cast<double>();
@@ -79,8 +85,6 @@ namespace fs = std::filesystem;
     self._internal->addLocation(loc, acc, time);
 }
 
-- (void)writeMetadata {
-    self._internal->writeMetadata();
-}
+#endif
 
 @end

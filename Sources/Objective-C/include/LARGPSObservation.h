@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-    #import <geoar/mapping/location_matcher.h>
+    #import <lar/mapping/location_matcher.h>
 #endif
 
 #import <Foundation/Foundation.h>
@@ -19,13 +19,13 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LARGPSObservation: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::GPSObservation* _internal;
+    @property(nonatomic,readonly) lar::GPSObservation* _internal;
 #endif
 
 @property(readonly) simd_double3 relative;
 
 #ifdef __cplusplus
-    - (id)initWithInternal:(geoar::GPSObservation*)observation;
+    - (id)initWithInternal:(lar::GPSObservation*)observation;
 #endif
 
 @end

@@ -8,7 +8,7 @@
 #pragma once
 
 #ifdef __cplusplus
-    #import <geoar/processing/map_processor.h>
+    #import <lar/processing/map_processor.h>
 #endif
 
 #import "LARMapperData.h"
@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LARMapProcessor: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::MapProcessor* _internal;
+    @property(nonatomic,readonly) lar::MapProcessor* _internal;
 #endif
 
 - (id)initWithMapperData:(LARMapperData*)data;

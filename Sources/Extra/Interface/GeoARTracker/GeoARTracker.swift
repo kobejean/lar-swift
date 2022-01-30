@@ -7,7 +7,7 @@
 
 import Foundation
 import ARKit
-import LocalARObjC
+import LocalizeARObjC
 
 public class GeoARTracker {
     public var debugString = ""

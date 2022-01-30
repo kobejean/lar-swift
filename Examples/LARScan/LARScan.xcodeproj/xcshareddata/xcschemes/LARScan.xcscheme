@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "Mapper"
-               BuildableName = "Mapper"
-               BlueprintName = "Mapper"
-               ReferencedContainer = "container:">
+               BlueprintIdentifier = "3D37D24D279D77480046A168"
+               BuildableName = "LARScan.app"
+               BlueprintName = "LARScan"
+               ReferencedContainer = "container:LARScan.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -28,6 +28,26 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3D37D262279D77490046A168"
+               BuildableName = "LARScanTests.xctest"
+               BlueprintName = "LARScanTests"
+               ReferencedContainer = "container:LARScan.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3D37D26C279D77490046A168"
+               BuildableName = "LARScanUITests.xctest"
+               BlueprintName = "LARScanUITests"
+               ReferencedContainer = "container:LARScan.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -44,10 +64,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "Mapper"
-            BuildableName = "Mapper"
-            BlueprintName = "Mapper"
-            ReferencedContainer = "container:">
+            BlueprintIdentifier = "3D37D24D279D77480046A168"
+            BuildableName = "LARScan.app"
+            BlueprintName = "LARScan"
+            ReferencedContainer = "container:LARScan.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,10 +81,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "Mapper"
-            BuildableName = "Mapper"
-            BlueprintName = "Mapper"
-            ReferencedContainer = "container:">
+            BlueprintIdentifier = "3D37D24D279D77480046A168"
+            BuildableName = "LARScan.app"
+            BlueprintName = "LARScan"
+            ReferencedContainer = "container:LARScan.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

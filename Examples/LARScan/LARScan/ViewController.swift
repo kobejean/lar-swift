@@ -9,7 +9,7 @@ import UIKit
 import SceneKit
 import ARKit
 import AVFoundation
-import LocalAR
+import LocalizeAR
 import CoreLocation
 import Collections
 

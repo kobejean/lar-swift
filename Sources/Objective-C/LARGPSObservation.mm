@@ -5,19 +5,19 @@
 //  Created by Jean Flaherty on 2021/12/26.
 //
 
-#import "geoar/mapping/location_matcher.h"
+#import "lar/mapping/location_matcher.h"
 
 #import "LARGPSObservation.h"
 
 @interface LARGPSObservation ()
 
-@property(nonatomic,readwrite) geoar::GPSObservation* _internal;
+@property(nonatomic,readwrite) lar::GPSObservation* _internal;
 
 @end
 
 @implementation LARGPSObservation
 
-- (id)initWithInternal:(geoar::GPSObservation*)observation {
+- (id)initWithInternal:(lar::GPSObservation*)observation {
     self = [super init];
     self._internal = observation;
     return self;

@@ -6,13 +6,13 @@
 //
 
 
-#import <geoar/processing/map_processor.h>
+#import <lar/processing/map_processor.h>
 
 #import "LARMapProcessor.h"
 
 @interface LARMapProcessor ()
 
-@property(nonatomic,readwrite) geoar::MapProcessor* _internal;
+@property(nonatomic,readwrite) lar::MapProcessor* _internal;
 
 @end
 
@@ -20,7 +20,7 @@
 
 - (id)initWithMapperData:(LARMapperData*)data {
     self = [super init];
-    self._internal = new geoar::MapProcessor(*data._internal);
+    self._internal = new lar::MapProcessor(*data._internal);
     return self;
 }
 

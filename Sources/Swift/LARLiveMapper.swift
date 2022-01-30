@@ -6,7 +6,8 @@
 //
 
 import Foundation
-import LocalARObjC
+import LocalizeARObjC
+import CoreLocation
 
 public actor LARLiveMapper {
     let mapper: LARMapper
@@ -21,6 +22,8 @@ public actor LARLiveMapper {
         mapper.writeMetadata()
     }
     
+    #if os(iOS)
+    
     public func add(frame: ARFrame)  {
         mapper.add(frame: frame)
     }
@@ -34,6 +37,8 @@ public actor LARLiveMapper {
             mapper.add(location: location)
         }
     }
+    
+    #endif
     
     public init(directory: URL) {
         mapper = LARMapper(directory: directory)

@@ -9,7 +9,7 @@
 
 #ifdef __cplusplus
     #import <opencv2/core.hpp>
-    #import <geoar/tracking/tracker.h>
+    #import <lar/tracking/tracker.h>
 #endif
 
 #import "opencv2/Mat.h"
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LARTracker: NSObject
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) geoar::Tracker* _internal;
+    @property(nonatomic,readonly) lar::Tracker* _internal;
 #endif
 
 @property(nonatomic,readonly) LARMap* map;

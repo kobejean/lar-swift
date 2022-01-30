@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "LocalAR",
+    name: "LocalizeAR",
     platforms: [
         .macOS(.v10_15), .iOS(.v14)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
-            name: "LocalAR",
-            targets: ["LocalAR"]
+            name: "LocalizeAR",
+            targets: ["LocalizeAR"]
         )
     ],
     dependencies: [
@@ -31,30 +31,18 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .executableTarget(
             name: "Mapper",
-            dependencies: ["LocalAR"],
+            dependencies: ["LocalizeAR"],
             path: "Sources/Mapper"),
         .target(
-            name: "LocalAR",
+            name: "LocalizeAR",
             dependencies: [
-                .target(name: "LocalARObjC"),
-                .target(name: "GeoARExtra", condition: .when(platforms: [.iOS]))
+                .target(name: "LocalizeARObjC")
             ],
             path: "Sources/Swift"
         ),
         .target(
-            name: "GeoARExtra",
-            dependencies: [
-                .product(name: "Collections", package: "swift-collections"),
-                .product(name: "LANumerics", package: "LANumerics"),
-                .target(name: "LocalARObjC"),
-                .target(name: "opencv2")
-            ],
-            path: "Sources/Extra"
-        ),
-        
-        .target(
-            name: "LocalARObjC",
-            dependencies: ["geoar", "g2o", "opencv2"],
+            name: "LocalizeARObjC",
+            dependencies: ["lar", "g2o", "opencv2"],
             path: "Sources/Objective-C",
             cxxSettings: [
                 // Include header only libraries
@@ -70,31 +58,31 @@ let package = Package(
             ]
         ),
         // Uncoment below if working with local frameworks
-//        .binaryTarget(name: "geoar", path: "Frameworks/geoar.xcframework"),
+//        .binaryTarget(name: "lar", path: "Frameworks/lar.xcframework"),
 //        .binaryTarget(name: "g2o", path: "Frameworks/g2o.xcframework"),
 //        .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
         
         // Recompute checksum via:
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
         .binaryTarget(
-            name: "geoar",
-            url: "https://github.com/kobejean/GeoARCore/releases/download/v0.4.0/geoar.xcframework.zip",
-            checksum: "c5ca9cbd4e4d8d6526ee939e94386fc363645597bce48df6ad655f3b710afd6b"
+            name: "lar",
+            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/lar.xcframework.zip",
+            checksum: "22dd57ffb4dc5319ef233c331180b7ab41fde9ea60d7c261547bef0bebe1e2c7"
         ),
         .binaryTarget(
             name: "g2o",
-            url: "https://github.com/kobejean/GeoARCore/releases/download/v0.4.0/g2o.xcframework.zip",
-            checksum: "16559178bd9e8349ba952ff742ba651fa469cb926b95dc69d0b202fa5fc53669"
+            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/g2o.xcframework.zip",
+            checksum: "9de68f2fbd6c70d7c55afbe9cd95256f0e88da94741c78c8326ce8e944b5c627"
         ),
         .binaryTarget(
             name: "opencv2",
-            url: "https://github.com/kobejean/GeoARCore/releases/download/v0.1.0/opencv2.xcframework.zip",
-            checksum: "543e3341c053057f3e218c62f149e31b7d8175f4d3cdb648c6a51bf9ffab0737"
+            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/opencv2.xcframework.zip",
+            checksum: "5f2bf918896a317703ac39fa27fd4e6eb26e3dfc438e21ddf37458be59cbbf68"
         ),
         
-        .testTarget(
-            name: "GeoARExtraTests",
-            dependencies: ["LocalAR"]
-        )
+//        .testTarget(
+//            name: "GeoARExtraTests",
+//            dependencies: ["LocalizeAR"]
+//        )
     ]
 )

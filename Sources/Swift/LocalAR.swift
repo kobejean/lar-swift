@@ -1,1 +1,1 @@
-@_exported import LocalARObjC
+@_exported import LocalizeARObjC
