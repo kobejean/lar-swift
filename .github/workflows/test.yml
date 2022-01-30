@@ -27,4 +27,5 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Test
-        run: xcodebuild -scheme GeoAR clean test -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
+        run: xcodebuild -scheme LocalizeAR clean -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
+        # run: xcodebuild -scheme LocalizeAR clean test -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
