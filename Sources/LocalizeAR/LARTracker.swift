@@ -8,7 +8,7 @@
 #if os(iOS)
 
 import ARKit
-import LocalizeARObjC
+import opencv2
 
 public extension LARTracker {
     
@@ -21,9 +21,8 @@ public extension LARTracker {
         guard let image = Mat(buffer: buffer, 0) else { return nil }
         let intrinsics = frame.camera.intrinsics.toMat()
         let transform = frame.camera.transform.toDouble().toMat()
-        self.localize(image, intrinsics: intrinsics, transform: transform)
-        
-        return transform.toSIMD()
+        let success = self.localize(image, intrinsics: intrinsics, transform: transform)
+        return success ? transform.toSIMD() : nil
     }
     
 }

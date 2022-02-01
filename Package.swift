@@ -17,14 +17,6 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(
-            url: "https://github.com/apple/swift-collections.git",
-            .upToNextMajor(from: "0.0.3")
-        ),
-        .package(
-            url: "https://github.com/phlegmaticprogrammer/LANumerics.git",
-            .upToNextMajor(from: "0.1.12")
-        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -32,19 +24,20 @@ let package = Package(
         .target(
             name: "LocalizeAR",
             dependencies: [
-                .target(name: "LocalizeARObjC")
+                .target(name: "LocalizeAR_ObjC"),
+                .target(name: "opencv2")
             ],
-            path: "Sources/Swift"
+            path: "Sources/LocalizeAR"
         ),
         .target(
-            name: "LocalizeARObjC",
+            name: "LocalizeAR_ObjC",
             dependencies: ["lar", "g2o", "opencv2"],
-            path: "Sources/Objective-C",
+            path: "Sources/LocalizeAR-ObjC",
             cxxSettings: [
                 // Include header only libraries
                 .headerSearchPath("../External/Headers/"),
                 .define("G2O_USE_VENDORED_CERES"),
-                .unsafeFlags(["-std=c++17"])
+                .unsafeFlags(["-std=c++17", "-Wno-incomplete-umbrella"])
             ],
             linkerSettings: [
                 .linkedLibrary("c++"),
@@ -62,8 +55,8 @@ let package = Package(
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
         .binaryTarget(
             name: "lar",
-            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/lar.xcframework.zip",
-            checksum: "22dd57ffb4dc5319ef233c331180b7ab41fde9ea60d7c261547bef0bebe1e2c7"
+            url: "https://github.com/kobejean/lar/releases/download/v0.6.0/lar.xcframework.zip",
+            checksum: "4d74d00c508674d3368b65907847df07f5817e224574c32934b010a44d889aec"
         ),
         .binaryTarget(
             name: "g2o",

@@ -7,12 +7,16 @@
 
 #pragma once
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincomplete-umbrella"
+#import <opencv2/Mat.h>
+#pragma clang diagnostic pop
+
 #ifdef __cplusplus
-    #import <opencv2/core.hpp>
-    #import <lar/tracking/tracker.h>
+    #include <opencv2/core/mat.hpp>
+    #include <lar/tracking/tracker.h>
 #endif
 
-#import "opencv2/Mat.h"
 #import <Foundation/Foundation.h>
 
 #import "LARMap.h"
@@ -29,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)initWithMap:(LARMap*)map;
 
-- (void)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform;
+- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform;
 
 @end
 

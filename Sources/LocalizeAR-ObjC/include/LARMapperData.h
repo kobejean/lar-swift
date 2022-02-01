@@ -21,7 +21,7 @@ NS_SWIFT_NAME(LARMapper.Data)
 @interface LARMapperData: NSObject
 
 @property(nonatomic,readonly) LARMap* map;
-@property(nonatomic,readonly) NSArray<LARGPSObservation*>* gps_observations;
+@property(nonatomic,readonly) NSArray<LARGPSObservation*>* gpsObservations;
 
 #ifdef __cplusplus
     @property(nonatomic,readonly) lar::Mapper::Data* _internal;

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import LocalizeARObjC
+import LocalizeAR_ObjC
 import CoreLocation
 
 public actor LARLiveMapper {

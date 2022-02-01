@@ -20,30 +20,46 @@
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="862"/>
                             </arscnView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="km6-wS-6s9">
-                                <rect key="frame" x="178.5" y="808" width="57" height="31"/>
-                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                <state key="normal" title="Snap"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Snap"/>
-                                <connections>
-                                    <action selector="snapFrame:" destination="BV1-FR-VrT" eventType="touchUpInside" id="zfB-YB-wvN"/>
-                                </connections>
-                            </button>
+                            <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
+                                <rect key="frame" x="125.5" y="811" width="163" height="31"/>
+                                <subviews>
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="hwS-jv-zN5">
+                                        <rect key="frame" x="0.0" y="0.0" width="86" height="32"/>
+                                        <segments>
+                                            <segment title="" image="camera" catalog="system"/>
+                                            <segment title="" image="location" catalog="system"/>
+                                        </segments>
+                                        <connections>
+                                            <action selector="modeChanged:" destination="BV1-FR-VrT" eventType="valueChanged" id="8i2-Vp-txu"/>
+                                        </connections>
+                                    </segmentedControl>
+                                    <button opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="km6-wS-6s9">
+                                        <rect key="frame" x="106" y="0.0" width="57" height="31"/>
+                                        <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                        <state key="normal" title="Snap"/>
+                                        <buttonConfiguration key="configuration" style="filled" title="Snap"/>
+                                        <connections>
+                                            <action selector="actionButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="YO4-e0-dnA"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                            </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="bottom" secondItem="pIs-TH-3LP" secondAttribute="bottom" constant="20" id="8uI-mb-cue"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="centerX" secondItem="fQZ-KI-GVf" secondAttribute="centerX" id="JN3-cj-0vK"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="km6-wS-6s9" firstAttribute="centerX" secondItem="fQZ-KI-GVf" secondAttribute="centerX" id="YF3-l2-EQu"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
-                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="bottom" secondItem="km6-wS-6s9" secondAttribute="bottom" constant="23" id="ujf-r1-nZr"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="actionButton" destination="km6-wS-6s9" id="Uwv-Ss-b8j"/>
+                        <outlet property="modeControl" destination="hwS-jv-zN5" id="4fv-mG-rlb"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
-                        <outlet property="snapButton" destination="km6-wS-6s9" id="5oE-WT-n1C"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
@@ -52,6 +68,8 @@
         </scene>
     </scenes>
     <resources>
+        <image name="camera" catalog="system" width="128" height="94"/>
+        <image name="location" catalog="system" width="128" height="118"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

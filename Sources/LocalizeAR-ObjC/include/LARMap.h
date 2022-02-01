@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
 
+- (simd_double3)globalPointFrom:(simd_double3)relative;
+- (simd_double3)relativePointFrom:(simd_double3)global;
+
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::Map*)map;
 #endif

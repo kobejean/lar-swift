@@ -11,14 +11,15 @@ import ARKit
 import AVFoundation
 import LocalizeAR
 import CoreLocation
-import Collections
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
-    @IBOutlet var snapButton: UIButton!
+    @IBOutlet var modeControl: UISegmentedControl!
+    @IBOutlet var actionButton: UIButton!
     
     var mapper: LARLiveMapper!
+    var tracker: LARTracker!
     
     let locationManager: CLLocationManager = {
         let locationManager = CLLocationManager()
@@ -36,6 +37,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     override func viewDidLoad() {
         super.viewDidLoad()
         mapper = LARLiveMapper(directory: createSessionDirctory()!)
+        Task {
+            await LARTracker(map: mapper.data.map)
+        }
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -45,16 +49,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         sceneView.debugOptions = [ .showWorldOrigin, .showFeaturePoints ]
-        
-        scaleConstraint = SCNTransformConstraint(inWorldSpace: true) { node, transform in
-            guard let camPosition = self.sceneView.pointOfView?.worldPosition else { return transform }
-            let scale = max(simd_distance(simd_float3(camPosition), simd_float3(node.worldPosition)), 0.5)
-            var newTransform = transform
-            newTransform.m11 = scale
-            newTransform.m22 = scale
-            newTransform.m33 = scale
-            return newTransform
-        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -69,7 +63,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         sceneView.session.run(configuration)
         sceneView.session.add(anchor: mapAnchor)
         
-        sceneView.pointOfView?.camera?.usesOrthographicProjection = true
+        // This constraint allows landmarks to be visible from far away
+        guard let pointOfView = sceneView.pointOfView else { return }
+        scaleConstraint = SCNScreenSpaceScaleConstraint(pointOfView: pointOfView)
+        landmarkNode.constraints = [scaleConstraint]
+        unusedLandmarkNode.constraints = [scaleConstraint]
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -95,7 +93,26 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     // MARK: - IBAction
     
-    @IBAction func snapFrame(_ button: UIButton) {
+    @IBAction func modeChanged(_ sender: UISegmentedControl) {
+        let actionTitle = ["Snap", "Localize"][sender.selectedSegmentIndex]
+        actionButton.setTitle(actionTitle, for: .normal)
+        
+        switch sender.selectedSegmentIndex {
+            case 0: break
+            case 1: Task { tracker = await LARTracker(map: mapper.data.map) }
+            default: break
+        }
+    }
+    
+    @IBAction func actionButtonPressed(_ button: UIButton) {
+        switch modeControl.selectedSegmentIndex {
+            case 0: snap()
+            case 1: localize()
+            default: break
+        }
+    }
+    
+    func snap() {
         guard let frame = sceneView.session.currentFrame else { return }
         
         AudioServicesPlaySystemSound(SystemSoundID(1108))
@@ -106,38 +123,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
             await renderDebug()
         }
     }
+    
+    func localize() {
+        guard let frame = sceneView.session.currentFrame else { return }
+        Task.detached(priority: .userInitiated) { [self] in
+            if let transform = await tracker.localize(frame: frame) {
+                print("t:", transform)
+            }
+        }
+    }
 
     // MARK: - ARSCNViewDelegate
     
     var scaleConstraint: SCNTransformConstraint!
     
-    let locationNode = { () -> SCNNode in
-        let node = SCNNode()
-        node.geometry = SCNSphere(radius: 0.005)
-        node.geometry?.firstMaterial?.diffuse.contents = UIColor.systemBlue
-        return node
-    }()
-    
-    let unusedLandmarkNode = { () -> SCNNode in
-        let node = SCNNode()
-        node.geometry = SCNSphere(radius: 0.002)
-        node.geometry?.firstMaterial?.diffuse.contents = UIColor.gray
-        return node
-    }()
-    
-    let landmarkNode = { () -> SCNNode in
-        let node = SCNNode()
-        node.geometry = SCNSphere(radius: 0.002)
-        node.geometry?.firstMaterial?.diffuse.contents = UIColor.green
-        return node
-    }()
+    let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
+    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
+    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
 
 //     Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        if (anchor == mapAnchor) {
-            return mapNode
-        }
-        return nil
+        return anchor == mapAnchor ? mapNode : nil
     }
     
     var landmarkNodes: [SCNNode] = []
@@ -147,34 +153,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         landmarkNodes.forEach { $0.removeFromParentNode() }
         landmarkNodes.removeAll()
         
-        let (landmarks, gps_observations) = await (mapper.data.map.landmarks, mapper.data.gps_observations)
+        let (landmarks, gpsObservations) = await (mapper.data.map.landmarks, mapper.data.gpsObservations)
         
-        let landmarkConstraints: [SCNConstraint] = [scaleConstraint]
-        let filteredLandmarks = landmarks.sorted(by: {
-            $0.lastSeen > $1.lastSeen || ($0.lastSeen == $1.lastSeen && $0.isUsable())
-        }).prefix(upTo: 1000)
-        for landmark in filteredLandmarks {
-            let usable = landmark.isUsable()
-            
-            let node = usable ? landmarkNode.clone() : unusedLandmarkNode.clone()
-            var transform = SCNMatrix4Identity
-            transform.m41 = Float(landmark.position.x)
-            transform.m42 = Float(landmark.position.y)
-            transform.m43 = Float(landmark.position.z)
-            node.transform = transform
-            node.constraints = landmarkConstraints
+        // Populate landmark nodes
+        for landmark in prioritizedLandmarks(landmarks, max: 1000) {
+            let node = landmark.isUsable() ? landmarkNode.clone() : unusedLandmarkNode.clone()
+            node.transform = transformFrom(position: landmark.position)
             mapNode.addChildNode(node)
             landmarkNodes.append(node)
         }
         
-        let filteredObservations = gps_observations.suffix(gps_observations.count - locationNodes.count)
-        for observation in filteredObservations {
+        // Populate location nodes
+        for observation in gpsObservations.suffix(gpsObservations.count - locationNodes.count) {
             let node = locationNode.clone()
-            var transform = SCNMatrix4Identity
-            transform.m41 = Float(observation.relative.x)
-            transform.m42 = Float(observation.relative.y)
-            transform.m43 = Float(observation.relative.z)
-            node.transform = transform
+            node.transform = transformFrom(position: observation.relative)
             mapNode.addChildNode(node)
             locationNodes.append(node)
         }
@@ -200,13 +192,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     // MARK: ARSessionDelegate
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        let timestamp = Date(timeIntervalSinceNow: frame.timestamp - ProcessInfo.processInfo.systemUptime)
+        let timestamp = dateFrom(uptime: frame.timestamp)
         let position = simd_make_float3(frame.camera.transform.columns.3)
         Task.detached(priority: .low) { [mapper] in
             await mapper?.add(position: position, timestamp: timestamp)
         }
     }
-    
     
     // MARK: CLLocationManagerDelegate
     

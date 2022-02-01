@@ -25,11 +25,11 @@
     return self;
 }
 
-- (NSArray<LARGPSObservation*>*)gps_observations {
-    int size = (int)self._internal->gps_observations.size();
+- (NSArray<LARGPSObservation*>*)gpsObservations {
+    int size = (int)self._internal->gps_obs.size();
     NSMutableArray<LARGPSObservation *> *observations = [[NSMutableArray<LARGPSObservation*> alloc] initWithCapacity: size];
     for (int i=0; i<size; i++) {
-        LARGPSObservation *observation = [[LARGPSObservation alloc] initWithInternal: &self._internal->gps_observations[i]];
+        LARGPSObservation *observation = [[LARGPSObservation alloc] initWithInternal: &self._internal->gps_obs[i]];
         [observations addObject: observation];
     }
     return [observations copy];

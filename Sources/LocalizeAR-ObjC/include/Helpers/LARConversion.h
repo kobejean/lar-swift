@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 
 #import <Eigen/Core>
-#import <opencv2/core.hpp>
+#import <opencv2/core/mat.hpp>
 
 #import <CoreVideo/CoreVideo.h>
 #import <simd/simd.h>
@@ -23,6 +23,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (long int)timestampFromInterval:(NSTimeInterval)interval;
 + (Eigen::Matrix3f)eigenFromSIMD3:(simd_float3x3)simd;
 + (Eigen::Matrix4f)eigenFromSIMD4:(simd_float4x4)simd;
++ (Eigen::Vector3d)vector3dFromSIMD3:(simd_double3)simd;
++ (Eigen::Vector3f)vector3fFromSIMD3:(simd_float3)simd;
++ (simd_double3)simd3FromVector3d:(Eigen::Vector3d)vector;
++ (simd_float3)simd3FromVector3f:(Eigen::Vector3f)vector;
 + (cv::Mat)matFromBuffer:(CVPixelBufferRef)buffer planeIndex:(size_t)planeIndex type:(int)type;
 
 @end

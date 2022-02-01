@@ -9,6 +9,7 @@
 #import <fstream>
 #import "lar/core/utils/json.h"
 
+#import "Helpers/LARConversion.h"
 #import "LARMap.h"
 
 @interface LARMap ()
@@ -26,6 +27,18 @@
     lar::from_json(json, *map);
     self._internal = map;
     return self;
+}
+
+- (simd_double3)globalPointFrom:(simd_double3)relative {
+    Eigen::Vector3d _relative = [LARConversion vector3dFromSIMD3:relative];
+    Eigen::Vector3d _global = self._internal->globalPointFrom(_relative);
+    return [LARConversion simd3FromVector3d:_global];
+}
+
+- (simd_double3)relativePointFrom:(simd_double3)global {
+    Eigen::Vector3d _global = [LARConversion vector3dFromSIMD3:global];
+    Eigen::Vector3d _relative = self._internal->relativePointFrom(_global);
+    return [LARConversion simd3FromVector3d:_relative];
 }
 
 - (id)initWithInternal:(lar::Map*)map {
