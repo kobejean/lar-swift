@@ -55,8 +55,8 @@ let package = Package(
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
         .binaryTarget(
             name: "lar",
-            url: "https://github.com/kobejean/lar/releases/download/v0.6.0/lar.xcframework.zip",
-            checksum: "4d74d00c508674d3368b65907847df07f5817e224574c32934b010a44d889aec"
+            url: "https://github.com/kobejean/lar/releases/download/v0.7.0/lar.xcframework.zip",
+            checksum: "3f791f882c158d791e8aa1192df342df2f1c32df99b0e129c9d04551853f5295"
         ),
         .binaryTarget(
             name: "g2o",

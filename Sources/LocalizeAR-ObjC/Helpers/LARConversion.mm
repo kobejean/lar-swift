@@ -52,7 +52,6 @@
     return simd_make_double3(vector.x(), vector.y(), vector.z());
 }
 
-
 + (simd_float3)simd3FromVector3f:(Eigen::Vector3f)vector {
     return simd_make_float3(vector.x(), vector.y(), vector.z());
 }
