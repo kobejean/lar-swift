@@ -28,6 +28,11 @@
     return simd_make_double3(position.x(), position.y(), position.z());
 }
 
+- (simd_float3)orientation {
+    Eigen::Vector3f position = self._internal->orientation;
+    return simd_make_float3(position.x(), position.y(), position.z());
+}
+
 - (long long)lastSeen {
     return self._internal->last_seen;
 }

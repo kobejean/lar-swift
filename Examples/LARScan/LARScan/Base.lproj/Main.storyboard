@@ -18,10 +18,19 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
-                                <rect key="frame" x="0.0" y="0.0" width="414" height="862"/>
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="596"/>
                             </arscnView>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="417-dV-nQU">
+                                <rect key="frame" x="0.0" y="596" width="414" height="300"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="300" id="8YO-j7-Me0"/>
+                                </constraints>
+                                <connections>
+                                    <outlet property="delegate" destination="BV1-FR-VrT" id="YEf-Ev-W2g"/>
+                                </connections>
+                            </mapView>
                             <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
-                                <rect key="frame" x="125.5" y="811" width="163" height="31"/>
+                                <rect key="frame" x="125.5" y="545" width="163" height="31"/>
                                 <subviews>
                                     <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="hwS-jv-zN5">
                                         <rect key="frame" x="0.0" y="0.0" width="86" height="32"/>
@@ -48,23 +57,27 @@
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="bottom" secondItem="pIs-TH-3LP" secondAttribute="bottom" constant="20" id="8uI-mb-cue"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
-                            <constraint firstItem="pIs-TH-3LP" firstAttribute="centerX" secondItem="fQZ-KI-GVf" secondAttribute="centerX" id="JN3-cj-0vK"/>
-                            <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="LXA-6p-7dx"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="LhB-A7-JJr"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="centerX" secondItem="417-dV-nQU" secondAttribute="centerX" id="bW7-uY-DaG"/>
+                            <constraint firstAttribute="bottom" secondItem="417-dV-nQU" secondAttribute="bottom" id="owi-GV-g7G"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="uba-9y-iGT"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="pIs-TH-3LP" secondAttribute="bottom" constant="20" id="waT-Pd-CGa"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="actionButton" destination="km6-wS-6s9" id="Uwv-Ss-b8j"/>
+                        <outlet property="mapView" destination="417-dV-nQU" id="omc-YM-sXo"/>
                         <outlet property="modeControl" destination="hwS-jv-zN5" id="4fv-mG-rlb"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="139" y="109"/>
+            <point key="canvasLocation" x="137.68115942028987" y="108.48214285714285"/>
         </scene>
     </scenes>
     <resources>

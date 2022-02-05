@@ -29,16 +29,20 @@
     return self;
 }
 
-- (simd_double3)globalPointFrom:(simd_double3)relative {
+- (bool)globalPointFrom:(simd_double3)relative global:(simd_double3*) global {
     Eigen::Vector3d _relative = [LARConversion vector3dFromSIMD3:relative];
-    Eigen::Vector3d _global = self._internal->globalPointFrom(_relative);
-    return [LARConversion simd3FromVector3d:_global];
+    Eigen::Vector3d _global;
+    bool success = self._internal->globalPointFrom(_relative, _global);
+    *global = [LARConversion simd3FromVector3d:_global];
+    return success;
 }
 
-- (simd_double3)relativePointFrom:(simd_double3)global {
+- (bool)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative {
     Eigen::Vector3d _global = [LARConversion vector3dFromSIMD3:global];
-    Eigen::Vector3d _relative = self._internal->relativePointFrom(_global);
-    return [LARConversion simd3FromVector3d:_relative];
+    Eigen::Vector3d _relative;
+    bool success = self._internal->relativePointFrom(_global, _relative);
+    *relative = [LARConversion simd3FromVector3d:_relative];
+    return success;
 }
 
 - (id)initWithInternal:(lar::Map*)map {

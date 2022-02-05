@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(readonly) simd_double3 position;
+@property(readonly) simd_float3 orientation;
 @property(readonly) long long lastSeen;
 
 #ifdef __cplusplus

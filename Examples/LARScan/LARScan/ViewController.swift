@@ -11,10 +11,12 @@ import ARKit
 import AVFoundation
 import LocalizeAR
 import CoreLocation
+import MapKit
 
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet var mapView: MKMapView!
     @IBOutlet var modeControl: UISegmentedControl!
     @IBOutlet var actionButton: UIButton!
     
@@ -30,6 +32,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         locationManager.requestWhenInUseAuthorization()
         return locationManager
     }()
+    var currentLocation: CLLocation?
+    var userLocationAnnotation: MKPointAnnotation?
+    var userLocationAnnotationView: LARMKUserLocationAnnotationView?
     
     let mapAnchor = ARAnchor(name: "mapAnchor", transform: matrix_identity_float4x4)
     let mapNode = SCNNode()
@@ -45,6 +50,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         sceneView.delegate = self
         sceneView.session.delegate = self
         locationManager.delegate = self
+        
+//        mapView.cameraZoomRange = MKMapView.CameraZoomRange(minCenterCoordinateDistance: 1, maxCenterCoordinateDistance: 80)
+        mapView.userTrackingMode = .follow
         
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
@@ -89,6 +97,26 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         else { return nil }
         try? FileManager.default.createDirectory(at: sessionDirectory, withIntermediateDirectories: true, attributes: nil)
         return sessionDirectory
+    }
+    
+    @MainActor
+    func updateUserLocation(position: simd_float3) async {
+        guard await mapper.data.gpsObservations.count >= 2,
+            let global = await mapper.data.map.globalPoint(from: simd_double3(position))
+        else { return }
+        let location = CLLocation(latitude: global.x, longitude: global.y)
+        let distance = currentLocation?.distance(from: location)
+        guard distance == nil || distance! > 0.1 else { return }
+        
+        if userLocationAnnotation == nil {
+            let annotaion = MKPointAnnotation()
+            mapView.addAnnotation(annotaion)
+            mapView.userTrackingMode = .none
+            userLocationAnnotation = annotaion
+        }
+        userLocationAnnotation!.coordinate = location.coordinate
+        currentLocation = location
+        mapView.setCenter(location.coordinate, animated: true)
     }
     
     // MARK: - IBAction
@@ -140,6 +168,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
     let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
     let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
+//    let unusedLandmarkNode = SCNNode.axis(color: UIColor.gray)
+//    let landmarkNode = SCNNode.axis(color: UIColor.green)
 
 //     Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
@@ -158,7 +188,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         // Populate landmark nodes
         for landmark in prioritizedLandmarks(landmarks, max: 1000) {
             let node = landmark.isUsable() ? landmarkNode.clone() : unusedLandmarkNode.clone()
-            node.transform = transformFrom(position: landmark.position)
+            node.transform = transformFrom(position: landmark.position, orientation: landmark.orientation)
             mapNode.addChildNode(node)
             landmarkNodes.append(node)
         }
@@ -194,6 +224,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let timestamp = dateFrom(uptime: frame.timestamp)
         let position = simd_make_float3(frame.camera.transform.columns.3)
+        Task {
+            await updateUserLocation(position: position)
+        }
         Task.detached(priority: .low) { [mapper] in
             await mapper?.add(position: position, timestamp: timestamp)
         }
