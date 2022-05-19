@@ -11,6 +11,7 @@
 
 #import "Helpers/LARConversion.h"
 #import "LARMap.h"
+#import <CoreLocation/CoreLocation.h>
 
 @interface LARMap ()
 
@@ -45,6 +46,22 @@
     return success;
 }
 
+- (CLLocation*)locationFrom:(LARAnchor*) anchor {
+    Eigen::Matrix4d transform = (self._internal->origin * anchor._internal->transform).matrix();
+    return [[CLLocation alloc] initWithLatitude:transform(0,0) longitude:transform(0,1)];
+}
+
+- (void)add:(LARAnchor*)anchor {
+    anchor._internal->id = (int) self._internal->anchors.size();
+    size_t idx = self._internal->anchors.size();
+    self._internal->anchors.push_back(*anchor._internal);
+    anchor._internal = &self._internal->anchors[idx];
+    
+    if ([self.delegate respondsToSelector:@selector(map:didAdd:)]) {
+        [self.delegate map:self didAdd:anchor];
+    }
+}
+
 - (id)initWithInternal:(lar::Map*)map {
     self = [super init];
     self._internal = map;
@@ -59,6 +76,16 @@
         [landmarks addObject: landmark];
     }
     return [landmarks copy];
+}
+
+- (NSArray<LARAnchor*>*)anchors {
+    int size = (int)self._internal->anchors.size();
+    NSMutableArray<LARAnchor *> *anchors = [[NSMutableArray<LARAnchor*> alloc] initWithCapacity: size];
+    for (int i=0; i<size; i++) {
+        LARAnchor *anchor = [[LARAnchor alloc] initWithInternal: &self._internal->anchors[i]];
+        [anchors addObject: anchor];
+    }
+    return [anchors copy];
 }
 
 @end

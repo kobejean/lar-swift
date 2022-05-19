@@ -19,6 +19,10 @@
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="596"/>
+                                <gestureRecognizers/>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="Sau-bH-5Tj" appends="YES" id="VOx-xZ-8gH"/>
+                                </connections>
                             </arscnView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="417-dV-nQU">
                                 <rect key="frame" x="0.0" y="596" width="414" height="300"/>
@@ -76,6 +80,11 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer id="Sau-bH-5Tj">
+                    <connections>
+                        <action selector="handleSceneTap:" destination="BV1-FR-VrT" id="FRA-ef-9Nn"/>
+                    </connections>
+                </tapGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="137.68115942028987" y="108.48214285714285"/>
         </scene>

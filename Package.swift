@@ -55,13 +55,13 @@ let package = Package(
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
         .binaryTarget(
             name: "lar",
-            url: "https://github.com/kobejean/lar/releases/download/v0.8.1/lar.xcframework.zip",
-            checksum: "7b5dce349cdb57306790fcd756ab30935c5597bdf9fd0b283e550c4c6ab36cd5"
+            url: "https://github.com/kobejean/lar/releases/download/v0.9.0/lar.xcframework.zip",
+            checksum: "e0637b4089b5607e0aa0b4f6f3d496b83eab2b6b7fe85b717f0504b6d058e1a2"
         ),
         .binaryTarget(
             name: "g2o",
-            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/g2o.xcframework.zip",
-            checksum: "9de68f2fbd6c70d7c55afbe9cd95256f0e88da94741c78c8326ce8e944b5c627"
+            url: "https://github.com/kobejean/lar/releases/download/v0.9.0/g2o.xcframework.zip",
+            checksum: "4faebbcbc7d999bf3a0cdcc1d4e0b0bf58e5fa970d87bd0cf89116aa5f8211b5"
         ),
         .binaryTarget(
             name: "opencv2",

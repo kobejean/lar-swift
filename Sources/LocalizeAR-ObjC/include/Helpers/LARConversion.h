@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (Eigen::Vector3f)vector3fFromSIMD3:(simd_float3)simd;
 + (simd_double3)simd3FromVector3d:(Eigen::Vector3d)vector;
 + (simd_float3)simd3FromVector3f:(Eigen::Vector3f)vector;
++ (simd_double4x4)simd4x4FromTransform3d:(Eigen::Transform<double,3,Eigen::Affine>)transform;
++ (Eigen::Transform<double,3,Eigen::Affine>)transform3dFromSIMD4x4:(simd_double4x4)simd;
 + (cv::Mat)matFromBuffer:(CVPixelBufferRef)buffer planeIndex:(size_t)planeIndex type:(int)type;
 
 @end

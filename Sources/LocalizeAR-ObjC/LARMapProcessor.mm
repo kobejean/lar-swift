@@ -20,7 +20,7 @@
 
 - (id)initWithMapperData:(LARMapperData*)data {
     self = [super init];
-    self._internal = new lar::MapProcessor(*data._internal);
+    self._internal = new lar::MapProcessor(data._internal);
     return self;
 }
 

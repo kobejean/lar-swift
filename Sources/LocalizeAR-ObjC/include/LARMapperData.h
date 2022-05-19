@@ -24,9 +24,9 @@ NS_SWIFT_NAME(LARMapper.Data)
 @property(nonatomic,readonly) NSArray<LARGPSObservation*>* gpsObservations;
 
 #ifdef __cplusplus
-    @property(nonatomic,readonly) lar::Mapper::Data* _internal;
+    @property(nonatomic,readonly) std::shared_ptr<lar::Mapper::Data> _internal;
 
-    - (id)initWithInternal:(lar::Mapper::Data*)data;
+    - (id)initWithInternal:(std::shared_ptr<lar::Mapper::Data>)data;
 #endif
 
 

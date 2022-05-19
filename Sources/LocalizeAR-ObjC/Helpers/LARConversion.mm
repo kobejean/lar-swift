@@ -56,6 +56,26 @@
     return simd_make_float3(vector.x(), vector.y(), vector.z());
 }
 
++ (simd_double4x4)simd4x4FromTransform3d:(Eigen::Transform<double,3,Eigen::Affine>)transform {
+    auto mat = transform.matrix();
+    return simd_matrix(
+       (simd_double4){ mat(0,0), mat(1,0), mat(2,0), mat(3,0) },
+       (simd_double4){ mat(0,1), mat(1,1), mat(2,1), mat(3,1) },
+       (simd_double4){ mat(0,2), mat(1,2), mat(2,2), mat(3,2) },
+       (simd_double4){ mat(0,3), mat(1,3), mat(2,3), mat(3,3) }
+    );
+}
+
++ (Eigen::Transform<double,3,Eigen::Affine>)transform3dFromSIMD4x4:(simd_double4x4)simd {
+    Eigen::Matrix4d mat;
+    mat <<  simd.columns[0][0], simd.columns[1][0], simd.columns[2][0], simd.columns[3][0],
+            simd.columns[0][1], simd.columns[1][1], simd.columns[2][1], simd.columns[3][1],
+            simd.columns[0][2], simd.columns[1][2], simd.columns[2][2], simd.columns[3][2],
+            simd.columns[0][3], simd.columns[1][3], simd.columns[2][3], simd.columns[3][3];
+    return Eigen::Transform<double,3,Eigen::Affine>{mat};
+}
+
+
 + (cv::Mat)matFromBuffer:(CVPixelBufferRef)buffer planeIndex:(size_t)planeIndex type:(int)type {
     int width = (int) CVPixelBufferGetWidthOfPlane(buffer, planeIndex);
     int height = (int) CVPixelBufferGetHeightOfPlane(buffer, planeIndex);

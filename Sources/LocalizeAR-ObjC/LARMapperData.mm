@@ -11,14 +11,14 @@
 
 @interface LARMapperData ()
 
-@property(nonatomic,readwrite) lar::Mapper::Data* _internal;
+@property(nonatomic,readwrite) std::shared_ptr<lar::Mapper::Data> _internal;
 @property(nonatomic,readwrite) LARMap* map;
 
 @end
 
 @implementation LARMapperData
 
-- (id)initWithInternal:(lar::Mapper::Data*)data {
+- (id)initWithInternal:(std::shared_ptr<lar::Mapper::Data>)data {
     self = [super init];
     self._internal = data;
     self.map = [[LARMap alloc] initWithInternal:&self._internal->map];

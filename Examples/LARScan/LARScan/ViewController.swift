@@ -13,7 +13,7 @@ import LocalizeAR
 import CoreLocation
 import MapKit
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate, LARMapDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet var mapView: MKMapView!
@@ -42,8 +42,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     override func viewDidLoad() {
         super.viewDidLoad()
         mapper = LARLiveMapper(directory: createSessionDirctory()!)
-        Task {
-            await LARTracker(map: mapper.data.map)
+        Task { [mapper] in
+            let map = await mapper!.data.map
+            map.delegate = self
         }
         
         // Set the view's delegate
@@ -66,6 +67,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         let configuration = ARWorldTrackingConfiguration()
         configuration.frameSemantics = .smoothedSceneDepth
         configuration.worldAlignment = .gravity
+        configuration.planeDetection = .horizontal
 
         // Run the view's session
         sceneView.session.run(configuration)
@@ -140,6 +142,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         }
     }
     
+    @IBAction func handleSceneTap(_ sender: UITapGestureRecognizer) {
+        // Hit test to find a place for a virtual object.
+        guard let query = sceneView
+                .raycastQuery(from: sender.location(in: sceneView), allowing: .estimatedPlane, alignment: .any),
+              let result = sceneView.session.raycast(query).first
+        else {
+            return
+        }
+        let transform = simd_double4x4(
+            simd_double4(result.worldTransform.columns.0),
+            simd_double4(result.worldTransform.columns.1),
+            simd_double4(result.worldTransform.columns.2),
+            simd_double4(result.worldTransform.columns.3)
+        )
+        let anchor = LARAnchor(transform: transform)
+        Task {
+            await mapper.data.map.add(anchor)
+            print(anchor)
+        }
+    }
+    
     func snap() {
         guard let frame = sceneView.session.currentFrame else { return }
         
@@ -165,11 +188,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     var scaleConstraint: SCNTransformConstraint!
     
+    let anchorNode = SCNNode.sphere(radius: 0.02, color: UIColor.magenta)
     let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
-    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
-    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
-//    let unusedLandmarkNode = SCNNode.axis(color: UIColor.gray)
-//    let landmarkNode = SCNNode.axis(color: UIColor.green)
+//    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
+//    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
+    let unusedLandmarkNode = SCNNode.axis(color: UIColor.gray)
+    let landmarkNode = SCNNode.axis(color: UIColor.green)
 
 //     Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
@@ -239,4 +263,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
             await mapper?.add(locations: locations)
         }
     }
+    
+    // MARK: LARMapDelegate
+    
+    func map(_ map: LARMap, didAdd anchor: LARAnchor) {
+        let node = anchorNode.clone()
+        node.transform = SCNMatrix4(anchor.transform)
+        mapNode.addChildNode(node)
+    }
+    
 }

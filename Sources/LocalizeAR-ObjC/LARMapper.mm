@@ -32,7 +32,7 @@ namespace fs = std::filesystem;
     self = [super init];
     self._internal = new lar::Mapper(path);
     self.directory = directory;
-    self.data = [[LARMapperData alloc] initWithInternal:&self._internal->data];
+    self.data = [[LARMapperData alloc] initWithInternal: self._internal->data];
     return self;
 }
 

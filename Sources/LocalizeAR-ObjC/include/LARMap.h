@@ -12,9 +12,13 @@
 #endif
 
 #import <Foundation/Foundation.h>
+#import <CoreLocation/CoreLocation.h>
+#import "LARAnchor.h"
 #import "LARLandmark.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@protocol LARMapDelegate;
 
 @interface LARMap: NSObject
 
@@ -22,16 +26,27 @@ NS_ASSUME_NONNULL_BEGIN
     @property(nonatomic,readonly) lar::Map* _internal;
 #endif
 
-@property(nonatomic,readonly) NSArray<LARLandmark*> *landmarks;
+@property(nonatomic,assign) id <LARMapDelegate> delegate;
+@property(nonatomic,readonly) NSArray<LARLandmark*>* landmarks;
+@property(nonatomic,readonly) NSArray<LARAnchor*>* anchors;
 
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
 
 - (bool)globalPointFrom:(simd_double3)relative global:(simd_double3*) global;
 - (bool)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative;
+- (CLLocation*)locationFrom:(LARAnchor*)anchor  NS_SWIFT_NAME( location(anchor:) );
+- (void)add:(LARAnchor*)anchor;
+
 
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::Map*)map;
 #endif
+
+@end
+
+@protocol LARMapDelegate<NSObject>
+
+  @optional -(void)map:(LARMap *)map didAdd: (LARAnchor *)anchor;
 
 @end
 
