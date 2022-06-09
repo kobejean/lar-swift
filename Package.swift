@@ -3,6 +3,8 @@
 
 import PackageDescription
 
+var exclude = ["Submodules/lar"]
+
 let package = Package(
     name: "LocalizeAR",
     platforms: [
@@ -30,8 +32,22 @@ let package = Package(
             path: "Sources/LocalizeAR"
         ),
         .target(
+            name: "LocalizeAR_CPP",
+            dependencies: ["g2o", "opencv2"],
+            path: "Sources/LocalizeAR-CPP",
+            cxxSettings: [
+                // Include header only libraries
+                .headerSearchPath("../External/Headers/"),
+                .define("G2O_USE_VENDORED_CERES"),
+                .unsafeFlags(["-std=c++17", "-Wno-incomplete-umbrella"])
+            ],
+            linkerSettings: [
+                .linkedLibrary("c++"),
+            ]
+        ),
+        .target(
             name: "LocalizeAR_ObjC",
-            dependencies: ["lar", "g2o", "opencv2"],
+            dependencies: ["LocalizeAR_CPP", "g2o", "opencv2"],
             path: "Sources/LocalizeAR-ObjC",
             cxxSettings: [
                 // Include header only libraries
@@ -53,11 +69,11 @@ let package = Package(
         
         // Recompute checksum via:
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
-        .binaryTarget(
-            name: "lar",
-            url: "https://github.com/kobejean/lar/releases/download/v0.9.0/lar.xcframework.zip",
-            checksum: "e0637b4089b5607e0aa0b4f6f3d496b83eab2b6b7fe85b717f0504b6d058e1a2"
-        ),
+//        .binaryTarget(
+//            name: "lar",
+//            url: "https://github.com/kobejean/lar/releases/download/v0.9.0/lar.xcframework.zip",
+//            checksum: "e0637b4089b5607e0aa0b4f6f3d496b83eab2b6b7fe85b717f0504b6d058e1a2"
+//        ),
         .binaryTarget(
             name: "g2o",
             url: "https://github.com/kobejean/lar/releases/download/v0.9.0/g2o.xcframework.zip",

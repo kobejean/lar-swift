@@ -1,0 +1,3 @@
+[submodule "Sources/LocalizeAR-CPP/lar"]
+	path = .Submodules/lar
+	url = https://github.com/kobejean/lar.git
