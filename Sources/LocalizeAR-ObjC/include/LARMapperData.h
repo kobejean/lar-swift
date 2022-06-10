@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(LARMapper.Data)
 @interface LARMapperData: NSObject
 
-@property(nonatomic,readonly) LARMap* map;
+@property(nonatomic,strong,readonly) LARMap* map;
 @property(nonatomic,readonly) NSArray<LARGPSObservation*>* gpsObservations;
 
 #ifdef __cplusplus

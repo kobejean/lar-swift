@@ -31,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(nonatomic,readonly) NSURL* directory;
-@property(nonatomic,readonly) LARMapperData* data;
+@property(nonatomic,strong,readonly) LARMapperData* data;
 
 - (id)initWithDirectory:(NSURL*)directory;
 

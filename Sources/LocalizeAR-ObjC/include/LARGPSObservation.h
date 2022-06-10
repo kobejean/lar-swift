@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(readonly) simd_double3 relative;
+@property(readonly) simd_double3 global;
 
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::GPSObservation*)observation;

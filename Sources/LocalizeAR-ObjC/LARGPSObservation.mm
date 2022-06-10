@@ -28,4 +28,9 @@
     return simd_make_double3(relative.x(), relative.y(), relative.z());
 }
 
+- (simd_double3)global {
+    Eigen::Vector3d global = self._internal->global;
+    return simd_make_double3(global.x(), global.y(), global.z());
+}
+
 @end

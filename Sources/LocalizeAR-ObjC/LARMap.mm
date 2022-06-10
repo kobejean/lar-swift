@@ -30,6 +30,10 @@
     return self;
 }
 
+- (void)dealloc {
+    delete self._internal;
+}
+
 - (bool)globalPointFrom:(simd_double3)relative global:(simd_double3*) global {
     Eigen::Vector3d _relative = [LARConversion vector3dFromSIMD3:relative];
     Eigen::Vector3d _global;
@@ -52,7 +56,7 @@
 }
 
 - (void)add:(LARAnchor*)anchor {
-    anchor._internal->id = (int) self._internal->anchors.size();
+    anchor.id = (int) self._internal->anchors.size();
     size_t idx = self._internal->anchors.size();
     self._internal->anchors.push_back(*anchor._internal);
     anchor._internal = &self._internal->anchors[idx];

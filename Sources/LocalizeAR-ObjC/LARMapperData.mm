@@ -12,7 +12,7 @@
 @interface LARMapperData ()
 
 @property(nonatomic,readwrite) std::shared_ptr<lar::Mapper::Data> _internal;
-@property(nonatomic,readwrite) LARMap* map;
+@property(nonatomic,strong,readwrite) LARMap* map;
 
 @end
 

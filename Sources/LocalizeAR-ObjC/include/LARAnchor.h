@@ -22,8 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
     @property(nonatomic,readwrite) lar::Anchor* _internal;
 #endif
 
-@property(readonly) int position;
-@property(readonly) simd_double4x4 transform;
+@property(nonatomic,readwrite) int id;
+@property(nonatomic,readonly) int position;
+@property(nonatomic,readonly) simd_double4x4 transform;
 
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::Anchor*)anchor;

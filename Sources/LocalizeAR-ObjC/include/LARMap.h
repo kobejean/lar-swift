@@ -27,8 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(nonatomic,assign) id <LARMapDelegate> delegate;
-@property(nonatomic,readonly) NSArray<LARLandmark*>* landmarks;
-@property(nonatomic,readonly) NSArray<LARAnchor*>* anchors;
+@property(nonatomic,strong,readonly) NSArray<LARLandmark*>* landmarks;
+@property(nonatomic,strong,readonly) NSArray<LARAnchor*>* anchors;
 
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
 

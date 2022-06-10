@@ -10,11 +10,11 @@
 #import "Helpers/LARConversion.h"
 #import "LARAnchor.h"
 
-//@interface LARAnchor ()
-//
+@interface LARAnchor ()
+
 //@property(nonatomic,readwrite) lar::Anchor* _internal;
-//
-//@end
+
+@end
 
 @implementation LARAnchor
 
@@ -35,6 +35,10 @@
 
 - (int)id {
     return self._internal->id;
+}
+
+- (void)setId:(int)id {
+    self._internal->id = id;
 }
 
 - (simd_double4x4)transform {

@@ -23,6 +23,10 @@
     return self;
 }
 
+- (void)dealloc {
+    delete self._internal;
+}
+
 - (simd_double3)position {
     Eigen::Vector3d position = self._internal->position;
     return simd_make_double3(position.x(), position.y(), position.z());

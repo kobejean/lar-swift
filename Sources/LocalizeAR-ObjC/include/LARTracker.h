@@ -13,7 +13,6 @@
 #pragma clang diagnostic pop
 
 #ifdef __cplusplus
-    #include <opencv2/core/mat.hpp>
     #include <lar/tracking/tracker.h>
 #endif
 

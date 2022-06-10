@@ -20,7 +20,7 @@ namespace fs = std::filesystem;
 
 @property(nonatomic,readwrite) lar::Mapper* _internal;
 @property(nonatomic,retain,readwrite) NSURL* directory;
-@property(nonatomic,readwrite) LARMapperData* data;
+@property(nonatomic,strong,readwrite) LARMapperData* data;
 
 
 @end

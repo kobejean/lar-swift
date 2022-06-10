@@ -11,7 +11,7 @@
 
 @interface LARTracker ()
 
-@property(nonatomic,readwrite) lar::Tracker* _internal;
+@property(nonatomic,readwrite) lar::Tracker *_internal;
 @property(nonatomic,retain,readwrite) LARMap* map;
 
 @end
