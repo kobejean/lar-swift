@@ -3,7 +3,12 @@
 
 import PackageDescription
 
-var exclude = ["Submodules/lar"]
+let cxxSettings: [CXXSetting] = [
+    // Include header only libraries
+    .headerSearchPath("../External/Headers/"),
+    .define("G2O_USE_VENDORED_CERES"),
+    .unsafeFlags(["-std=c++17"])
+]
 
 let package = Package(
     name: "LocalizeAR",
@@ -25,36 +30,22 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "LocalizeAR",
-            dependencies: [
-                .target(name: "LocalizeAR_ObjC"),
-                .target(name: "opencv2")
-            ],
-            path: "Sources/LocalizeAR"
+            dependencies: [.target(name: "LocalizeAR_ObjC")],
+            path: "Sources/LocalizeAR",
+            cxxSettings: [.unsafeFlags(["-Wno-incomplete-umbrella"])]
         ),
         .target(
             name: "LocalizeAR_CPP",
             dependencies: ["g2o", "opencv2"],
             path: "Sources/LocalizeAR-CPP",
-            cxxSettings: [
-                // Include header only libraries
-                .headerSearchPath("../External/Headers/"),
-                .define("G2O_USE_VENDORED_CERES"),
-                .unsafeFlags(["-std=c++17", "-Wno-incomplete-umbrella"])
-            ],
-            linkerSettings: [
-                .linkedLibrary("c++"),
-            ]
+            cxxSettings: cxxSettings,
+            linkerSettings: [.linkedLibrary("c++")]
         ),
         .target(
             name: "LocalizeAR_ObjC",
-            dependencies: ["LocalizeAR_CPP", "g2o", "opencv2"],
+            dependencies: ["LocalizeAR_CPP"],
             path: "Sources/LocalizeAR-ObjC",
-            cxxSettings: [
-                // Include header only libraries
-                .headerSearchPath("../External/Headers/"),
-                .define("G2O_USE_VENDORED_CERES"),
-                .unsafeFlags(["-std=c++17", "-Wno-incomplete-umbrella"])
-            ],
+            cxxSettings: cxxSettings,
             linkerSettings: [
                 .linkedLibrary("c++"),
                 .linkedFramework("Accelerate"),
