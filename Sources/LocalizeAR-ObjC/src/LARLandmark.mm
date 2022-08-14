@@ -24,7 +24,7 @@
 }
 
 - (void)dealloc {
-    delete self._internal;
+//    delete self._internal;
 }
 
 - (simd_double3)position {
