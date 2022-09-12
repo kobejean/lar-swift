@@ -11,7 +11,7 @@ import SceneKit
 
 func prioritizedLandmarks(_ landmarks: [LARLandmark], max: Int) -> AnySequence<LARLandmark> {
     let seq = landmarks.sorted(by: {
-        $0.lastSeen > $1.lastSeen || ($0.lastSeen == $1.lastSeen && $0.isUsable())
+        (!$1.isUsable() && $0.isUsable()) || $0.lastSeen > $1.lastSeen
     }).prefix(max)
     return AnySequence(seq)
 }

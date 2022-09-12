@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(readonly) simd_double3 position;
 @property(readonly) simd_float3 orientation;
 @property(readonly) long long lastSeen;
+@property(readonly) bool isMatched;
 
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::Landmark*)landmark;

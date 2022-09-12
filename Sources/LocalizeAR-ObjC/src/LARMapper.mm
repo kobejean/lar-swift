@@ -19,13 +19,15 @@ namespace fs = std::filesystem;
 @interface LARMapper ()
 
 @property(nonatomic,readwrite) lar::Mapper* _internal;
-@property(nonatomic,retain,readwrite) NSURL* directory;
+//@property(nonatomic,retain,readwrite) NSURL* directory;
 @property(nonatomic,strong,readwrite) LARMapperData* data;
 
 
 @end
 
 @implementation LARMapper
+
+@synthesize directory = _directory;
 
 - (id)initWithDirectory:(NSURL*)directory {
     fs::path path = [[directory path] UTF8String];
@@ -42,6 +44,16 @@ namespace fs = std::filesystem;
 
 - (void)writeMetadata {
     self._internal->writeMetadata();
+}
+
+- (void)readMetadata {
+    self._internal->readMetadata();
+}
+
+- (void)setDirectory:(NSURL *)directory {
+    fs::path path = [[directory path] UTF8String];
+    self._internal->data->directory = path;
+    _directory = directory;
 }
 
 

@@ -18,7 +18,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet var mapView: MKMapView!
     @IBOutlet var modeControl: UISegmentedControl!
-    @IBOutlet var actionButton: UIButton!
+    @IBOutlet var mapModeButtons: UIStackView!
+    @IBOutlet var localizeModeButtons: UIStackView!
+    @IBOutlet var localizeButton: UIButton!
     
     var mapper: LARLiveMapper!
     var tracker: LARTracker!
@@ -36,8 +38,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     var userLocationAnnotation: MKPointAnnotation?
     var userLocationAnnotationView: LARMKUserLocationAnnotationView?
     
-    let mapAnchor = ARAnchor(name: "mapAnchor", transform: matrix_identity_float4x4)
+    var mapAnchor = ARAnchor(name: "mapAnchor", transform: matrix_identity_float4x4)
     let mapNode = SCNNode()
+    let mapOriginNode = SCNNode()
+    var mapOriginNodeTransform = SCNMatrix4Identity
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,6 +62,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         sceneView.debugOptions = [ .showWorldOrigin, .showFeaturePoints ]
+        
+        mapNode.addChildNode(mapOriginNode)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -121,25 +127,73 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         mapView.setCenter(location.coordinate, animated: true)
     }
     
+    func moveAnchor(frame: ARFrame, transform: simd_double4x4) {
+        sceneView.session.remove(anchor: mapAnchor)
+        mapAnchor = ARAnchor(name: "mapAnchor", transform: frame.camera.transform)
+        mapOriginNodeTransform = SCNMatrix4(transform.inverse)
+        sceneView.session.add(anchor: mapAnchor)
+    }
+    
     // MARK: - IBAction
     
     @IBAction func modeChanged(_ sender: UISegmentedControl) {
-        let actionTitle = ["Snap", "Localize"][sender.selectedSegmentIndex]
-        actionButton.setTitle(actionTitle, for: .normal)
-        
         switch sender.selectedSegmentIndex {
-            case 0: break
-            case 1: Task { tracker = await LARTracker(map: mapper.data.map) }
-            default: break
+        case 0:
+            mapModeButtons.isHidden = false
+            localizeModeButtons.isHidden = true
+        case 1:
+            mapModeButtons.isHidden = true
+            localizeModeButtons.isHidden = false
+        default: break
         }
     }
     
-    @IBAction func actionButtonPressed(_ button: UIButton) {
-        switch modeControl.selectedSegmentIndex {
-            case 0: snap()
-            case 1: localize()
-            default: break
+    @IBAction func renderButtonPressed(_ button: UIButton) {
+        Task {
+            await renderDebug()
         }
+    }
+    
+    @IBAction func optimizeButtonPressed(_ button: UIButton) {
+        Task {
+            await mapper.process()
+            await renderDebug()
+        }
+    }
+    
+    @IBAction func snapButtonPressed(_ button: UIButton) {
+        guard let frame = sceneView.session.currentFrame else { return }
+        
+        AudioServicesPlaySystemSound(SystemSoundID(1108))
+        Task.detached(priority: .low) { [self] in
+            await mapper.add(frame: frame)
+            await mapper.writeMetadata()
+            await renderDebug()
+        }
+    }
+    
+    @IBAction func localizeButtonPressed(_ button: UIButton) {
+        guard let frame = sceneView.session.currentFrame else { return }
+        Task {
+            tracker = await LARTracker(map: mapper.data.map)
+            if let transform = tracker.localize(frame: frame) {
+                moveAnchor(frame: frame, transform: transform)
+                print("t:", transform)
+            }
+            await renderDebug()
+        }
+    }
+    
+    @IBAction func saveButtonPressed(_ button: UIButton) {
+        Task {
+            await mapper.saveMap()
+        }
+    }
+    
+    @IBAction func loadButtonPressed(_ button: UIButton) {
+        let projectPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
+        projectPicker.delegate = self
+        self.present(projectPicker, animated: true)
     }
     
     @IBAction func handleSceneTap(_ sender: UITapGestureRecognizer) {
@@ -162,27 +216,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
             print(anchor)
         }
     }
-    
-    func snap() {
-        guard let frame = sceneView.session.currentFrame else { return }
-        
-        AudioServicesPlaySystemSound(SystemSoundID(1108))
-        Task.detached(priority: .low) { [self] in
-            await mapper.add(frame: frame)
-            await mapper.writeMetadata()
-            await mapper.process()
-            await renderDebug()
-        }
-    }
-    
-    func localize() {
-        guard let frame = sceneView.session.currentFrame else { return }
-        Task.detached(priority: .userInitiated) { [self] in
-            if let transform = await tracker.localize(frame: frame) {
-                print("t:", transform)
-            }
-        }
-    }
 
     // MARK: - ARSCNViewDelegate
     
@@ -190,14 +223,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     let anchorNode = SCNNode.sphere(radius: 0.02, color: UIColor.magenta)
     let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
-//    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
-//    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
-    let unusedLandmarkNode = SCNNode.axis(color: UIColor.gray)
-    let landmarkNode = SCNNode.axis(color: UIColor.green)
+    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
+    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
+//    let unusedLandmarkNode = SCNNode.axis(color: UIColor.gray)
+//    let landmarkNode = SCNNode.axis(color: UIColor.green)
 
 //     Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        return anchor == mapAnchor ? mapNode : nil
+        if anchor == mapAnchor {
+            mapOriginNode.transform = mapOriginNodeTransform
+            mapNode.addChildNode(mapOriginNode)
+            return mapNode
+        }
+        return nil
     }
     
     var landmarkNodes: [SCNNode] = []
@@ -206,14 +244,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     func renderDebug() async {
         landmarkNodes.forEach { $0.removeFromParentNode() }
         landmarkNodes.removeAll()
+        let isMapMode = modeControl.selectedSegmentIndex == 0
         
-        let (landmarks, gpsObservations) = await (mapper.data.map.landmarks, mapper.data.gpsObservations)
+        async let _landmarks = isMapMode ? mapper.data.map.landmarks : tracker.local_landmarks
+        let (landmarks, gpsObservations) = await (_landmarks, mapper.data.gpsObservations)
         
         // Populate landmark nodes
         for landmark in prioritizedLandmarks(landmarks, max: 1000) {
-            let node = landmark.isUsable() ? landmarkNode.clone() : unusedLandmarkNode.clone()
+            let node = (isMapMode && landmark.isUsable()) || landmark.isMatched ? landmarkNode.clone() : unusedLandmarkNode.clone()
             node.transform = transformFrom(position: landmark.position, orientation: landmark.orientation)
-            mapNode.addChildNode(node)
+            mapOriginNode.addChildNode(node)
             landmarkNodes.append(node)
         }
         
@@ -221,7 +261,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         for observation in gpsObservations.suffix(gpsObservations.count - locationNodes.count) {
             let node = locationNode.clone()
             node.transform = transformFrom(position: observation.relative)
-            mapNode.addChildNode(node)
+            mapOriginNode.addChildNode(node)
             locationNodes.append(node)
         }
     }
@@ -269,7 +309,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     func map(_ map: LARMap, didAdd anchor: LARAnchor) {
         let node = anchorNode.clone()
         node.transform = SCNMatrix4(anchor.transform)
-        mapNode.addChildNode(node)
+        mapOriginNode.addChildNode(node)
     }
     
 }

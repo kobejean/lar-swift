@@ -18,8 +18,21 @@ public actor LARLiveMapper {
         processor.process()
     }
     
+    public func load(directory: URL) {
+        mapper.directory = directory
+        readMetadata()
+    }
+    
     public func writeMetadata()  {
         mapper.writeMetadata()
+    }
+    
+    public func readMetadata()  {
+        mapper.readMetadata()
+    }
+    
+    public func saveMap()  {
+        processor.createMap(mapper.directory.path)
     }
     
     #if os(iOS)

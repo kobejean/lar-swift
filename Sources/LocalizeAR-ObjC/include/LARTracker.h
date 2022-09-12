@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 #endif
 
 @property(nonatomic,readonly) LARMap* map;
+@property(nonatomic,strong,readonly) NSArray<LARLandmark*>* local_landmarks;
 
 - (id)initWithMap:(LARMap*)map;
 

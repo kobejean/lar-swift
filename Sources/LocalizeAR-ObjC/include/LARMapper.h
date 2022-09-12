@@ -30,12 +30,13 @@ NS_ASSUME_NONNULL_BEGIN
     @property(nonatomic,readonly) lar::Mapper* _internal;
 #endif
 
-@property(nonatomic,readonly) NSURL* directory;
+@property(nonatomic,readwrite) NSURL* directory;
 @property(nonatomic,strong,readonly) LARMapperData* data;
 
 - (id)initWithDirectory:(NSURL*)directory;
 
 - (void)writeMetadata;
+- (void)readMetadata;
 
 #if TARGET_OS_IPHONE
     - (void)addFrame:(ARFrame*)frame NS_SWIFT_NAME( add(frame:) );

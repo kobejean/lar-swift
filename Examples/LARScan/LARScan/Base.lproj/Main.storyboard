@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19519"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="Stack View standard spacing" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -18,23 +19,45 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
-                                <rect key="frame" x="0.0" y="0.0" width="414" height="596"/>
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                                 <gestureRecognizers/>
                                 <connections>
                                     <outletCollection property="gestureRecognizers" destination="Sau-bH-5Tj" appends="YES" id="VOx-xZ-8gH"/>
                                 </connections>
                             </arscnView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="417-dV-nQU">
-                                <rect key="frame" x="0.0" y="596" width="414" height="300"/>
+                                <rect key="frame" x="44" y="54" width="360" height="300"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="300" id="8YO-j7-Me0"/>
+                                    <constraint firstAttribute="width" constant="360" id="FTL-OK-t75"/>
                                 </constraints>
                                 <connections>
                                     <outlet property="delegate" destination="BV1-FR-VrT" id="YEf-Ev-W2g"/>
                                 </connections>
                             </mapView>
+                            <stackView opaque="NO" contentMode="scaleToFill" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="FR5-qK-79k">
+                                <rect key="frame" x="125" y="772" width="164" height="31"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JLd-oO-X4C">
+                                        <rect key="frame" x="0.0" y="0.0" width="74" height="31"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="filled" title="Render"/>
+                                        <connections>
+                                            <action selector="renderButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="lH6-mi-IfB"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SNA-ZB-RNX">
+                                        <rect key="frame" x="82" y="0.0" width="82" height="31"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="filled" title="Optimize"/>
+                                        <connections>
+                                            <action selector="optimizeButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="dLW-gy-tTw"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                            </stackView>
                             <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
-                                <rect key="frame" x="125.5" y="545" width="163" height="31"/>
+                                <rect key="frame" x="94" y="811" width="226.5" height="31"/>
                                 <subviews>
                                     <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="hwS-jv-zN5">
                                         <rect key="frame" x="0.0" y="0.0" width="86" height="32"/>
@@ -46,34 +69,70 @@
                                             <action selector="modeChanged:" destination="BV1-FR-VrT" eventType="valueChanged" id="8i2-Vp-txu"/>
                                         </connections>
                                     </segmentedControl>
-                                    <button opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="km6-wS-6s9">
-                                        <rect key="frame" x="106" y="0.0" width="57" height="31"/>
-                                        <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                        <state key="normal" title="Snap"/>
-                                        <buttonConfiguration key="configuration" style="filled" title="Snap"/>
-                                        <connections>
-                                            <action selector="actionButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="YO4-e0-dnA"/>
-                                        </connections>
-                                    </button>
+                                    <stackView opaque="NO" contentMode="scaleToFill" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="xKu-0q-qfP">
+                                        <rect key="frame" x="106" y="0.0" width="120.5" height="31"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="km6-wS-6s9">
+                                                <rect key="frame" x="0.0" y="0.0" width="57" height="31"/>
+                                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                                <state key="normal" title="Snap"/>
+                                                <buttonConfiguration key="configuration" style="filled" title="Snap"/>
+                                                <connections>
+                                                    <action selector="snapButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="GMz-dk-Afd"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zLw-7R-bhh">
+                                                <rect key="frame" x="65" y="0.0" width="55.5" height="31"/>
+                                                <buttonConfiguration key="configuration" style="filled" title="Save"/>
+                                                <connections>
+                                                    <action selector="saveButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="sIi-34-4sU"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                    </stackView>
+                                    <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="Lgq-yX-wV0">
+                                        <rect key="frame" x="226.5" y="0.0" width="85" height="31"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jqz-yL-mi5">
+                                                <rect key="frame" x="0.0" y="0.0" width="77" height="31"/>
+                                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                                <state key="normal" title="Snap"/>
+                                                <buttonConfiguration key="configuration" style="filled" title="Localize"/>
+                                                <connections>
+                                                    <action selector="localizeButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="OBF-m9-ae2"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1mD-5z-Wys">
+                                                <rect key="frame" x="85" y="0.0" width="0.0" height="31"/>
+                                                <buttonConfiguration key="configuration" style="filled" title="Load"/>
+                                                <connections>
+                                                    <action selector="loadButtonPressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="SIa-X1-xIm"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                    </stackView>
                                 </subviews>
                             </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="FR5-qK-79k" firstAttribute="centerX" secondItem="fQZ-KI-GVf" secondAttribute="centerX" id="86o-8u-px9"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
-                            <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="LXA-6p-7dx"/>
-                            <constraint firstItem="417-dV-nQU" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="LhB-A7-JJr"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="fQZ-KI-GVf" secondAttribute="top" constant="10" id="JmC-it-PuF"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="pIs-TH-3LP" firstAttribute="centerX" secondItem="417-dV-nQU" secondAttribute="centerX" id="bW7-uY-DaG"/>
-                            <constraint firstAttribute="bottom" secondItem="417-dV-nQU" secondAttribute="bottom" id="owi-GV-g7G"/>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="centerX" secondItem="fQZ-KI-GVf" secondAttribute="centerX" id="mFx-3U-G3t"/>
+                            <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="U0K-SW-4ec" secondAttribute="bottom" id="oSC-be-cSd"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
-                            <constraint firstItem="417-dV-nQU" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="uba-9y-iGT"/>
-                            <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="pIs-TH-3LP" secondAttribute="bottom" constant="20" id="waT-Pd-CGa"/>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" constant="-20" id="uVn-Yy-A1p"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" constant="-10" id="uba-9y-iGT"/>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="top" secondItem="FR5-qK-79k" secondAttribute="bottom" constant="8" symbolic="YES" id="w8b-CK-wYa"/>
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="actionButton" destination="km6-wS-6s9" id="Uwv-Ss-b8j"/>
+                        <outlet property="localizeButton" destination="jqz-yL-mi5" id="Dcb-hn-ogn"/>
+                        <outlet property="localizeModeButtons" destination="Lgq-yX-wV0" id="mzV-hW-wwb"/>
+                        <outlet property="mapModeButtons" destination="xKu-0q-qfP" id="kO7-Ny-I8H"/>
                         <outlet property="mapView" destination="417-dV-nQU" id="omc-YM-sXo"/>
                         <outlet property="modeControl" destination="hwS-jv-zN5" id="4fv-mG-rlb"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>

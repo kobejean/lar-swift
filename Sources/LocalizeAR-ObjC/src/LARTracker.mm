@@ -34,4 +34,14 @@
     return self._internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef);
 }
 
+- (NSArray<LARLandmark*>*)local_landmarks {
+    int size = (int)self._internal->local_landmarks.size();
+    NSMutableArray<LARLandmark *> *local_landmarks = [[NSMutableArray<LARLandmark*> alloc] initWithCapacity: size];
+    for (int i=0; i<size; i++) {
+        LARLandmark *landmark = [[LARLandmark alloc] initWithInternal: &self._internal->local_landmarks[i]];
+        [local_landmarks addObject: landmark];
+    }
+    return [local_landmarks copy];
+}
+
 @end
