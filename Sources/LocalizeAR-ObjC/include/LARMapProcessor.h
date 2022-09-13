@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id)initWithMapperData:(LARMapperData*)data;
 
 - (void)process;
-- (void)createMap:(NSString*)directory;
+- (void)saveMap:(NSString*)directory;
 
 @end
 

@@ -32,7 +32,7 @@ public actor LARLiveMapper {
     }
     
     public func saveMap()  {
-        processor.createMap(mapper.directory.path)
+        processor.saveMap(mapper.directory.path)
     }
     
     #if os(iOS)

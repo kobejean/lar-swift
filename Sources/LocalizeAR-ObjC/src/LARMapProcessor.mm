@@ -32,9 +32,9 @@
     self._internal->process();
 }
 
-- (void)createMap:(NSString*)directory {
+- (void)saveMap:(NSString*)directory {
     std::string directory_string = std::string([directory UTF8String]);
-    self._internal->createMap(directory_string);
+    self._internal->saveMap(directory_string);
 }
 
 @end

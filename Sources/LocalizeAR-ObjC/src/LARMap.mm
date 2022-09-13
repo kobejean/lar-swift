@@ -21,7 +21,7 @@
 
 @implementation LARMap
 
-- (id)initWithContentsOf:(NSString*)filepath {
+- (id)initWithContentsOfFile:(NSString*)filepath {
     self = [super init];
     nlohmann::json json = nlohmann::json::parse(std::ifstream([filepath UTF8String]));
     lar::Map* map = new lar::Map();
@@ -30,8 +30,20 @@
     return self;
 }
 
+- (id)initWithInternal:(lar::Map*)map {
+    self = [super init];
+    self._internal = map;
+    return self;
+}
+
 - (void)dealloc {
     delete self._internal;
+}
+
+- (void)writeToFile:(NSString*)filepath {
+    nlohmann::json map_json = *self._internal;
+    std::ofstream file([filepath UTF8String]);
+    file << std::setw(2) << map_json << std::endl;
 }
 
 - (bool)globalPointFrom:(simd_double3)relative global:(simd_double3*) global {
@@ -64,12 +76,6 @@
     if ([self.delegate respondsToSelector:@selector(map:didAdd:)]) {
         [self.delegate map:self didAdd:anchor];
     }
-}
-
-- (id)initWithInternal:(lar::Map*)map {
-    self = [super init];
-    self._internal = map;
-    return self;
 }
 
 - (NSArray<LARLandmark*>*)landmarks {
