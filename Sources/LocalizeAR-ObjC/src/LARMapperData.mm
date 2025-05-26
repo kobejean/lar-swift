@@ -11,7 +11,6 @@
 
 @interface LARMapperData ()
 
-@property(nonatomic,readwrite) std::shared_ptr<lar::Mapper::Data> _internal;
 @property(nonatomic,strong,readwrite) LARMap* map;
 
 @end
@@ -20,16 +19,16 @@
 
 - (id)initWithInternal:(std::shared_ptr<lar::Mapper::Data>)data {
     self = [super init];
-    self._internal = data;
-    self.map = [[LARMap alloc] initWithInternal:&self._internal->map];
+    self->_internal = data;
+    self.map = [[LARMap alloc] initWithInternal:&self->_internal->map];
     return self;
 }
 
 - (NSArray<LARGPSObservation*>*)gpsObservations {
-    int size = (int)self._internal->gps_obs.size();
+    int size = (int)self->_internal->gps_obs.size();
     NSMutableArray<LARGPSObservation *> *observations = [[NSMutableArray<LARGPSObservation*> alloc] initWithCapacity: size];
     for (int i=0; i<size; i++) {
-        LARGPSObservation *observation = [[LARGPSObservation alloc] initWithInternal: &self._internal->gps_obs[i]];
+        LARGPSObservation *observation = [[LARGPSObservation alloc] initWithInternal: &self->_internal->gps_obs[i]];
         [observations addObject: observation];
     }
     return [observations copy];

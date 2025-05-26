@@ -21,7 +21,7 @@ extension SCNNode {
         let node = SCNNode()
         let axis = SCNNode()
         let tip = SCNNode.sphere(radius: 0.001, color: UIColor.red)
-        tip.position = SCNVector3(0, 0, 0.05)
+        tip.position = SCNVector3(0, 0, 0)
         axis.position = SCNVector3(0, 0, 0.025)
         let geometry = SCNBox(width: 0.001, height: 0.001, length: 0.05, chamferRadius: 0)
         geometry.chamferSegmentCount = 1

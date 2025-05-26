@@ -24,18 +24,22 @@ public actor LARLiveMapper {
     
     #if os(iOS)
     
-    public func add(frame: ARFrame)  {
-        mapper.add(frame: frame)
+    public func addFrame(_ frame: ARFrame)  {
+        mapper.addFrame(frame)
     }
     
-    public func add(position: simd_float3, timestamp: Date) {
-        mapper.add(position: position, timestamp: timestamp)
+    public func addPosition(_ position: simd_float3, timestamp: Date) {
+        mapper.addPosition(position, timestamp: timestamp)
     }
     
-    public func add(locations: [CLLocation]) {
+    public func addLocations(_ locations: [CLLocation]) {
         for location in locations {
-            mapper.add(location: location)
+            mapper.addLocation(location)
         }
+    }
+    
+    public func createAnchor(transform: simd_float4x4) -> LARAnchor {
+        return mapper.createAnchor(transform: transform)
     }
     
     #endif

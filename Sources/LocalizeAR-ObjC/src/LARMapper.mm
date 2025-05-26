@@ -1,5 +1,5 @@
 //
-//  Collection.mm
+//  LARMapper.mm
 //
 //
 //  Created by Jean Flaherty on 2021/12/26.
@@ -18,7 +18,6 @@ namespace fs = std::filesystem;
 
 @interface LARMapper ()
 
-@property(nonatomic,readwrite) lar::Mapper* _internal;
 @property(nonatomic,retain,readwrite) NSURL* directory;
 @property(nonatomic,strong,readwrite) LARMapperData* data;
 
@@ -30,20 +29,26 @@ namespace fs = std::filesystem;
 - (id)initWithDirectory:(NSURL*)directory {
     fs::path path = [[directory path] UTF8String];
     self = [super init];
-    self._internal = new lar::Mapper(path);
+    _internal = new lar::Mapper(path);
     self.directory = directory;
-    self.data = [[LARMapperData alloc] initWithInternal: self._internal->data];
+    self.data = [[LARMapperData alloc] initWithInternal: _internal->data];
     return self;
 }
 
 - (void)dealloc {
-    delete self._internal;
+    delete _internal;
 }
 
 - (void)writeMetadata {
-    self._internal->writeMetadata();
+    self->_internal->writeMetadata();
 }
 
+
+- (LARAnchor*)createAnchor:(simd_float4x4)transform {
+    auto _transform = [LARConversion transform3dFromSIMD4x4f: transform];
+    LARAnchor *anchor = [[LARAnchor alloc] initWithInternal: &_internal->createAnchor(_transform)];
+    return anchor;
+}
 
 #if TARGET_OS_IPHONE
 
@@ -64,7 +69,7 @@ namespace fs = std::filesystem;
     aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
     aFrame.extrinsics = [LARConversion eigenFromSIMD4:frame.camera.transform].cast<double>();
     
-    self._internal->addFrame(aFrame, image, depth, confidence);
+    _internal->addFrame(aFrame, image, depth, confidence);
     
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
@@ -74,15 +79,14 @@ namespace fs = std::filesystem;
 
 - (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp {
     long long time = (long long)round(1000 * timestamp.timeIntervalSince1970);
-    self._internal->addPosition({ position.x, position.y, position.z }, time);
+    self->_internal->addPosition({ position.x, position.y, position.z }, time);
 }
-
 
 - (void)addLocation:(CLLocation*)location {
     long long time = (long long)round(1000 * location.timestamp.timeIntervalSince1970);
     Eigen::Vector3d loc{location.coordinate.latitude, location.coordinate.longitude, location.altitude};
     Eigen::Vector3d acc{location.horizontalAccuracy, location.horizontalAccuracy, location.verticalAccuracy};
-    self._internal->addLocation(loc, acc, time);
+    self->_internal->addLocation(loc, acc, time);
 }
 
 #endif

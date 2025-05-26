@@ -22,6 +22,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     var mapper: LARLiveMapper!
     var tracker: LARTracker!
+    var anchorNodes = LARSCNNodeCollection()
+    var anchors: [Int32:LARAnchor] = [:]
+    var larNavigation: LARNavigationManager!
     
     let locationManager: CLLocationManager = {
         let locationManager = CLLocationManager()
@@ -45,6 +48,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         Task { [mapper] in
             let map = await mapper!.data.map
             map.delegate = self
+            larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
         }
         
         // Set the view's delegate
@@ -103,10 +107,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     @MainActor
     func updateUserLocation(position: simd_float3) async {
-        guard await mapper.data.gpsObservations.count >= 2,
-            let global = await mapper.data.map.globalPoint(from: simd_double3(position))
-        else { return }
-        let location = CLLocation(latitude: global.x, longitude: global.y)
+        guard await mapper.data.map.originReady else { return }
+        let location = await mapper.data.map.location(from: simd_double3(position))
         let distance = currentLocation?.distance(from: location)
         guard distance == nil || distance! > 0.1 else { return }
         
@@ -126,7 +128,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     @IBAction func modeChanged(_ sender: UISegmentedControl) {
         let actionTitle = ["Snap", "Localize"][sender.selectedSegmentIndex]
         actionButton.setTitle(actionTitle, for: .normal)
-        
         switch sender.selectedSegmentIndex {
             case 0: break
             case 1: Task { tracker = await LARTracker(map: mapper.data.map) }
@@ -143,24 +144,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     }
     
     @IBAction func handleSceneTap(_ sender: UITapGestureRecognizer) {
+
         // Hit test to find a place for a virtual object.
         guard let query = sceneView
-                .raycastQuery(from: sender.location(in: sceneView), allowing: .estimatedPlane, alignment: .any),
+            .raycastQuery(from: sender.location(in: sceneView), allowing: .estimatedPlane, alignment: .any),
               let result = sceneView.session.raycast(query).first
-        else {
-            return
+        else { return }
+        if let anchorNode = larNavigation.anchorNodes.nearest(vec: result.worldTransform.position, within: 0.25) {
+            anchorNode.isSelected = !anchorNode.isSelected
+        } else {
+            Task {
+                let anchor = await mapper.createAnchor(transform: result.worldTransform)
+                anchors[anchor.id] = anchor
+            }
         }
-        let transform = simd_double4x4(
-            simd_double4(result.worldTransform.columns.0),
-            simd_double4(result.worldTransform.columns.1),
-            simd_double4(result.worldTransform.columns.2),
-            simd_double4(result.worldTransform.columns.3)
-        )
-        let anchor = LARAnchor(transform: transform)
-        Task {
-            await mapper.data.map.add(anchor)
-            print(anchor)
-        }
+
     }
     
     func snap() {
@@ -168,7 +166,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         
         AudioServicesPlaySystemSound(SystemSoundID(1108))
         Task.detached(priority: .low) { [self] in
-            await mapper.add(frame: frame)
+            await mapper.addFrame(frame)
             await mapper.writeMetadata()
             await mapper.process()
             await renderDebug()
@@ -179,7 +177,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
         guard let frame = sceneView.session.currentFrame else { return }
         Task.detached(priority: .userInitiated) { [self] in
             if let transform = await tracker.localize(frame: frame) {
-                print("t:", transform)
+                let transform_f = simd_float4x4(columns: (
+                    simd_float4(transform.columns.0),
+                    simd_float4(transform.columns.1),
+                    simd_float4(transform.columns.2),
+                    simd_float4(transform.columns.3)
+                ))
+                await MainActor.run {
+                    mapNode.transform = SCNMatrix4(transform_f * frame.camera.transform.inverse)
+                }
             }
         }
     }
@@ -188,7 +194,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     var scaleConstraint: SCNTransformConstraint!
     
-    let anchorNode = SCNNode.sphere(radius: 0.02, color: UIColor.magenta)
     let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
 //    let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.gray)
 //    let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
@@ -252,7 +257,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
             await updateUserLocation(position: position)
         }
         Task.detached(priority: .low) { [mapper] in
-            await mapper?.add(position: position, timestamp: timestamp)
+            await mapper?.addPosition(position, timestamp: timestamp)
         }
     }
     
@@ -260,16 +265,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         Task.detached(priority: .low) { [mapper] in
-            await mapper?.add(locations: locations)
+            await mapper?.addLocations(locations)
         }
     }
     
     // MARK: LARMapDelegate
     
     func map(_ map: LARMap, didAdd anchor: LARAnchor) {
-        let node = anchorNode.clone()
-        node.transform = SCNMatrix4(anchor.transform)
-        mapNode.addChildNode(node)
+        larNavigation.addNavigationPoint(anchor: anchor)
+        if let selectedId = LARSCNAnchorNode.selectedNode?.anchorId {
+            map.addEdge(from: selectedId, to: anchor.id)
+            larNavigation.addNavigationEdge(from: anchors[selectedId]!, to: anchor)
+        }
     }
     
 }

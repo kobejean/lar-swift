@@ -16,14 +16,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LARAnchor: NSObject
-
+@interface LARAnchor: NSObject {
 #ifdef __cplusplus
-    @property(nonatomic,readwrite) lar::Anchor* _internal;
+    @public lar::Anchor* _internal;
 #endif
+}
+
 
 @property(nonatomic,readwrite) int id;
-@property(nonatomic,readonly) int position;
 @property(nonatomic,readonly) simd_double4x4 transform;
 
 #ifdef __cplusplus

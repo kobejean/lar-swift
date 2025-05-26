@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3D2B4C1827A6809600D52692 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D2B4C1727A6809600D52692 /* LocalizeAR */; };
 		3D2B4C1B27A6A4CA00D52692 /* Conversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1A27A6A4CA00D52692 /* Conversion.swift */; };
 		3D2B4C1D27A6A58E00D52692 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1C27A6A58E00D52692 /* Misc.swift */; };
 		3D2B4C1F27A7660A00D52692 /* SCNNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1E27A7660A00D52692 /* SCNNode.swift */; };
@@ -21,6 +20,7 @@
 		3D37D268279D77490046A168 /* LARScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D267279D77490046A168 /* LARScanTests.swift */; };
 		3D37D272279D77490046A168 /* LARScanUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D271279D77490046A168 /* LARScanUITests.swift */; };
 		3D37D274279D77490046A168 /* LARScanUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D273279D77490046A168 /* LARScanUITestsLaunchTests.swift */; };
+		3DB5FDB42DE1E4B60007C601 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3DB5FDB32DE1E4B60007C601 /* LocalizeAR */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,7 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3D2B4C1827A6809600D52692 /* LocalizeAR in Frameworks */,
+				3DB5FDB42DE1E4B60007C601 /* LocalizeAR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,7 +176,7 @@
 			);
 			name = LARScan;
 			packageProductDependencies = (
-				3D2B4C1727A6809600D52692 /* LocalizeAR */,
+				3DB5FDB32DE1E4B60007C601 /* LocalizeAR */,
 			);
 			productName = LARScan;
 			productReference = 3D37D24E279D77480046A168 /* LARScan.app */;
@@ -657,7 +657,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3D2B4C1727A6809600D52692 /* LocalizeAR */ = {
+		3DB5FDB32DE1E4B60007C601 /* LocalizeAR */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LocalizeAR;
 		};

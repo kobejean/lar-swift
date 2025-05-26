@@ -20,7 +20,7 @@
 
 - (id)initWithMapperData:(LARMapperData*)data {
     self = [super init];
-    self._internal = new lar::MapProcessor(data._internal);
+    self._internal = new lar::MapProcessor(data->_internal);
     return self;
 }
 
@@ -32,9 +32,9 @@
     self._internal->process();
 }
 
-- (void)createMap:(NSString*)directory {
+- (void)saveMap:(NSString*)directory {
     std::string directory_string = std::string([directory UTF8String]);
-    self._internal->createMap(directory_string);
+    self._internal->saveMap(directory_string);
 }
 
 @end

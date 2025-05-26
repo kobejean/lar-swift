@@ -22,11 +22,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LARTracker: NSObject
-
+@interface LARTracker: NSObject {
 #ifdef __cplusplus
-    @property(nonatomic,readonly) lar::Tracker* _internal;
+    @public lar::Tracker* _internal;
 #endif
+};
 
 @property(nonatomic,readonly) LARMap* map;
 

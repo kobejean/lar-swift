@@ -16,11 +16,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LARLandmark: NSObject
-
+@interface LARLandmark: NSObject {
+    
 #ifdef __cplusplus
-    @property(nonatomic,readonly) lar::Landmark* _internal;
+    @public lar::Landmark* _internal;
 #endif
+}
 
 @property(readonly) simd_double3 position;
 @property(readonly) simd_float3 orientation;

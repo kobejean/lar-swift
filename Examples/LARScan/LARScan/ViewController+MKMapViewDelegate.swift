@@ -15,8 +15,7 @@ extension ViewController: MKMapViewDelegate {
         if annotation is MKUserLocation {
             let pin = LARMKUserLocationAnnotationView(annotation: annotation, color: .green, reuseIdentifier: nil)
             pin.alpha = 0.25
-//            pin.isHidden = true
-//            userLocationAnnotationView = pin
+            userLocationAnnotationView = pin
             return pin
 
         } else if let annotation = annotation as? MKPointAnnotation, annotation == userLocationAnnotation {
@@ -27,19 +26,19 @@ extension ViewController: MKMapViewDelegate {
         return nil
     }
     
-//    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-//        if let circle = overlay as? GeoARMKNavigationGuideNodeOverlay {
-//            let renderer = MKCircleRenderer(circle: circle)
-//            renderer.fillColor = view.tintColor
-//            return renderer
-//        } else if let circle = overlay as? GeoARMKNavigationNodeOverlay {
-//            let renderer = MKCircleRenderer(circle: circle)
-//            renderer.fillColor = .white
-//            return renderer
-//        }
-//
-//        return MKOverlayRenderer(overlay: overlay)
-//    }
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let circle = overlay as? LARMKNavigationGuideNodeOverlay {
+            let renderer = MKCircleRenderer(circle: circle)
+            renderer.fillColor = view.tintColor
+            return renderer
+        } else if let circle = overlay as? LARMKNavigationNodeOverlay {
+            let renderer = MKCircleRenderer(circle: circle)
+            renderer.fillColor = .white
+            return renderer
+        }
+
+        return MKOverlayRenderer(overlay: overlay)
+    }
 //
 //    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
 //        if !mapRegionIsMovedProgramatically {

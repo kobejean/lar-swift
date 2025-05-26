@@ -11,25 +11,23 @@
 
 @interface LARGPSObservation ()
 
-@property(nonatomic,readwrite) lar::GPSObservation* _internal;
-
 @end
 
 @implementation LARGPSObservation
 
 - (id)initWithInternal:(lar::GPSObservation*)observation {
     self = [super init];
-    self._internal = observation;
+    self->_internal = observation;
     return self;
 }
 
 - (simd_double3)relative {
-    Eigen::Vector3d relative = self._internal->relative;
+    Eigen::Vector3d relative = self->_internal->relative;
     return simd_make_double3(relative.x(), relative.y(), relative.z());
 }
 
 - (simd_double3)global {
-    Eigen::Vector3d global = self._internal->global;
+    Eigen::Vector3d global = self->_internal->global;
     return simd_make_double3(global.x(), global.y(), global.z());
 }
 

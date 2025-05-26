@@ -16,11 +16,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LARGPSObservation: NSObject
-
+@interface LARGPSObservation: NSObject {
 #ifdef __cplusplus
-    @property(nonatomic,readonly) lar::GPSObservation* _internal;
+    @public lar::GPSObservation* _internal;
 #endif
+}
 
 @property(readonly) simd_double3 relative;
 @property(readonly) simd_double3 global;

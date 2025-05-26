@@ -20,22 +20,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol LARMapDelegate;
 
-@interface LARMap: NSObject
-
+@interface LARMap: NSObject {
 #ifdef __cplusplus
-    @property(nonatomic,readonly) lar::Map* _internal;
+    @public lar::Map* _internal;
 #endif
+}
 
 @property(nonatomic,assign) id <LARMapDelegate> delegate;
 @property(nonatomic,strong,readonly) NSArray<LARLandmark*>* landmarks;
 @property(nonatomic,strong,readonly) NSArray<LARAnchor*>* anchors;
+@property(nonatomic,readonly) BOOL originReady;
 
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
-
-- (bool)globalPointFrom:(simd_double3)relative global:(simd_double3*) global;
-- (bool)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative;
-- (CLLocation*)locationFrom:(LARAnchor*)anchor  NS_SWIFT_NAME( location(anchor:) );
-- (void)add:(LARAnchor*)anchor;
+- (void)globalPointFromRelative:(simd_double3)relative global:(simd_double3*) global NS_SWIFT_NAME(globalPoint(from:global:));
+- (void)globalPointFromAnchor:(LARAnchor*)anchor global:(simd_double3*) global NS_SWIFT_NAME(globalPoint(from:global:));
+- (void)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative NS_SWIFT_NAME(relativePoint(from:relative:));
+- (LARAnchor*)createAnchor:(simd_float4x4)transform;
+- (void)addEdgeFrom:(int)start_id to: (int)goal_id;
 
 
 #ifdef __cplusplus
@@ -46,7 +47,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol LARMapDelegate<NSObject>
 
-  @optional -(void)map:(LARMap *)map didAdd: (LARAnchor *)anchor;
+@optional -(void)map:(LARMap *)map didAdd: (LARAnchor *)anchor;
+@optional -(void)map:(LARMap *)map didUpdate: (LARAnchor *)anchor;
+@optional -(void)map:(LARMap *)map willRemove: (LARAnchor *)anchor;
 
 @end
 

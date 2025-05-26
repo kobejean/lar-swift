@@ -12,37 +12,34 @@
 
 @interface LARAnchor ()
 
-//@property(nonatomic,readwrite) lar::Anchor* _internal;
-
 @end
 
 @implementation LARAnchor
 
 - (id)initWithInternal:(lar::Anchor*)anchor {
     self = [super init];
-    self._internal = anchor;
+    self->_internal = anchor;
     return self;
 }
 
 - (id)initWithTransform:(simd_double4x4)transform {
     self = [super init];
-    self._internal = new lar::Anchor {
-        .id=0,
-        .transform=[LARConversion transform3dFromSIMD4x4:transform]
+    self->_internal = new lar::Anchor {
+        0,[LARConversion transform3dFromSIMD4x4d:transform]
     };
     return self;
 }
 
 - (int)id {
-    return self._internal->id;
+    return (int)self->_internal->id;
 }
 
 - (void)setId:(int)id {
-    self._internal->id = id;
+    self->_internal->id = id;
 }
 
 - (simd_double4x4)transform {
-    Eigen::Transform<double,3,Eigen::Affine> transform = self._internal->transform;
+    Eigen::Transform<double,3,Eigen::Affine> transform = self->_internal->transform;
     return [LARConversion simd4x4FromTransform3d:transform];
 }
 
