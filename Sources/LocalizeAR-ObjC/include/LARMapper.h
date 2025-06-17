@@ -36,6 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)initWithDirectory:(NSURL*)directory;
 
+- (void)readMetadata;
+
 - (void)writeMetadata;
 
 - (LARAnchor*)createAnchor:(simd_float4x4)transform  NS_SWIFT_NAME( createAnchor(transform:) );

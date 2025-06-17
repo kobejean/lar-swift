@@ -39,8 +39,11 @@
     return self->_internal->last_seen;
 }
 
+- (BOOL)isMatched {
+    return self->_internal->is_matched;
+}
 
-- (bool)isUsable {
+- (BOOL)isUsable {
     return self->_internal->isUseable();
 }
 

@@ -10,6 +10,7 @@ import SceneKit
 
 public class LARSCNNodeCollection {
     public var anchorNodes: [LARSCNAnchorNode] = []
+	public var nodeById: [Int32:LARSCNAnchorNode] = [:]
     
     public init() {}
     
@@ -35,6 +36,7 @@ public class LARSCNNodeCollection {
     /// Add a node to the collection
     public func add(_ node: LARSCNAnchorNode) {
         anchorNodes.append(node)
+        nodeById[node.anchorId] = node
     }
     
     /// Remove a node from the collection
@@ -45,5 +47,6 @@ public class LARSCNNodeCollection {
     /// Remove node by anchorId
     public func remove(withId anchorId: Int32) {
         anchorNodes.removeAll { $0.anchorId == anchorId }
+        nodeById.removeValue(forKey: anchorId)
     }
 }

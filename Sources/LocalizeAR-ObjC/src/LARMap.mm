@@ -31,7 +31,8 @@
 }
 
 - (void)dealloc {
-    delete self->_internal;
+    // TODO: see how to dealloc
+//    delete self->_internal;
 }
 
 - (void)globalPointFromRelative:(simd_double3)relative global:(simd_double3*) global {
@@ -60,6 +61,11 @@
     return anchor;
 }
 
+- (void)updateAnchor:(LARAnchor*)anchor transform:(simd_float4x4)transform {
+    auto _transform = [LARConversion transform3dFromSIMD4x4f: transform];
+    _internal->updateAnchor(*anchor->_internal, _transform);
+}
+
 - (void)addEdgeFrom:(int)start_id to: (int)goal_id {
     _internal->addEdge(start_id, goal_id);
 }
@@ -77,8 +83,8 @@
 - (NSArray<LARLandmark*>*)landmarks {
     int size = (int)self->_internal->landmarks.size();
     NSMutableArray<LARLandmark *> *landmarks = [[NSMutableArray<LARLandmark*> alloc] initWithCapacity: size];
-    for (int i=0; i<size; i++) {
-        LARLandmark *landmark = [[LARLandmark alloc] initWithInternal: &self->_internal->landmarks[i]];
+    for (lar::Landmark *_landmark : self->_internal->landmarks.all()) {
+        LARLandmark *landmark = [[LARLandmark alloc] initWithInternal: _landmark];
         [landmarks addObject: landmark];
     }
     return [landmarks copy];
@@ -92,6 +98,27 @@
         [anchors addObject: anchor];
     }
     return [anchors copy];
+}
+
+- (NSDictionary<NSNumber*, NSArray<NSNumber*>*>*)edges {
+	if (!_internal) {
+		return @{};
+	}
+	
+	NSMutableDictionary<NSNumber*, NSArray<NSNumber*>*>* objcEdges = [[NSMutableDictionary alloc] init];
+	
+	for (const auto& pair : _internal->edges) {
+		NSNumber* key = [NSNumber numberWithInt:(int32_t)pair.first];
+		
+		NSMutableArray<NSNumber*>* values = [[NSMutableArray alloc] initWithCapacity:pair.second.size()];
+		for (std::size_t value : pair.second) {
+			[values addObject:[NSNumber numberWithInt:(int32_t)value]];
+		}
+		
+		objcEdges[key] = [values copy];
+	}
+	
+	return [objcEdges copy];
 }
 
 - (void)setDelegate:(id<LARMapDelegate>)delegate {

@@ -39,6 +39,10 @@ namespace fs = std::filesystem;
     delete _internal;
 }
 
+- (void)readMetadata {
+    self->_internal->readMetadata();
+}
+
 - (void)writeMetadata {
     self->_internal->writeMetadata();
 }

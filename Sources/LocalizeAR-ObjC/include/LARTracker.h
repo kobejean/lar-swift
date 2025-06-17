@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id)initWithMap:(LARMap*)map;
 
-- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform;
+- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform gvec:(Mat*)gvec;
 
 @end
 

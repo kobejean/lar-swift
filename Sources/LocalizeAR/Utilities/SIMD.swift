@@ -20,6 +20,17 @@ extension simd_float4x4 {
     }
 }
 
+extension simd_float3 {
+	public var transform: simd_float4x4 {
+		return simd_float4x4(
+			simd_float4(1, 0, 0, 0),
+			simd_float4(0, 1, 0, 0),
+			simd_float4(0, 0, 1, 0),
+			simd_float4(x, y, z, 1)
+		)
+	}
+}
+
 extension simd_double4x4 {
     /// Extract position as simd_float3 from transform matrix
     public var position: simd_double3 {
@@ -54,4 +65,11 @@ extension simd_double4x4 {
         ].withUnsafeBufferPointer { buffer in Data(buffer: buffer) }
         return Mat(rows: 4, cols: 4, type: CvType.CV_64F, data: data)
     }
+}
+
+extension simd_double3 {
+	func toMat() -> Mat {
+		let data = [self[0], self[1], self[2]].withUnsafeBufferPointer { buffer in Data(buffer: buffer) }
+		return Mat(rows: 3, cols: 1, type: CvType.CV_64F, data: data)
+	}
 }

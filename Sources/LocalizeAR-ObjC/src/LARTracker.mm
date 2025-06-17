@@ -28,8 +28,8 @@
     delete self->_internal;
 }
 
-- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform {
-    return self->_internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef);
+- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform gvec:(Mat*)gvec {
+	return self->_internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef, gvec.nativeRef);
 }
 
 @end

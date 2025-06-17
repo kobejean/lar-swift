@@ -10,7 +10,8 @@ import SceneKit
 import UIKit
 
 public class LARSCNAnchorNode : SCNNode {
-    
+	public static let anchorCategory: Int = 1 << 10
+ 
     // MARK: - Static Selection Management
     private static weak var currentlySelected: LARSCNAnchorNode?
     
@@ -75,17 +76,18 @@ public class LARSCNAnchorNode : SCNNode {
     
     private func setupNode() {
         // Create the sphere geometry and material
-        let sphere = SCNSphere(radius: 0.02)
+        let sphere = SCNSphere(radius: 0.1)
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.magenta
+		material.diffuse.contents = UIColor.white
         sphere.materials = [material]
         self.geometry = sphere
         
         createHaloNode()
+		self.categoryBitMask = Self.anchorCategory
     }
     
     private func createHaloNode() {
-        let haloTube = SCNTube(innerRadius: 0.025, outerRadius: 0.035, height: 0.005)
+        let haloTube = SCNTube(innerRadius: 0.2, outerRadius: 0.3, height: 0.01)
         let haloMaterial = SCNMaterial()
         haloMaterial.diffuse.contents = UIColor.white
         haloTube.materials = [haloMaterial]
