@@ -17,11 +17,11 @@ class SCNScreenSpaceScaleConstraint : SCNTransformConstraint {
     
     convenience init(pointOfView: SCNNode) {
         self.init(inWorldSpace: true) { node, transform in
-            let x = simd_float3(transform.m11, transform.m12, transform.m13)
+            let currentScale = simd_length(simd_float3(transform.m11, transform.m12, transform.m13))
             let nodePosition = simd_float3(transform.m41, transform.m42, transform.m43)
             let camPosition = pointOfView.simdWorldPosition
             let camDistance = simd_distance(camPosition, nodePosition)
-            let scale = max(camDistance, 0.5) / simd_length(x)
+			let scale = max(camDistance, 1.0) / currentScale
             var newTransform = transform
             newTransform.m11 *= scale
             newTransform.m12 *= scale

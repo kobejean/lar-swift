@@ -19,7 +19,8 @@
 		3D37D268279D77490046A168 /* LARScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D267279D77490046A168 /* LARScanTests.swift */; };
 		3D37D272279D77490046A168 /* LARScanUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D271279D77490046A168 /* LARScanUITests.swift */; };
 		3D37D274279D77490046A168 /* LARScanUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D273279D77490046A168 /* LARScanUITestsLaunchTests.swift */; };
-		3DB5FDB42DE1E4B60007C601 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3DB5FDB32DE1E4B60007C601 /* LocalizeAR */; };
+		3D4700CB2E1197980001E387 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D4700CA2E1197980001E387 /* LocalizeAR */; };
+		3D8058072E04B2BF0043CC97 /* Sunshower.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 3D8058062E04B2BF0043CC97 /* Sunshower.m4a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		3D37D271279D77490046A168 /* LARScanUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LARScanUITests.swift; sourceTree = "<group>"; };
 		3D37D273279D77490046A168 /* LARScanUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LARScanUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		3D37D284279D8E970046A168 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3D8058062E04B2BF0043CC97 /* Sunshower.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = Sunshower.m4a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,7 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3DB5FDB42DE1E4B60007C601 /* LocalizeAR in Frameworks */,
+				3D4700CB2E1197980001E387 /* LocalizeAR in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +127,7 @@
 				3D37D284279D8E970046A168 /* Info.plist */,
 				3D37D251279D77480046A168 /* AppDelegate.swift */,
 				3D37D255279D77480046A168 /* ViewController.swift */,
+				3D8058062E04B2BF0043CC97 /* Sunshower.m4a */,
 				3D37D257279D77480046A168 /* Main.storyboard */,
 				3D37D25A279D77490046A168 /* Assets.xcassets */,
 				3D37D25C279D77490046A168 /* LaunchScreen.storyboard */,
@@ -173,7 +176,7 @@
 			);
 			name = LARScan;
 			packageProductDependencies = (
-				3DB5FDB32DE1E4B60007C601 /* LocalizeAR */,
+				3D4700CA2E1197980001E387 /* LocalizeAR */,
 			);
 			productName = LARScan;
 			productReference = 3D37D24E279D77480046A168 /* LARScan.app */;
@@ -264,6 +267,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D37D25E279D77490046A168 /* LaunchScreen.storyboard in Resources */,
+				3D8058072E04B2BF0043CC97 /* Sunshower.m4a in Resources */,
 				3D37D25B279D77490046A168 /* Assets.xcassets in Resources */,
 				3D37D259279D77480046A168 /* Main.storyboard in Resources */,
 			);
@@ -653,7 +657,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3DB5FDB32DE1E4B60007C601 /* LocalizeAR */ = {
+		3D4700CA2E1197980001E387 /* LocalizeAR */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LocalizeAR;
 		};

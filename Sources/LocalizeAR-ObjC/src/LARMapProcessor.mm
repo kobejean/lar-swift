@@ -32,9 +32,18 @@
     self._internal->process();
 }
 
+- (void)rescale:(double)scaleFactor {
+    self._internal->rescale(scaleFactor);
+}
+
 - (void)saveMap:(NSString*)directory {
     std::string directory_string = std::string([directory UTF8String]);
     self._internal->saveMap(directory_string);
+}
+
+
+- (void)updateGlobalAlignment {
+	self._internal->global_alignment.updateAlignment();
 }
 
 @end

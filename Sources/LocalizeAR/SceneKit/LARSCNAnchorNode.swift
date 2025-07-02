@@ -7,7 +7,12 @@
 
 import Foundation
 import SceneKit
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+typealias UIColor = NSColor
+#endif
 
 public class LARSCNAnchorNode : SCNNode {
 	public static let anchorCategory: Int = 1 << 10

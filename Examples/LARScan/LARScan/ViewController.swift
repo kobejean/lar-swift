@@ -12,14 +12,18 @@ import AVFoundation
 import LocalizeAR
 import CoreLocation
 import MapKit
+import Combine
+import AVFoundation
 
-class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate, LARMapDelegate, UIDocumentPickerDelegate, MKMapViewDelegate {
+
+class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate, LARMapDelegate, UIDocumentPickerDelegate {
 	
 	@IBOutlet var sceneView: ARSCNView!
 	@IBOutlet var mapView: MKMapView!
 	@IBOutlet var modeControl: UISegmentedControl!
 	@IBOutlet var actionButton: UIButton!
 	
+	var audioPlayer: AVAudioPlayer!
 	var mapper: LARLiveMapper!
 	var anchorNodes = LARSCNNodeCollection()
 	var larNavigation: LARNavigationManager!
@@ -37,7 +41,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	}()
 	
 	let mapNode = SCNNode()
-	var userLocationAnnotationView: LARMKUserLocationAnnotationView?
 	
 	// MARK: - UIViewController Lifecycle
 	
@@ -63,6 +66,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		// Show statistics such as fps and timing information
 		sceneView.showsStatistics = true
 		sceneView.debugOptions = [ .showWorldOrigin, .showFeaturePoints ]
+//		startMusic()
 	}
 	
 	override func viewWillAppear(_ animated: Bool) {
@@ -104,6 +108,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		else { return nil }
 		try? FileManager.default.createDirectory(at: sessionDirectory, withIntermediateDirectories: true, attributes: nil)
 		return sessionDirectory
+	}
+	
+	func startMusic() {
+		// Configure audio session first
+		do {
+			try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+			try AVAudioSession.sharedInstance().setActive(true)
+		} catch {
+			print("Failed to set audio session category: \(error)")
+			return
+		}
+		
+		guard let path = Bundle.main.path(forResource: "Sunshower", ofType: "m4a") else {
+			print("Audio file not found")
+			return
+		}
+		
+		let url = URL(fileURLWithPath: path)
+		
+		do {
+			audioPlayer = try AVAudioPlayer(contentsOf: url)
+			audioPlayer.numberOfLoops = -1
+			audioPlayer?.play()
+		} catch {
+			print("Error playing audio: \(error)")
+		}
 	}
 	
 	// MARK: - IBAction
@@ -171,6 +201,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				)
 				let anchor = await mapper.mapper.createAnchor(transform: position.transform)
 				sceneView.session.add(anchor: LARARAnchor(anchor: anchor, transform: result.worldTransform))
+				
 			}
 		}
 	}
@@ -196,9 +227,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		)
 		let cameraGravity = rotation.inverse * worldGravity
 		let gvec = simd_double3(cameraGravity.x, -cameraGravity.y, -cameraGravity.z)
+		let cameraPose = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode).toDouble()
 		
 		Task.detached(priority: .userInitiated) { [self, pose] in
-			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec) {
+			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, pose: cameraPose) {
 				await MainActor.run {
 					mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
 				}
@@ -210,9 +242,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	// MARK: - ARSCNViewDelegate
 	
 	var scaleConstraint: SCNTransformConstraint!
-	let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemBlue)
-	let unusedLandmarkNode = SCNNode.sphere(radius: 0.001, color: UIColor.red)
-	let landmarkNode = SCNNode.sphere(radius: 0.001, color: UIColor.green)
+	let locationNode = SCNNode.sphere(radius: 0.005, color: UIColor.systemPurple)
+	let unusedLandmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.red)
+	let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
 	
 	//     Override to create and configure nodes for anchors added to the view's session.
 	func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
@@ -221,24 +253,84 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	
 	var landmarkNodes: [SCNNode] = []
 	var locationNodes: [SCNNode] = []
-	
+	// Add these properties to your ViewController class
+	var boundsNodes: [SCNNode] = []
+	var boundsLineNodes: [SCNNode] = []
+
+	// Add this method to create a line between two points
+	func createLine(from start: simd_double3, to end: simd_double3, color: UIColor = UIColor.green) -> SCNNode {
+		let vector = end - start
+		let distance = simd_length(vector)
+		
+		// Create cylinder geometry for the line
+		let cylinder = SCNCylinder(radius: 0.001, height: CGFloat(distance))
+		cylinder.firstMaterial?.diffuse.contents = color
+		
+		let lineNode = SCNNode(geometry: cylinder)
+		
+		// Position the line at the midpoint
+		let midpoint = (start + end) / 2
+		lineNode.position = SCNVector3(midpoint.x, midpoint.y, midpoint.z)
+		
+		// Rotate the line to point from start to end
+		let direction = simd_normalize(vector)
+		let up = simd_double3(0, 1, 0)
+		
+		// Calculate rotation to align cylinder with the line direction
+		if simd_length(simd_cross(up, direction)) > 0.001 {
+			let axis = simd_normalize(simd_cross(up, direction))
+			let angle = acos(simd_clamp(simd_dot(up, direction), -1.0, 1.0))
+			lineNode.rotation = SCNVector4(axis.x, axis.y, axis.z, angle)
+		}
+		
+		return lineNode
+	}
+
 	@MainActor
 	func renderDebug() async {
+		// Remove existing nodes
 		landmarkNodes.forEach { $0.removeFromParentNode() }
 		landmarkNodes.removeAll()
+		
+//		boundsNodes.forEach { $0.removeFromParentNode() }
+//		boundsNodes.removeAll()
+//		
+//		boundsLineNodes.forEach { $0.removeFromParentNode() }
+//		boundsLineNodes.removeAll()
 		
 		let (landmarks, gpsObservations) = await (mapper.data.map.landmarks, mapper.data.gpsObservations)
 		
 		// Populate landmark nodes
-		for landmark in prioritizedLandmarks(landmarks, max: 1000) {
+		for landmark in prioritizedLandmarks(landmarks, max: 500) {
 			let node = landmark.isMatched ? landmarkNode.clone() : unusedLandmarkNode.clone()
-			node.transform = transformFrom(position: landmark.position)
+			let position: simd_double3 = landmark.position
+			node.transform = transformFrom(position: position)
 			mapNode.addChildNode(node)
 			landmarkNodes.append(node)
+			
+//			if landmark.isMatched {
+//				// Draw visibility bounds rectangle
+//				let boundsLowerXZ = landmark.boundsLower
+//				let boundsUpperXZ = landmark.boundsUpper
+//								
+//				// Draw lines from landmark position to bounds corners
+//				let corners = [
+//					simd_make_double3(boundsLowerXZ.x, 10, boundsLowerXZ.y), // bottom-left
+//					simd_make_double3(boundsUpperXZ.x, 10, boundsLowerXZ.y), // bottom-right
+//					simd_make_double3(boundsUpperXZ.x, 10, boundsUpperXZ.y), // top-right
+//					simd_make_double3(boundsLowerXZ.x, 10, boundsUpperXZ.y)  // top-left
+//				]
+//				
+//				for corner in corners {
+//					let lineNode = createLine(from: position, to: corner)
+//					mapNode.addChildNode(lineNode)
+//					boundsLineNodes.append(lineNode)
+//				}
+//			}
 		}
 		
 		// Populate location nodes
-		for observation in gpsObservations.suffix(gpsObservations.count - locationNodes.count) {
+		for observation in gpsObservations.suffix(max(0,gpsObservations.count - locationNodes.count)) {
 			let node = locationNode.clone()
 			node.transform = transformFrom(position: observation.relative)
 			mapNode.addChildNode(node)
@@ -247,6 +339,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	}
 	
 	// MARK: - ARSessionDelegate
+	
 	
 	func session(_ session: ARSession, didFailWithError error: Error) {
 		// Present an error message to the user
@@ -282,7 +375,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	
 	func session(_ session: ARSession, didUpdate frame: ARFrame) {
 		let timestamp = dateFrom(uptime: frame.timestamp)
-		let position = simd_make_float3(frame.camera.transform.columns.3)
+		let transform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
+		let position = simd_make_float3(transform.columns.3)
 		larNavigation.updateUserLocation(position: position)
 		Task(priority: .low) { [weak mapper] in
 			await mapper?.mapper.addPosition(position, timestamp: timestamp)
@@ -295,6 +389,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		if pauseGPSRecord { return }
 		Task(priority: .low) { // TODO: investigate why detaching is bad here
 			await mapper?.mapper.addLocations(locations)
+			await mapper?.processor.updateGlobalAlignment()
+			await renderDebug()
+			larNavigation.updateMapOverlays()
 		}
 	}
 	
@@ -307,6 +404,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			larNavigation.addNavigationEdge(from: selectedId, to: anchor.id)
 		}
 		larNavigation.selectAnchor(id: anchor.id)
+		Task(priority: .low) { await renderDebug() }
 	}
 	
 	// MARK: - UIDocumentPickerDelegate
@@ -339,7 +437,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			let map = await mapper.data.map
 			map.delegate = self
 			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
-			larNavigation.userLocationAnnotationView = userLocationAnnotationView
 			await mapper.updateTracker()
 		}
 	}
@@ -347,55 +444,5 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
 		print("Document picker was cancelled")
 	}
-	
-	// MARK: - MKMapViewDelegate
-	
-	func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-		if annotation is MKUserLocation {
-			let pin = LARMKUserLocationAnnotationView(annotation: annotation, color: .green, reuseIdentifier: nil)
-			pin.alpha = 0.25
-			larNavigation?.userLocationAnnotationView = pin
-			userLocationAnnotationView = pin
-			return pin
-			
-		} else if let annotation = annotation as? MKPointAnnotation,
-				  let userLocationAnnotation = larNavigation.userLocationAnnotation,
-				  annotation == userLocationAnnotation {
-			let pin = LARMKUserLocationAnnotationView(annotation: annotation, color: view.tintColor, reuseIdentifier: nil)
-			return pin
-		}
-		return nil
-	}
-	
-	func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-		if let circle = overlay as? LARMKNavigationGuideNodeOverlay {
-			let renderer = MKCircleRenderer(circle: circle)
-			renderer.fillColor = view.tintColor
-			return renderer
-		} else if let circle = overlay as? LARMKNavigationNodeOverlay {
-			let renderer = MKCircleRenderer(circle: circle)
-			renderer.fillColor = .white
-			return renderer
-		}
-		
-		return MKOverlayRenderer(overlay: overlay)
-	}
-	//
-	//    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-	//        if !mapRegionIsMovedProgramatically {
-	//            mapRegionIsMovedByUser = true
-	//        }
-	//    }
-	//
-	//    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-	//        if !mapRegionIsMovedProgramatically {
-	//            mapRegionFreezeTimer?.invalidate()
-	//            mapRegionFreezeTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] timer in
-	//                self?.mapRegionIsMovedByUser = false
-	//            }
-	//        } else {
-	//            mapRegionIsMovedProgramatically = false
-	//        }
-	//    }
 	
 }

@@ -66,6 +66,15 @@
     _internal->updateAnchor(*anchor->_internal, _transform);
 }
 
+- (void)updateOrigin:(simd_double4x4)transform {
+    auto _transform = [LARConversion transform3dFromSIMD4x4d: transform];
+    _internal->updateOrigin(_transform);
+}
+
+- (simd_double4x4)origin {
+    return [LARConversion simd4x4FromTransform3d:_internal->origin];
+}
+
 - (void)addEdgeFrom:(int)start_id to: (int)goal_id {
     _internal->addEdge(start_id, goal_id);
 }
@@ -161,10 +170,23 @@
                 });
             }
         });
+        
+        _internal->setDidUpdateOriginCallback([weakSelf](const lar::Map::Transform& transform) {
+            LARMap* strongSelf = weakSelf;
+            if (strongSelf && strongSelf.delegate) {
+                simd_double4x4 simdTransform = [LARConversion simd4x4FromTransform3d:transform];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if ([strongSelf.delegate respondsToSelector:@selector(map:didUpdateOrigin:)]) {
+                        [strongSelf.delegate map:strongSelf didUpdateOrigin:simdTransform];
+                    }
+                });
+            }
+        });
     } else if (_internal) {
         _internal->setDidAddAnchorCallback([](lar::Anchor& anchor) {});
         _internal->setDidUpdateAnchorCallback([](lar::Anchor& anchor) {});
         _internal->setWillRemoveAnchorCallback([](lar::Anchor& anchor) {});
+        _internal->setDidUpdateOriginCallback([](const lar::Map::Transform& transform) {});
     }
 }
 

@@ -5,6 +5,7 @@
 //  Created by Jean Flaherty on 2022/02/02.
 //
 
+#if canImport(UIKit)
 import Foundation
 import MapKit
 
@@ -35,3 +36,5 @@ public class LARMKUserLocationAnnotationView: MKAnnotationView {
         layer.addSublayer(circleLayer)
     }
 }
+
+#endif

@@ -11,8 +11,10 @@ import LocalizeAR_ObjC
 
 public extension LARMapper {
     
+#if TARGET_OS_IPHONE
     func addLocations(_ locations: [CLLocation]) {
         for location in locations { addLocation(location) }
     }
+#endif
     
 }

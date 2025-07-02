@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic,strong,readonly) NSArray<LARAnchor*>* anchors;
 @property (nonatomic,strong,readonly) NSDictionary<NSNumber*, NSArray<NSNumber*>*>* edges;
 @property(nonatomic,readonly) BOOL originReady;
+@property(nonatomic,readonly) simd_double4x4 origin;
 
 - (id)initWithContentsOf:(NSString*)filepath NS_SWIFT_NAME( init(contentsOf:) );
 - (void)globalPointFromRelative:(simd_double3)relative global:(simd_double3*) global NS_SWIFT_NAME(globalPoint(from:global:));
@@ -38,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative NS_SWIFT_NAME(relativePoint(from:relative:));
 - (LARAnchor*)createAnchor:(simd_float4x4)transform;
 - (void)updateAnchor:(LARAnchor*)anchor transform:(simd_float4x4)transform;
+- (void)updateOrigin:(simd_double4x4)transform;
 - (void)addEdgeFrom:(int)start_id to: (int)goal_id;
 
 
@@ -52,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 @optional -(void)map:(LARMap *)map didAdd: (LARAnchor *)anchor;
 @optional -(void)map:(LARMap *)map didUpdate: (LARAnchor *)anchor;
 @optional -(void)map:(LARMap *)map willRemove: (LARAnchor *)anchor;
+@optional -(void)map:(LARMap *)map didUpdateOrigin: (simd_double4x4)transform;
 
 @end
 

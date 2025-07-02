@@ -13,7 +13,7 @@ let cxxSettings: [CXXSetting] = [
 let package = Package(
     name: "LocalizeAR",
     platforms: [
-        .macOS(.v10_15), .iOS(.v14)
+		.macOS(.v12), .iOS(.v14)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -32,14 +32,18 @@ let package = Package(
             name: "LocalizeAR",
             dependencies: [.target(name: "LocalizeAR_ObjC")],
             path: "Sources/LocalizeAR",
-            cxxSettings: [.unsafeFlags(["-Wno-incomplete-umbrella"])]
+            cxxSettings: [.unsafeFlags(["-Wno-incomplete-umbrella"])],
         ),
         .target(
             name: "LocalizeAR_CPP",
             dependencies: ["g2o", "opencv2"],
             path: "Sources/LocalizeAR-CPP",
             cxxSettings: cxxSettings,
-            linkerSettings: [.linkedLibrary("c++")]
+            linkerSettings: [
+				.linkedLibrary("c++"),
+				.linkedLibrary("sqlite3"),
+				.linkedLibrary("z"),
+			]
         ),
         .target(
             name: "LocalizeAR_ObjC",

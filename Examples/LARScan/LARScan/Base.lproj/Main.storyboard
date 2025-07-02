@@ -28,9 +28,6 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="300" id="8YO-j7-Me0"/>
                                 </constraints>
-                                <connections>
-                                    <outlet property="delegate" destination="BV1-FR-VrT" id="YEf-Ev-W2g"/>
-                                </connections>
                             </mapView>
                             <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
                                 <rect key="frame" x="646.5" y="1021.5" width="335.5" height="34.5"/>

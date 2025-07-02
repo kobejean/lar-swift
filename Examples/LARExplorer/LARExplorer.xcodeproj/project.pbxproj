@@ -1,0 +1,586 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3D4700B92E116A3D0001E387 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D4700B82E116A3D0001E387 /* LocalizeAR */; };
+		3D4700C92E116B670001E387 /* LocalizeAR in Frameworks */ = {isa = PBXBuildFile; productRef = 3D4700C82E116B670001E387 /* LocalizeAR */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3D4DCFFE2E1163EE00F67AAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D4DCFE72E1163EC00F67AAB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D4DCFEE2E1163EC00F67AAB;
+			remoteInfo = LARExplorer;
+		};
+		3D4DD0082E1163EE00F67AAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D4DCFE72E1163EC00F67AAB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3D4DCFEE2E1163EC00F67AAB;
+			remoteInfo = LARExplorer;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		3D4DCFEF2E1163EC00F67AAB /* LARExplorer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LARExplorer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D4DCFFD2E1163EE00F67AAB /* LARExplorerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LARExplorerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D4DD0072E1163EE00F67AAB /* LARExplorerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LARExplorerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3D4DCFF12E1163EC00F67AAB /* LARExplorer */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LARExplorer;
+			sourceTree = "<group>";
+		};
+		3D4DD0002E1163EE00F67AAB /* LARExplorerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LARExplorerTests;
+			sourceTree = "<group>";
+		};
+		3D4DD00A2E1163EE00F67AAB /* LARExplorerUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LARExplorerUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3D4DCFEC2E1163EC00F67AAB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D4700C92E116B670001E387 /* LocalizeAR in Frameworks */,
+				3D4700B92E116A3D0001E387 /* LocalizeAR in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DCFFA2E1163EE00F67AAB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DD0042E1163EE00F67AAB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3D4DCFE62E1163EC00F67AAB = {
+			isa = PBXGroup;
+			children = (
+				3D4DCFF12E1163EC00F67AAB /* LARExplorer */,
+				3D4DD0002E1163EE00F67AAB /* LARExplorerTests */,
+				3D4DD00A2E1163EE00F67AAB /* LARExplorerUITests */,
+				3D4DCFF02E1163EC00F67AAB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3D4DCFF02E1163EC00F67AAB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3D4DCFEF2E1163EC00F67AAB /* LARExplorer.app */,
+				3D4DCFFD2E1163EE00F67AAB /* LARExplorerTests.xctest */,
+				3D4DD0072E1163EE00F67AAB /* LARExplorerUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3D4DCFEE2E1163EC00F67AAB /* LARExplorer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D4DD0112E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorer" */;
+			buildPhases = (
+				3D4DCFEB2E1163EC00F67AAB /* Sources */,
+				3D4DCFEC2E1163EC00F67AAB /* Frameworks */,
+				3D4DCFED2E1163EC00F67AAB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3D4DCFF12E1163EC00F67AAB /* LARExplorer */,
+			);
+			name = LARExplorer;
+			packageProductDependencies = (
+				3D4700B82E116A3D0001E387 /* LocalizeAR */,
+				3D4700C82E116B670001E387 /* LocalizeAR */,
+			);
+			productName = LARExplorer;
+			productReference = 3D4DCFEF2E1163EC00F67AAB /* LARExplorer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3D4DCFFC2E1163EE00F67AAB /* LARExplorerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D4DD0142E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorerTests" */;
+			buildPhases = (
+				3D4DCFF92E1163EE00F67AAB /* Sources */,
+				3D4DCFFA2E1163EE00F67AAB /* Frameworks */,
+				3D4DCFFB2E1163EE00F67AAB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3D4DCFFF2E1163EE00F67AAB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3D4DD0002E1163EE00F67AAB /* LARExplorerTests */,
+			);
+			name = LARExplorerTests;
+			packageProductDependencies = (
+			);
+			productName = LARExplorerTests;
+			productReference = 3D4DCFFD2E1163EE00F67AAB /* LARExplorerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		3D4DD0062E1163EE00F67AAB /* LARExplorerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3D4DD0172E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorerUITests" */;
+			buildPhases = (
+				3D4DD0032E1163EE00F67AAB /* Sources */,
+				3D4DD0042E1163EE00F67AAB /* Frameworks */,
+				3D4DD0052E1163EE00F67AAB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3D4DD0092E1163EE00F67AAB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3D4DD00A2E1163EE00F67AAB /* LARExplorerUITests */,
+			);
+			name = LARExplorerUITests;
+			packageProductDependencies = (
+			);
+			productName = LARExplorerUITests;
+			productReference = 3D4DD0072E1163EE00F67AAB /* LARExplorerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3D4DCFE72E1163EC00F67AAB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					3D4DCFEE2E1163EC00F67AAB = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					3D4DCFFC2E1163EE00F67AAB = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 3D4DCFEE2E1163EC00F67AAB;
+					};
+					3D4DD0062E1163EE00F67AAB = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 3D4DCFEE2E1163EC00F67AAB;
+					};
+				};
+			};
+			buildConfigurationList = 3D4DCFEA2E1163EC00F67AAB /* Build configuration list for PBXProject "LARExplorer" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3D4DCFE62E1163EC00F67AAB;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3D4700C72E116B670001E387 /* XCLocalSwiftPackageReference "../../../lar-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3D4DCFF02E1163EC00F67AAB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3D4DCFEE2E1163EC00F67AAB /* LARExplorer */,
+				3D4DCFFC2E1163EE00F67AAB /* LARExplorerTests */,
+				3D4DD0062E1163EE00F67AAB /* LARExplorerUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3D4DCFED2E1163EC00F67AAB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DCFFB2E1163EE00F67AAB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DD0052E1163EE00F67AAB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3D4DCFEB2E1163EC00F67AAB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DCFF92E1163EE00F67AAB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D4DD0032E1163EE00F67AAB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3D4DCFFF2E1163EE00F67AAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D4DCFEE2E1163EC00F67AAB /* LARExplorer */;
+			targetProxy = 3D4DCFFE2E1163EE00F67AAB /* PBXContainerItemProxy */;
+		};
+		3D4DD0092E1163EE00F67AAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3D4DCFEE2E1163EC00F67AAB /* LARExplorer */;
+			targetProxy = 3D4DD0082E1163EE00F67AAB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3D4DD00F2E1163EE00F67AAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		3D4DD0102E1163EE00F67AAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		3D4DD0122E1163EE00F67AAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LARExplorer/LARExplorer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		3D4DD0132E1163EE00F67AAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LARExplorer/LARExplorer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		3D4DD0152E1163EE00F67AAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LARExplorer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LARExplorer";
+			};
+			name = Debug;
+		};
+		3D4DD0162E1163EE00F67AAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LARExplorer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LARExplorer";
+			};
+			name = Release;
+		};
+		3D4DD0182E1163EE00F67AAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = LARExplorer;
+			};
+			name = Debug;
+		};
+		3D4DD0192E1163EE00F67AAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q74A2VY23K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kobejean.LARExplorerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = LARExplorer;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3D4DCFEA2E1163EC00F67AAB /* Build configuration list for PBXProject "LARExplorer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D4DD00F2E1163EE00F67AAB /* Debug */,
+				3D4DD0102E1163EE00F67AAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D4DD0112E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D4DD0122E1163EE00F67AAB /* Debug */,
+				3D4DD0132E1163EE00F67AAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D4DD0142E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D4DD0152E1163EE00F67AAB /* Debug */,
+				3D4DD0162E1163EE00F67AAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3D4DD0172E1163EE00F67AAB /* Build configuration list for PBXNativeTarget "LARExplorerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3D4DD0182E1163EE00F67AAB /* Debug */,
+				3D4DD0192E1163EE00F67AAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		3D4700C72E116B670001E387 /* XCLocalSwiftPackageReference "../../../lar-swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../lar-swift";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3D4700B82E116A3D0001E387 /* LocalizeAR */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LocalizeAR;
+		};
+		3D4700C82E116B670001E387 /* LocalizeAR */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LocalizeAR;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 3D4DCFE72E1163EC00F67AAB /* Project object */;
+}
