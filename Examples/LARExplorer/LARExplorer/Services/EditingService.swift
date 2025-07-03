@@ -8,18 +8,32 @@
 import Foundation
 import SceneKit
 import LocalizeAR
+import Combine
 
 @MainActor
 class EditingService: ObservableObject {
     // MARK: - Published Properties
-    @Published var selectedNodes: Set<String> = []
+    @Published var selectedAnchors: Set<Int32> = []
     @Published var selectedEdges: Set<String> = []
     @Published var selectedTool: ExplorerTool = .explore
     @Published var isEditingMode = false
     
     // MARK: - Internal Properties
-    private weak var mapNode: SCNNode?
+    private weak var navigationManager: LARNavigationManager?
     private var map: LARMap?
+    @Published var edgeCreationSourceAnchor: Int32?
+    
+    // Position offset properties
+    @Published var positionOffsetX: Float = 0.0 {
+        didSet { updatePreviewPositions() }
+    }
+    @Published var positionOffsetY: Float = 0.0 {
+        didSet { updatePreviewPositions() }
+    }
+    @Published var positionOffsetZ: Float = 0.0 {
+        didSet { updatePreviewPositions() }
+    }
+    @Published var isPreviewingOffset: Bool = false
     
     // MARK: - Initialization
     init() {
@@ -27,83 +41,214 @@ class EditingService: ObservableObject {
         $selectedTool
             .map { $0 != .explore }
             .assign(to: &$isEditingMode)
+        
+        // Clear state when switching tools
+        $selectedTool
+            .sink { [weak self] newTool in
+                self?.handleToolChange(to: newTool)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+    private func handleToolChange(to newTool: ExplorerTool) {
+        // Clear selection and state when switching tools
+        clearSelection()
+        
+        if newTool != .editEdges {
+            cancelEdgeCreation()
+        }
     }
     
     // MARK: - Configuration
-    func configure(mapNode: SCNNode, map: LARMap) {
-        self.mapNode = mapNode
+    func configure(navigationManager: LARNavigationManager, map: LARMap) {
+        self.navigationManager = navigationManager
         self.map = map
     }
     
-    // MARK: - Node Editing
-    func selectNode(named name: String) {
-        if selectedNodes.contains(name) {
-            selectedNodes.remove(name)
+    // MARK: - Anchor Editing
+    func selectAnchor(id: Int32) {
+        if selectedAnchors.contains(id) {
+            selectedAnchors.remove(id)
         } else {
-            selectedNodes.insert(name)
+            selectedAnchors.insert(id)
         }
-        updateNodeVisualState(name)
+        updateAnchorVisualState(id)
+        updatePreviewPositions()
     }
     
-    func deleteSelectedNodes() {
-        // TODO: Implement node deletion
-        // This would involve:
-        // 1. Remove nodes from the scene
-        // 2. Update the map data structure
-        // 3. Refresh connections/edges
-        selectedNodes.removeAll()
+    func deleteSelectedAnchors() {
+        guard let map = map, !selectedAnchors.isEmpty else { return }
+        
+        clearSelectionVisuals()
+        removeAnchorsFromMap(selectedAnchors, map: map)
+        selectedAnchors.removeAll()
     }
     
-    func moveNode(named name: String, to position: SCNVector3) {
-        // TODO: Implement node movement
-        // This would involve:
-        // 1. Update the node position in SceneKit
-        // 2. Update the corresponding landmark in the map
-        // 3. Recalculate affected edges/connections
+    private func clearSelectionVisuals() {
+        selectedAnchors.forEach { anchorId in
+            navigationManager?.setAnchorSelection(id: anchorId, selected: false)
+        }
+    }
+    
+    private func removeAnchorsFromMap(_ anchorIds: Set<Int32>, map: LARMap) {
+        for anchorId in anchorIds {
+            guard let anchor = map.anchors.first(where: { $0.id == anchorId }) else { continue }
+            map.removeAnchor(anchor)
+        }
+    }
+    
+    func clearSelection() {
+        guard !selectedAnchors.isEmpty else { return }
+        clearSelectionVisuals()
+        selectedAnchors.removeAll()
+        hidePreview()
+    }
+    
+    func applyPositionOffset() {
+        guard let map = map, let navigationManager = navigationManager, !selectedAnchors.isEmpty else { return }
+        
+        let offset = simd_float3(positionOffsetX, positionOffsetY, positionOffsetZ)
+        
+        for anchorId in selectedAnchors {
+            guard let anchor = map.anchors.first(where: { $0.id == anchorId }) else { continue }
+            
+            // Calculate new transform with offset
+            let currentTransform = anchor.transform
+            let currentPosition = simd_float3(Float(currentTransform.columns.3.x), Float(currentTransform.columns.3.y), Float(currentTransform.columns.3.z))
+            let newPosition = currentPosition + offset
+            
+            // Convert simd_double4x4 to simd_float4x4 and update position
+			let newTransform = convertTransform(from: currentTransform, withPosition: newPosition)
+            
+            // Update anchor in map
+            map.updateAnchor(anchor, transform: newTransform)
+            
+            // Update visual representation
+            navigationManager.updateNavigationPoint(anchor: anchor, transform: newTransform)
+        }
+        
+        // Refresh guide nodes and map overlays to update connections
+        navigationManager.refreshGuideNodes()
+        navigationManager.updateMapOverlays()
+        
+        // Hide preview and reset offset values
+        hidePreview()
+        resetPositionOffset()
+    }
+    
+    func resetPositionOffset() {
+        positionOffsetX = 0.0
+        positionOffsetY = 0.0
+        positionOffsetZ = 0.0
+        hidePreview()
+    }
+    
+    func showPreview() {
+        isPreviewingOffset = true
+        updatePreviewPositions()
+    }
+    
+    func hidePreview() {
+        isPreviewingOffset = false
+        navigationManager?.hidePreviewNodes()
+    }
+    
+    private func updatePreviewPositions() {
+        guard isPreviewingOffset, !selectedAnchors.isEmpty,
+              let navigationManager = navigationManager else {
+            return
+        }
+        
+        let offset = simd_float3(positionOffsetX, positionOffsetY, positionOffsetZ)
+        
+        // Create preview positions for selected anchors
+        var previewPositions: [(id: Int32, position: simd_float3)] = []
+        
+        for anchorId in selectedAnchors {
+            guard let anchor = map?.anchors.first(where: { $0.id == anchorId }) else { continue }
+            
+            let currentTransform = anchor.transform
+            let currentPosition = simd_float3(
+                Float(currentTransform.columns.3.x),
+                Float(currentTransform.columns.3.y),
+                Float(currentTransform.columns.3.z)
+            )
+            let previewPosition = currentPosition + offset
+            
+            previewPositions.append((id: anchorId, position: previewPosition))
+        }
+        
+        // Update preview visualization
+        navigationManager.showPreviewNodes(for: previewPositions)
     }
     
     // MARK: - Edge Editing
-    func createEdge(from nodeA: String, to nodeB: String) {
-        // TODO: Implement edge creation
-        // This would involve:
-        // 1. Create visual representation of the edge
-        // 2. Update the navigation graph
-        // 3. Add to the map's connection data
+    
+    func handleAnchorClickForEdgeCreation(_ anchorId: Int32) {
+        guard selectedTool == .editEdges else { return }
+        
+        if let sourceId = edgeCreationSourceAnchor {
+            // Second click - create edge
+            if sourceId != anchorId {
+                createEdge(from: sourceId, to: anchorId)
+            }
+            clearEdgeCreationState()
+        } else {
+            // First click - select source anchor
+            setEdgeCreationSource(anchorId)
+        }
+    }
+    
+    private func setEdgeCreationSource(_ anchorId: Int32) {
+        edgeCreationSourceAnchor = anchorId
+        // Visual feedback for source selection
+        navigationManager?.setAnchorSelection(id: anchorId, selected: true)
+    }
+    
+    private func createEdge(from sourceId: Int32, to targetId: Int32) {
+        guard let map = map,
+              let navigationManager = navigationManager else { return }
+        
+        // Add edge to the map (C++ layer)
+		map.addEdge(from: sourceId, to: targetId)
+        
+        // Add visual edge to navigation manager
+        navigationManager.addNavigationEdge(from: sourceId, to: targetId)
+    }
+    
+    private func clearEdgeCreationState() {
+        if let sourceId = edgeCreationSourceAnchor {
+            navigationManager?.setAnchorSelection(id: sourceId, selected: false)
+        }
+        edgeCreationSourceAnchor = nil
+    }
+    
+    func cancelEdgeCreation() {
+        clearEdgeCreationState()
     }
     
     func deleteSelectedEdges() {
-        // TODO: Implement edge deletion
+        // Edge deletion not yet implemented
         selectedEdges.removeAll()
     }
     
-    // MARK: - GPS Alignment
-    func alignWithGPS(referencePoints: [(SCNVector3, CLLocationCoordinate2D)]) {
-        // TODO: Implement GPS alignment
-        // This would involve:
-        // 1. Calculate transformation matrix from reference points
-        // 2. Apply transformation to all landmarks
-        // 3. Update the map's coordinate system
-    }
-    
-    // MARK: - Relocalization Testing
-    func testRelocalization(at position: SCNVector3, orientation: SCNVector4) {
-        // TODO: Implement relocalization testing
-        // This would involve:
-        // 1. Simulate camera pose at given position/orientation
-        // 2. Run localization algorithm
-        // 3. Display results and confidence metrics
-    }
-    
     // MARK: - Private Methods
-    private func updateNodeVisualState(_ name: String) {
-        guard let node = mapNode?.childNode(withName: name, recursively: true) else { return }
-        
-        // Update visual appearance based on selection state
-        let isSelected = selectedNodes.contains(name)
-        
-        if let geometry = node.geometry,
-           let material = geometry.firstMaterial {
-            material.emission.contents = isSelected ? NSColor.yellow : NSColor.clear
-        }
+    
+    private func updateAnchorVisualState(_ anchorId: Int32) {
+        let shouldSelect = selectedAnchors.contains(anchorId)
+        navigationManager?.setAnchorSelection(id: anchorId, selected: shouldSelect)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func convertTransform(from doubleTransform: simd_double4x4, withPosition position: simd_float3) -> simd_float4x4 {
+        return simd_float4x4(
+            simd_float4(Float(doubleTransform.columns.0.x), Float(doubleTransform.columns.0.y), Float(doubleTransform.columns.0.z), Float(doubleTransform.columns.0.w)),
+            simd_float4(Float(doubleTransform.columns.1.x), Float(doubleTransform.columns.1.y), Float(doubleTransform.columns.1.z), Float(doubleTransform.columns.1.w)),
+            simd_float4(Float(doubleTransform.columns.2.x), Float(doubleTransform.columns.2.y), Float(doubleTransform.columns.2.z), Float(doubleTransform.columns.2.w)),
+            simd_float4(position.x, position.y, position.z, Float(doubleTransform.columns.3.w))
+        )
     }
 }

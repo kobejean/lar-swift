@@ -19,6 +19,7 @@
 #import <Foundation/Foundation.h>
 
 #import "LARMap.h"
+#import "LARFrame.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -33,6 +34,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (id)initWithMap:(LARMap*)map;
 
 - (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform gvec:(Mat*)gvec;
+
+// Frame-based localization
+- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame outputTransform:(Mat*)transform;
+
+// Frame-based localization with initial camera pose for spatial querying
+- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame initialPose:(Mat*)initialPose outputTransform:(Mat*)transform;
 
 @end
 

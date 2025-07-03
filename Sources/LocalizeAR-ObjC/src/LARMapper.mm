@@ -47,11 +47,22 @@ namespace fs = std::filesystem;
     self->_internal->writeMetadata();
 }
 
-
 - (LARAnchor*)createAnchor:(simd_float4x4)transform {
     auto _transform = [LARConversion transform3dFromSIMD4x4f: transform];
     LARAnchor *anchor = [[LARAnchor alloc] initWithInternal: &_internal->createAnchor(_transform)];
     return anchor;
+}
+
+- (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp {
+	long long time = (long long)round(1000 * timestamp.timeIntervalSince1970);
+	self->_internal->addPosition({ position.x, position.y, position.z }, time);
+}
+
+- (void)addLocation:(CLLocation*)location {
+	long long time = (long long)round(1000 * location.timestamp.timeIntervalSince1970);
+	Eigen::Vector3d loc{location.coordinate.latitude, location.coordinate.longitude, location.altitude};
+	Eigen::Vector3d acc{location.horizontalAccuracy, location.horizontalAccuracy, location.verticalAccuracy};
+	self->_internal->addLocation(loc, acc, time);
 }
 
 #if TARGET_OS_IPHONE
@@ -78,19 +89,6 @@ namespace fs = std::filesystem;
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
-}
-
-
-- (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp {
-    long long time = (long long)round(1000 * timestamp.timeIntervalSince1970);
-    self->_internal->addPosition({ position.x, position.y, position.z }, time);
-}
-
-- (void)addLocation:(CLLocation*)location {
-    long long time = (long long)round(1000 * location.timestamp.timeIntervalSince1970);
-    Eigen::Vector3d loc{location.coordinate.latitude, location.coordinate.longitude, location.altitude};
-    Eigen::Vector3d acc{location.horizontalAccuracy, location.horizontalAccuracy, location.verticalAccuracy};
-    self->_internal->addLocation(loc, acc, time);
 }
 
 #endif

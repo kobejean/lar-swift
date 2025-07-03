@@ -66,6 +66,10 @@
     _internal->updateAnchor(*anchor->_internal, _transform);
 }
 
+- (void)removeAnchor:(LARAnchor*)anchor {
+    _internal->removeAnchor(*anchor->_internal);
+}
+
 - (void)updateOrigin:(simd_double4x4)transform {
     auto _transform = [LARConversion transform3dFromSIMD4x4d: transform];
     _internal->updateOrigin(_transform);
@@ -102,8 +106,8 @@
 - (NSArray<LARAnchor*>*)anchors {
     int size = (int)self->_internal->anchors.size();
     NSMutableArray<LARAnchor *> *anchors = [[NSMutableArray<LARAnchor*> alloc] initWithCapacity: size];
-    for (int i=0; i<size; i++) {
-        LARAnchor *anchor = [[LARAnchor alloc] initWithInternal: &self->_internal->anchors[i]];
+    for (const auto& pair : self->_internal->anchors) {
+        LARAnchor *anchor = [[LARAnchor alloc] initWithInternal: const_cast<lar::Anchor*>(&pair.second)];
         [anchors addObject: anchor];
     }
     return [anchors copy];
@@ -162,7 +166,7 @@
         _internal->setWillRemoveAnchorCallback([weakSelf](lar::Anchor& anchor) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
-                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternal:&anchor];
+                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternalCopy:&anchor];
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if ([strongSelf.delegate respondsToSelector:@selector(map:willRemove:)]) {
                         [strongSelf.delegate map:strongSelf willRemove:objcAnchor];

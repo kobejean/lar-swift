@@ -17,6 +17,7 @@ struct ContentView: View {
     @StateObject private var explorerViewModel = LARExplorerViewModel()
     @StateObject private var editingService = EditingService()
     @StateObject private var alignmentService = GPSAlignmentService()
+    @StateObject private var localizationService = TestLocalizationService()
     
     // MARK: - State
     @State private var selectedTool: ExplorerTool = .explore
@@ -32,13 +33,14 @@ struct ContentView: View {
             ToolbarView(
                 selectedTool: $selectedTool,
                 isPointCloudVisible: $isPointCloudVisible,
-                onLoadMap: loadMap
+                onLoadMap: loadMap,
+                onSaveMap: saveMap
             )
             
             // Main content area
             VStack(spacing: 0) {
                 // SceneKit view on top
-                SceneView(onSceneViewCreated: handleSceneReady)
+                SceneView(editingService: editingService, onSceneViewCreated: handleSceneReady)
                     .frame(maxHeight: .infinity)
                 
                 // Divider
@@ -54,7 +56,7 @@ struct ContentView: View {
                     Divider()
                     
                     // Inspector panel on right
-                    InspectorView(selectedTool: $selectedTool, alignmentService: alignmentService)
+                    InspectorView(selectedTool: $selectedTool, alignmentService: alignmentService, editingService: editingService, localizationService: localizationService)
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
             }
@@ -86,6 +88,9 @@ struct ContentView: View {
         self.mapNode = mapNode
         MapConfigurationService.configureScene(sceneView: sceneView)
         
+        // Configure localization service with SceneView for camera pose access
+        localizationService.configure(sceneView: sceneView)
+        
         if explorerViewModel.isMapLoaded {
             configureApplicationWithLoadedMap()
         }
@@ -106,7 +111,6 @@ struct ContentView: View {
         
         // Configure all components using services
         MapConfigurationService.configureMapRegion(mapView: mapView, for: mapData)
-        editingService.configure(mapNode: mapNode, map: mapData)
         alignmentService.configure(with: explorerViewModel.mapperData!)
         
         // Initialize navigation
@@ -116,14 +120,20 @@ struct ContentView: View {
             mapNode: mapNode
         )
         
+        // Configure editing service with navigation manager
+        editingService.configure(navigationManager: navigationManager!, map: mapData)
+        
+        // Configure localization service
+        localizationService.configure(with: mapData)
+        
         // Load point cloud
         Task {
             do {
                 try await MapConfigurationService.loadPointCloud(
                     from: mapData,
                     into: mapNode,
-                    progressHandler: { progress in
-                        print("Point cloud loading: \(Int(progress * 100))%")
+                    progressHandler: { _ in
+                        // Progress updates could be shown in UI if needed
                     }
                 )
             } catch {
@@ -149,6 +159,27 @@ struct ContentView: View {
             Task {
                 await explorerViewModel.loadMap(from: url)
             }
+        }
+    }
+    
+    private func saveMap() {
+        guard let mapperData = explorerViewModel.mapperData else {
+            explorerViewModel.errorMessage = "No map data available to save"
+            return
+        }
+        
+        let savePanel = NSOpenPanel()
+        savePanel.canChooseDirectories = true
+        savePanel.canChooseFiles = false
+        savePanel.allowsMultipleSelection = false
+        savePanel.canCreateDirectories = true
+        savePanel.title = "Select Directory to Save Map"
+        savePanel.prompt = "Save"
+        
+        if savePanel.runModal() == .OK, let url = savePanel.url {
+            let mapProcessor = LARMapProcessor(mapperData: mapperData)
+            mapProcessor.saveMap(url.path)
+            // Map saved successfully - could show success message in UI if needed
         }
     }
 }

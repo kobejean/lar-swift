@@ -12,29 +12,69 @@ import LocalizeAR
 
 struct SceneView: NSViewRepresentable {
     @StateObject private var viewModel = SceneViewModel()
+    @ObservedObject var editingService: EditingService
     let onSceneViewCreated: (SCNView, SCNNode) -> Void
     
     func makeNSView(context: Context) -> SCNView {
-        let sceneView = SCNView()
         let scene = SCNScene()
-        sceneView.scene = scene
         
         // Create map node
         let mapNode = SCNNode()
         scene.rootNode.addChildNode(mapNode)
         
-        // Basic scene setup using configuration
-        sceneView.backgroundColor = AppConfiguration.Scene.backgroundColor
-        sceneView.allowsCameraControl = AppConfiguration.Scene.allowsCameraControl
-        sceneView.showsStatistics = AppConfiguration.Scene.showsStatistics
+        // Create custom scene view that handles mouse events
+        let customSceneView = ClickableSceneView(coordinator: context.coordinator)
+        customSceneView.scene = scene
+        customSceneView.backgroundColor = AppConfiguration.Scene.backgroundColor
+        customSceneView.allowsCameraControl = AppConfiguration.Scene.allowsCameraControl
+        customSceneView.showsStatistics = AppConfiguration.Scene.showsStatistics
         
         // Configure view model and notify parent
         DispatchQueue.main.async {
-            viewModel.configure(sceneView: sceneView, mapNode: mapNode)
-            onSceneViewCreated(sceneView, mapNode)
+            viewModel.configure(sceneView: customSceneView, mapNode: mapNode)
+            onSceneViewCreated(customSceneView, mapNode)
         }
         
-        return sceneView
+        return customSceneView
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(editingService: editingService)
+    }
+    
+    class Coordinator: NSObject {
+        let editingService: EditingService
+        
+        init(editingService: EditingService) {
+            self.editingService = editingService
+        }
+        
+        func handleClick(at location: NSPoint, in sceneView: SCNView) {
+            Task { @MainActor in
+                // Hit test only anchor nodes using category bit mask
+                let hitTestOptions: [SCNHitTestOption: Any] = [
+                    .categoryBitMask: LARSCNAnchorNode.anchorCategory,
+                    .firstFoundOnly: true
+                ]
+                let hitResults = sceneView.hitTest(location, options: hitTestOptions)
+                
+                if let hitResult = hitResults.first, let anchorNode = hitResult.node as? LARSCNAnchorNode {
+                    await handleAnchorClick(anchorNode.anchorId)
+                }
+            }
+        }
+        
+        @MainActor
+        private func handleAnchorClick(_ anchorId: Int32) {
+            switch editingService.selectedTool {
+            case .editAnchors:
+                editingService.selectAnchor(id: anchorId)
+            case .editEdges:
+                editingService.handleAnchorClickForEdgeCreation(anchorId)
+            default:
+                break
+            }
+        }
     }
     
     func updateNSView(_ sceneView: SCNView, context: Context) {
@@ -48,5 +88,30 @@ struct SceneView: NSViewRepresentable {
     
     func togglePointCloudVisibility() {
         viewModel.togglePointCloudVisibility()
+    }
+}
+
+// Custom SCNView that properly handles mouse events
+class ClickableSceneView: SCNView {
+    weak var coordinator: SceneView.Coordinator?
+    
+    init(coordinator: SceneView.Coordinator) {
+        self.coordinator = coordinator
+        super.init(frame: .zero, options: nil)
+    }
+    
+    override init(frame: NSRect, options: [String : Any]?) {
+        super.init(frame: frame, options: options)
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        
+        let location = convert(event.locationInWindow, from: nil)
+        coordinator?.handleClick(at: location, in: self)
     }
 }

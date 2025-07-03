@@ -29,6 +29,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	var larNavigation: LARNavigationManager!
 	var pauseGPSRecord = false
 	private var currentFolderURL: URL?
+	private var selectedAnchorNode: LARSCNAnchorNode?
 	
 	let locationManager: CLLocationManager = {
 		let locationManager = CLLocationManager()
@@ -185,10 +186,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		
 		if let hitResult = hitResults.first, let anchorNode = hitResult.node as? LARSCNAnchorNode {
 			// Connect from selected anchorNode
-			if let selectedNode = LARSCNAnchorNode.selectedNode, selectedNode != anchorNode {
+			if let selectedNode = selectedAnchorNode, selectedNode != anchorNode {
 				larNavigation.addNavigationEdge(from: selectedNode.anchorId, to: anchorNode.anchorId)
 			}
-			anchorNode.isSelected = !anchorNode.isSelected
+			selectAnchorNode(anchorNode.isSelected ? nil : anchorNode)
 		} else {
 			// No anchor node tapped, do raycast placement
 			guard let query = sceneView.raycastQuery(from: location, allowing: .estimatedPlane, alignment: .any),
@@ -395,15 +396,32 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		}
 	}
 	
+	// MARK: - Selection Management
+	
+	private func selectAnchorNode(_ node: LARSCNAnchorNode?) {
+		// Deselect previously selected node
+		if let previousId = selectedAnchorNode?.anchorId {
+			larNavigation.setAnchorSelection(id: previousId, selected: false)
+		}
+		
+		// Select new node
+		selectedAnchorNode = node
+		if let newId = node?.anchorId {
+			larNavigation.setAnchorSelection(id: newId, selected: true)
+		}
+	}
+	
 	// MARK: - LARMapDelegate
 	
 	func map(_ map: LARMap, didAdd anchor: LARAnchor) {
 		larNavigation.addNavigationPoint(anchor: anchor)
-		if let selectedId = LARSCNAnchorNode.selectedNode?.anchorId {
+		if let selectedId = selectedAnchorNode?.anchorId {
 			map.addEdge(from: selectedId, to: anchor.id)
 			larNavigation.addNavigationEdge(from: selectedId, to: anchor.id)
 		}
-		larNavigation.selectAnchor(id: anchor.id)
+		if let newAnchorNode = larNavigation.getAnchorNode(id: anchor.id) {
+			selectAnchorNode(newAnchorNode)
+		}
 		Task(priority: .low) { await renderDebug() }
 	}
 	

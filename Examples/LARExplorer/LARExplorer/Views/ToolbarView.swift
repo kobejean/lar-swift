@@ -9,7 +9,7 @@ import SwiftUI
 
 enum ExplorerTool: String, CaseIterable {
     case explore = "Explore"
-    case editNodes = "Edit Nodes"
+    case editAnchors = "Edit Anchors"
     case editEdges = "Edit Edges"
     case alignGPS = "Align GPS"
     case testRelocalization = "Test Relocalization"
@@ -17,7 +17,7 @@ enum ExplorerTool: String, CaseIterable {
     var icon: String {
         switch self {
         case .explore: return "location"
-        case .editNodes: return "circle.grid.cross"
+        case .editAnchors: return "circle.grid.cross"
         case .editEdges: return "line.diagonal"
         case .alignGPS: return "location.north.line"
         case .testRelocalization: return "camera.viewfinder"
@@ -29,6 +29,7 @@ struct ToolbarView: View {
     @Binding var selectedTool: ExplorerTool
     @Binding var isPointCloudVisible: Bool
     let onLoadMap: () -> Void
+    let onSaveMap: () -> Void
     
     var body: some View {
         HStack {
@@ -51,6 +52,9 @@ struct ToolbarView: View {
             
             // Actions
             Button("Load Map", action: onLoadMap)
+                .buttonStyle(.bordered)
+            
+            Button("Save Map", action: onSaveMap)
                 .buttonStyle(.bordered)
         }
         .padding()

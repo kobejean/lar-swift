@@ -8,6 +8,9 @@
 #if os(iOS)
 
 import ARKit
+
+#endif
+
 import opencv2
 
 extension Mat {
@@ -32,7 +35,7 @@ extension Mat {
         self.init(rows: rows, cols: cols, type: CvType.CV_32F, data: data)
     }
     
-    func toSIMD() -> simd_double4x4 {
+    public func toSIMD() -> simd_double4x4 {
         return simd_double4x4(
             .init(self.at(row: 0, col: 0).v, self.at(row: 1, col: 0).v, self.at(row: 2, col: 0).v, self.at(row: 3, col: 0).v),
             .init(self.at(row: 0, col: 1).v, self.at(row: 1, col: 1).v, self.at(row: 2, col: 1).v, self.at(row: 3, col: 1).v),
@@ -42,5 +45,3 @@ extension Mat {
     }
     
 }
-
-#endif

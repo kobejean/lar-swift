@@ -42,10 +42,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (LARAnchor*)createAnchor:(simd_float4x4)transform  NS_SWIFT_NAME( createAnchor(transform:) );
 
+- (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp;
+
+- (void)addLocation:(CLLocation*)location NS_SWIFT_NAME( addLocation(_:) );
+
 #if TARGET_OS_IPHONE
     - (void)addFrame:(ARFrame*)frame NS_SWIFT_NAME( addFrame(_:) );
-    - (void)addPosition:(simd_float3)position timestamp:(NSDate*)timestamp;
-    - (void)addLocation:(CLLocation*)location NS_SWIFT_NAME( addLocation(_:) );
 #endif
 
 @end

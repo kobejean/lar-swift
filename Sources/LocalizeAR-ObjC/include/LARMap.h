@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)relativePointFrom:(simd_double3)global relative:(simd_double3*) relative NS_SWIFT_NAME(relativePoint(from:relative:));
 - (LARAnchor*)createAnchor:(simd_float4x4)transform;
 - (void)updateAnchor:(LARAnchor*)anchor transform:(simd_float4x4)transform;
+- (void)removeAnchor:(LARAnchor*)anchor;
 - (void)updateOrigin:(simd_double4x4)transform;
 - (void)addEdgeFrom:(int)start_id to: (int)goal_id;
 

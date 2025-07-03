@@ -17,8 +17,6 @@ typealias UIColor = NSColor
 public class LARSCNAnchorNode : SCNNode {
 	public static let anchorCategory: Int = 1 << 10
  
-    // MARK: - Static Selection Management
-    private static weak var currentlySelected: LARSCNAnchorNode?
     
     // MARK: - Factory Methods
     
@@ -27,11 +25,8 @@ public class LARSCNAnchorNode : SCNNode {
     public static func create(anchorId: Int32) -> LARSCNAnchorNode {
         let newNode = baseTemplate.clone()
         newNode.anchorId = anchorId
-        newNode.isSelected = false
-        newNode.anchorId = anchorId
         return newNode
     }
-    
     
     // MARK: - Properties
     
@@ -40,13 +35,6 @@ public class LARSCNAnchorNode : SCNNode {
     
     public var isSelected: Bool = false {
         didSet {
-            if isSelected {
-                // Deselect the previously selected node
-                Self.currentlySelected?.isSelected = false
-                Self.currentlySelected = self
-            } else if Self.currentlySelected === self {
-                Self.currentlySelected = nil
-            }
             haloNode?.isHidden = !isSelected
         }
     }
@@ -75,6 +63,7 @@ public class LARSCNAnchorNode : SCNNode {
     public override func encode(with coder: NSCoder) {
         super.encode(with: coder)
         coder.encode(anchorId, forKey: "anchorId")
+        coder.encode(isSelected, forKey: "isSelected")
     }
     
     // MARK: - Private Methods
@@ -102,15 +91,4 @@ public class LARSCNAnchorNode : SCNNode {
         addChildNode(haloNode!)
     }
     
-    // MARK: - Public Methods
-    
-    /// Deselects all anchor nodes
-    public static func deselectAll() {
-        currentlySelected?.isSelected = false
-    }
-    
-    /// Gets the currently selected anchor node
-    public static var selectedNode: LARSCNAnchorNode? {
-        return currentlySelected
-    }
 }
