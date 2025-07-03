@@ -2,13 +2,23 @@
 //  PointCloudRenderer.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import SceneKit
 import LocalizeAR
 import AppKit
 
+/// Handles rendering of point clouds and landmark visualization for the AR map
+/// 
+/// The renderer supports two visualization modes:
+/// 1. Base point cloud: Shows all landmarks with red (unmatched) and green (matched) colors
+/// 2. Localization highlights: Overlays larger colored spheres on landmarks involved in localization
+///    - White: Spatial query results
+///    - Orange: Feature matches (excluding inliers)
+///    - Green: RANSAC inliers
+///
+/// Orange and green highlights use scale constraints to remain visible from far distances.
 @MainActor
 class PointCloudRenderer {
     // MARK: - Template Management
@@ -41,13 +51,13 @@ class PointCloudRenderer {
         from map: LARMap,
         progressHandler: @escaping (Double) -> Void
     ) async -> SCNNode {
+        // Create template nodes on main actor before background work
+        await createTemplateNodes()
+        
         return await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 let pointCloudNode = SCNNode()
                 pointCloudNode.name = AppConfiguration.PointCloud.containerNodeName
-                
-                // Create template nodes if needed
-                self.createTemplateNodes()
                 
                 let landmarks = map.landmarks
                 print("Creating point cloud with \(landmarks.count) landmarks")
@@ -160,6 +170,215 @@ class PointCloudRenderer {
         }
         
         return batchNode
+    }
+    
+    // MARK: - Landmark Highlighting for Localization Visualization
+    
+    /// Highlights landmarks based on their localization status with different colors and sizes
+    /// - Parameters:
+    ///   - spatialQueryIds: Landmarks found by spatial query (shown in white)
+    ///   - matchIds: Landmarks that matched features (shown in orange)
+    ///   - inlierIds: Landmarks that passed RANSAC validation (shown in green)
+    ///   - mapNode: The scene node containing the map
+    ///   - landmarks: All landmarks in the map for position lookup
+    ///   - sceneView: The scene view for accessing camera (needed for scale constraint)
+    func highlightLandmarks(
+        spatialQueryIds: [Int],
+        matchIds: [Int], 
+        inlierIds: [Int],
+        in mapNode: SCNNode,
+        landmarks: [LARLandmark],
+        sceneView: SCNView? = nil
+    ) {
+        // Remove any existing highlight nodes
+        clearLandmarkHighlights(in: mapNode)
+        
+        // Don't hide the original point cloud - let red landmarks show through
+        
+        // Configure scale constraint if enabled
+        let scaleConstraint: SCNScreenSpaceScaleConstraint?
+        if AppConfiguration.PointCloud.Localization.enableScaleConstraint,
+           let pointOfView = sceneView?.pointOfView {
+            scaleConstraint = SCNScreenSpaceScaleConstraint(pointOfView: pointOfView)
+            print("Scale constraint enabled with factor: \(AppConfiguration.PointCloud.Localization.scaleDistanceFactor)")
+        } else {
+            scaleConstraint = nil
+            print("Scale constraint disabled or no camera found")
+        }
+        
+        // Create lookup sets for efficient checking
+        let inlierSet = Set(inlierIds)
+        
+        // Configuration for highlight nodes
+        let config = AppConfiguration.PointCloud.Localization.self
+        
+        // Create spatial query highlights (white, no scale constraint)
+        let spatialQueryNode = createHighlightNodes(
+            landmarkIds: spatialQueryIds,
+            landmarks: landmarks,
+            color: config.spatialQueryColor,
+            nodeName: config.spatialQueryNodeName,
+            radius: config.highlightRadius,
+            useScaleConstraint: false
+        )
+        
+        // Create match highlights (orange, with scale constraint)
+        let matchNode = createHighlightNodes(
+            landmarkIds: matchIds.filter { !inlierSet.contains($0) }, // Exclude inliers
+            landmarks: landmarks,
+            color: config.matchColor,
+            nodeName: config.matchNodeName,
+            radius: config.highlightRadius,
+            useScaleConstraint: true,
+            scaleConstraint: scaleConstraint
+        )
+        
+        // Create inlier highlights (green, with scale constraint)
+        let inlierNode = createHighlightNodes(
+            landmarkIds: inlierIds,
+            landmarks: landmarks,
+            color: config.inlierColor,
+            nodeName: config.inlierNodeName,
+            radius: config.highlightRadius,
+            useScaleConstraint: true,
+            scaleConstraint: scaleConstraint
+        )
+        
+        // Add new highlight nodes
+        mapNode.addChildNode(spatialQueryNode)
+        mapNode.addChildNode(matchNode)
+        mapNode.addChildNode(inlierNode)
+        
+        print("Added landmark highlights: \(spatialQueryIds.count) spatial, \(matchIds.count) matches, \(inlierIds.count) inliers")
+    }
+    
+    func clearLandmarkHighlights(in mapNode: SCNNode) {
+        // Remove all highlight nodes using configuration names
+        let config = AppConfiguration.PointCloud.Localization.self
+        mapNode.childNode(withName: config.spatialQueryNodeName, recursively: false)?.removeFromParentNode()
+        mapNode.childNode(withName: config.matchNodeName, recursively: false)?.removeFromParentNode()
+        mapNode.childNode(withName: config.inlierNodeName, recursively: false)?.removeFromParentNode()
+    }
+    
+    private func resetLandmarkColors(in mapNode: SCNNode) {
+        // Reset to original colors based on landmark state
+        guard let pointCloudContainer = mapNode.childNode(withName: AppConfiguration.PointCloud.containerNodeName, recursively: false) else {
+            return
+        }
+        
+        // Reset matched landmarks to green
+        if let matchedNode = pointCloudContainer.childNode(withName: "MatchedLandmarks", recursively: false) {
+            setNodeTreeColor(matchedNode, color: AppConfiguration.PointCloud.matchedLandmarkColor)
+        }
+        
+        // Reset usable landmarks to red
+        if let usableNode = pointCloudContainer.childNode(withName: "UsableLandmarks", recursively: false) {
+            setNodeTreeColor(usableNode, color: AppConfiguration.PointCloud.usableLandmarkColor)
+        }
+    }
+    
+    private func highlightLandmark(id: Int, color: NSColor, in mapNode: SCNNode) {
+        // This is a simplified approach - for better performance, you might want to
+        // maintain a map of landmark ID to scene node for direct access
+        guard let pointCloudContainer = mapNode.childNode(withName: AppConfiguration.PointCloud.containerNodeName, recursively: false) else {
+            return
+        }
+        
+        // Search through all landmark nodes and update the matching one
+        pointCloudContainer.enumerateChildNodes { node, _ in
+            node.enumerateChildNodes { chunkNode, _ in
+                chunkNode.enumerateChildNodes { landmarkNode, _ in
+                    // For now, we'll color all landmarks in the highlighted sets
+                    // A more sophisticated approach would track landmark IDs to nodes
+                }
+            }
+        }
+    }
+    
+    private func createHighlightNodes(
+        landmarkIds: [Int],
+        landmarks: [LARLandmark],
+        color: NSColor,
+        nodeName: String,
+        radius: Double,
+        useScaleConstraint: Bool = false,
+        scaleConstraint: SCNScreenSpaceScaleConstraint? = nil
+    ) -> SCNNode {
+        let containerNode = SCNNode()
+        containerNode.name = nodeName
+        
+        guard !landmarkIds.isEmpty else { return containerNode }
+        
+        // Create shared geometry and material for efficiency
+        let sphere = SCNSphere(radius: radius)
+        let material = SCNMaterial()
+        material.diffuse.contents = color
+        sphere.materials = [material]
+        
+        // Create set for efficient lookup
+        let idSet = Set(landmarkIds)
+        
+        // Collect positions for matching landmarks
+        var positions: [SCNVector3] = []
+        for landmark in landmarks {
+            if idSet.contains(Int(landmark.id)) {
+                let position = landmark.position
+                positions.append(SCNVector3(position.x, position.y, position.z))
+            }
+        }
+        
+        // For better performance with many landmarks, use a single geometry with multiple instances
+        if positions.count > 50 {
+            // Use instanced rendering for large sets
+            let instancedNode = SCNNode(geometry: sphere)
+            
+            // Create transform matrices for instances
+            let transforms = positions.map { position in
+                SCNMatrix4MakeTranslation(position.x, position.y, position.z)
+            }
+            
+            // Apply transforms as instances (if supported by future SceneKit versions)
+            // For now, fall back to individual nodes but in batches
+            let batchSize = 100
+            for batch in positions.chunked(into: batchSize) {
+                let batchNode = SCNNode()
+                for position in batch {
+                    let node = SCNNode(geometry: sphere)
+                    node.position = position
+                    if useScaleConstraint, let constraint = scaleConstraint {
+                        node.constraints = [constraint]
+                    }
+                    batchNode.addChildNode(node)
+                }
+                containerNode.addChildNode(batchNode)
+            }
+        } else {
+            // Use individual nodes for smaller sets
+            for position in positions {
+                let highlightNode = SCNNode(geometry: sphere)
+                highlightNode.position = position
+                if useScaleConstraint, let constraint = scaleConstraint {
+                    highlightNode.constraints = [constraint]
+                }
+                containerNode.addChildNode(highlightNode)
+            }
+        }
+        
+        return containerNode
+    }
+    
+    private func setNodeTreeColor(_ node: SCNNode, color: NSColor) {
+        // Set color for this node
+        if let geometry = node.geometry {
+            let material = SCNMaterial()
+            material.diffuse.contents = color
+            geometry.materials = [material]
+        }
+        
+        // Recursively set color for child nodes
+        for child in node.childNodes {
+            setNodeTreeColor(child, color: color)
+        }
     }
 }
 

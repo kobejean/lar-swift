@@ -2,7 +2,7 @@
 //  GPSAlignmentService.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-07-02.
+//  Created by Jean Flaherty on 2025-07-02.
 //
 
 import SwiftUI

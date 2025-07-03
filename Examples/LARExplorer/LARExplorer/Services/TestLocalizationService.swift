@@ -2,7 +2,7 @@
 //  TestLocalizationService.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-07-03.
+//  Created by Jean Flaherty on 2025-07-03.
 //
 
 import SwiftUI
@@ -31,12 +31,25 @@ class TestLocalizationService: ObservableObject {
         return sceneView != nil
     }
     
-    struct LocalizationResult {
+    struct LocalizationResult: Equatable {
         let frameId: Int
         let originalTransform: simd_double4x4
         let localizedTransform: simd_double4x4
         let success: Bool
         let processingTime: TimeInterval
+        let spatialQueryLandmarkIds: [Int]
+        let matchLandmarkIds: [Int]
+        let inlierLandmarkIds: [Int]
+        let gravityAngleDifference: Double
+        let inlierBounds: [(simd_double2, simd_double2)] // Lower and upper bounds for each inlier
+        
+        static func == (lhs: LocalizationResult, rhs: LocalizationResult) -> Bool {
+            lhs.frameId == rhs.frameId &&
+            lhs.success == rhs.success &&
+            lhs.spatialQueryLandmarkIds == rhs.spatialQueryLandmarkIds &&
+            lhs.matchLandmarkIds == rhs.matchLandmarkIds &&
+            lhs.inlierLandmarkIds == rhs.inlierLandmarkIds
+        }
         
         var position: simd_double3 {
             simd_double3(localizedTransform.columns.3.x, 
@@ -60,6 +73,7 @@ class TestLocalizationService: ObservableObject {
     func configure(sceneView: SCNView) {
         self.sceneView = sceneView
     }
+    
     
     private func getCurrentCameraPose() -> simd_double4x4? {
         guard let sceneView = sceneView,
@@ -140,7 +154,7 @@ class TestLocalizationService: ObservableObject {
         return directory.appendingPathComponent("\(paddedId)_image.jpeg")
     }
     
-    func performLocalization(for frameId: Int, initialCameraPose: simd_double4x4? = nil) {
+    func performLocalization(for frameId: Int) {
         guard let tracker = tracker,
               let directory = selectedDirectory,
               let frame = frames.first(where: { $0.frameId == frameId }) else {
@@ -167,36 +181,46 @@ class TestLocalizationService: ObservableObject {
                 // Get original transform from frame's internal data
                 let originalTransform = getFrameTransform(frame)
                 
+                // Get camera position for spatial querying
+                let cameraPose = getCurrentCameraPose()
+                let (queryX, queryZ, queryDiameter) = extractSpatialQueryParams(cameraPose: cameraPose)
+                
+                await MainActor.run {
+                    self.usedCameraPose = cameraPose != nil
+                }
+                
+                print("Spatial query: x=\(queryX), z=\(queryZ), diameter=\(queryDiameter)")
+                
                 // Create output transform Mat
                 let outputTransform = Mat(rows: 4, cols: 4, type: CvType.CV_64FC1)
                 
-                // Perform frame-based localization with optional initial camera pose for spatial querying
-                let success: Bool
-                let cameraPose = initialCameraPose ?? getCurrentCameraPose()
-                
-                if let pose = cameraPose {
-                    // Use current camera pose or provided pose for spatial indexing
-                    let initialPoseMat = simdToMat(pose)
-                    success = tracker.localize(withImage: cvMat, frame: frame, initialPose: initialPoseMat, outputTransform: outputTransform)
-                    print("Using camera pose for spatial querying: \(pose)")
-                    
-                    await MainActor.run {
-                        self.usedCameraPose = true
-                    }
-                } else {
-                    // Use frame's original extrinsics as fallback
-                    success = tracker.localize(withImage: cvMat, frame: frame, outputTransform: outputTransform)
-                    print("Using frame's original extrinsics for localization")
-                    
-                    await MainActor.run {
-                        self.usedCameraPose = false
-                    }
-                }
+                // Perform frame-based localization with spatial query parameters
+                let success = tracker.localize(withImage: cvMat, frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter, outputTransform: outputTransform)
                 
                 let processingTime = Date().timeIntervalSince(startTime)
                 
                 if success {
                     let localizedTransform = outputTransform.toSIMD()
+                    
+                    // Get diagnostic information from tracker
+                    let spatialQueryLandmarkIds = tracker.spatialQueryLandmarkIds().map { $0.intValue }
+                    let matchLandmarkIds = tracker.matchLandmarkIds().map { $0.intValue }
+                    let inlierLandmarkIds = tracker.inlierLandmarkIds().map { $0.intValue }
+                    let gravityAngleDifference = tracker.gravityAngleDifference()
+                    
+                    // Collect bounds for inlier landmarks
+                    let landmarks = map!.landmarks
+                    var inlierBounds: [(simd_double2, simd_double2)] = []
+                    for inlierId in inlierLandmarkIds {
+                        if let landmark = landmarks.first(where: { $0.id == inlierId }) {
+                            inlierBounds.append((landmark.boundsLower, landmark.boundsUpper))
+                        }
+                    }
+                    
+                    print("Spatial query landmarks: \(spatialQueryLandmarkIds.count)")
+                    print("Feature matches: \(matchLandmarkIds.count)")
+                    print("Inliers: \(inlierLandmarkIds.count)")
+                    print("Gravity vector angle difference: \(gravityAngleDifference) degrees")
                     
                     await MainActor.run {
                         self.localizationResult = LocalizationResult(
@@ -204,7 +228,12 @@ class TestLocalizationService: ObservableObject {
                             originalTransform: originalTransform,
                             localizedTransform: localizedTransform,
                             success: true,
-                            processingTime: processingTime
+                            processingTime: processingTime,
+                            spatialQueryLandmarkIds: spatialQueryLandmarkIds,
+                            matchLandmarkIds: matchLandmarkIds,
+                            inlierLandmarkIds: inlierLandmarkIds,
+                            gravityAngleDifference: gravityAngleDifference,
+                            inlierBounds: inlierBounds
                         )
                         self.isProcessing = false
                     }
@@ -239,6 +268,20 @@ class TestLocalizationService: ObservableObject {
         }
         
         return mat
+    }
+    
+    private func extractSpatialQueryParams(cameraPose: simd_double4x4?) -> (Double, Double, Double) {
+        guard let pose = cameraPose else {
+            // No camera pose available - use global search
+            return (0.0, 0.0, 0.0) // diameter 0 means search all landmarks
+        }
+        
+        // Extract position from camera pose (XZ plane coordinates)
+        let queryX = pose.columns.3.x
+        let queryZ = pose.columns.3.z
+        let queryDiameter = 10.0 // 10 meter search diameter
+        
+        return (queryX, queryZ, queryDiameter)
     }
     
     private func convertToGrayscale(_ image: NSImage) -> CIImage? {
@@ -299,7 +342,10 @@ class TestLocalizationService: ObservableObject {
         localizationResult = nil
         errorMessage = nil
         imageCache = [:]
+        
+        // Note: Visualization clearing is now handled by ContentView observing this reset
     }
+    
 }
 
 enum LocalizationError: LocalizedError {

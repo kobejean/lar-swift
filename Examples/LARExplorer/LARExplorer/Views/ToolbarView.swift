@@ -2,7 +2,7 @@
 //  ToolbarView.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import SwiftUI

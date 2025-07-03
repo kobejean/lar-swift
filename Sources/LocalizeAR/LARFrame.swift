@@ -2,7 +2,7 @@
 //  LARFrame.swift
 //  
 //
-//  Created by Claude Code on 2025-07-03.
+//  Created by Jean Flaherty on 2025-07-03.
 //
 
 import Foundation

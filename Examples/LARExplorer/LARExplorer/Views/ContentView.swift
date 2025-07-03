@@ -3,7 +3,6 @@
 //  LARExplorer
 //
 //  Created by Jean Flaherty on 2025/06/29.
-//  Refactored by Claude Code on 2025-06-30.
 //
 
 import SwiftUI
@@ -27,6 +26,9 @@ struct ContentView: View {
     @State private var mapView: MKMapView?
     @State private var mapNode: SCNNode?
     @State private var navigationManager: LARNavigationManager?
+    @State private var sceneViewRef: SceneView?
+    @State private var sceneViewModel: SceneViewModel?
+    @StateObject private var mapViewModel = MapViewModel()
     
     var body: some View {
         VStack(spacing: AppConfiguration.UI.toolbarSpacing) {
@@ -49,14 +51,19 @@ struct ContentView: View {
                 // Bottom section with MapKit and Inspector
                 HStack(spacing: 0) {
                     // MapKit view on left
-                    MapView(onMapViewCreated: handleMapReady)
+                    MapView(mapViewModel: mapViewModel, onMapViewCreated: handleMapReady)
                         .frame(maxWidth: .infinity)
                     
                     // Vertical divider
                     Divider()
                     
                     // Inspector panel on right
-                    InspectorView(selectedTool: $selectedTool, alignmentService: alignmentService, editingService: editingService, localizationService: localizationService)
+                    InspectorView(
+                        selectedTool: $selectedTool,
+                        alignmentService: alignmentService,
+                        editingService: editingService,
+                        localizationService: localizationService
+                    )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
             }
@@ -73,8 +80,11 @@ struct ContentView: View {
         .onChange(of: isPointCloudVisible) { _, isVisible in
             togglePointCloudVisibility(isVisible)
         }
+        .onChange(of: localizationService.localizationResult) { _, result in
+            updateVisualizationState(for: result)
+        }
         .errorAlert(message: explorerViewModel.errorMessage) {
-            explorerViewModel.clearError()
+            explorerViewModel.resetError()
         }
     }
     
@@ -84,8 +94,9 @@ struct ContentView: View {
     }
     
     // MARK: - Event Handlers
-    private func handleSceneReady(sceneView: SCNView, mapNode: SCNNode) {
+    private func handleSceneReady(sceneView: SCNView, mapNode: SCNNode, sceneViewModel: SceneViewModel) {
         self.mapNode = mapNode
+        self.sceneViewModel = sceneViewModel
         MapConfigurationService.configureScene(sceneView: sceneView)
         
         // Configure localization service with SceneView for camera pose access
@@ -98,6 +109,7 @@ struct ContentView: View {
     
     private func handleMapReady(mapView: MKMapView) {
         self.mapView = mapView
+        mapViewModel.configure(mapView: mapView)
         
         if explorerViewModel.isMapLoaded {
             configureApplicationWithLoadedMap()
@@ -120,31 +132,39 @@ struct ContentView: View {
             mapNode: mapNode
         )
         
+        // Set map data and navigation manager
+        mapViewModel.setMapData(mapData, navigationManager: navigationManager)
+        
         // Configure editing service with navigation manager
         editingService.configure(navigationManager: navigationManager!, map: mapData)
         
         // Configure localization service
         localizationService.configure(with: mapData)
         
-        // Load point cloud
-        Task {
-            do {
-                try await MapConfigurationService.loadPointCloud(
-                    from: mapData,
-                    into: mapNode,
-                    progressHandler: { _ in
-                        // Progress updates could be shown in UI if needed
-                    }
-                )
-            } catch {
-                explorerViewModel.errorMessage = "Failed to load point cloud: \(error.localizedDescription)"
-            }
-        }
+        // Load point cloud through SceneViewModel
+        sceneViewModel?.loadPointCloud(from: mapData)
     }
     
     private func togglePointCloudVisibility(_ isVisible: Bool) {
         guard let mapNode = mapNode else { return }
         MapConfigurationService.togglePointCloudVisibility(in: mapNode, isVisible: isVisible)
+    }
+    
+    private func updateVisualizationState(for result: TestLocalizationService.LocalizationResult?) {
+        guard let result = result,
+              let mapData = explorerViewModel.mapData else {
+            // Clear visualizations when result is nil
+            sceneViewModel?.updateVisualization(state: LocalizationVisualization.State.empty)
+            mapViewModel.updateVisualization(state: LocalizationVisualization.State.empty)
+            return
+        }
+        
+        // Create visualization state from result
+        let state = LocalizationVisualization.State.from(localizationResult: result, landmarks: mapData.landmarks)
+        
+        // Update both view models with the same state
+        sceneViewModel?.updateVisualization(state: state)
+        mapViewModel.updateVisualization(state: state)
     }
     
     // MARK: - Action Methods

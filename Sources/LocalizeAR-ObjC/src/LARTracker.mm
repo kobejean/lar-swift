@@ -99,22 +99,22 @@
 	return self->_internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef, gvec.nativeRef);
 }
 
-- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame outputTransform:(Mat*)transform {
+- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform {
     cv::Mat imageMat = image.nativeRef;
     lar::Frame* internalFrame = frame->_internal;
     
-    // Copy extrinsics to working matrix
-    Eigen::Matrix4d extrinsics = internalFrame->extrinsics;
+    // Prepare result transform
+    Eigen::Matrix4d resultTransform;
     
-    // Call the frame-based localize method (same as C++ lar_localize.cpp)
-    bool success = self->_internal->localize(imageMat, *internalFrame, extrinsics);
+    // Call the frame-based localize method with explicit spatial query parameters
+    bool success = self->_internal->localize(imageMat, *internalFrame, queryX, queryZ, queryDiameter, resultTransform);
     
     // Copy result back to output transform Mat
     if (success) {
         cv::Mat transformMat = transform.nativeRef;
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                transformMat.at<double>(i, j) = extrinsics(i, j);
+                transformMat.at<double>(i, j) = resultTransform(i, j);
             }
         }
     }
@@ -122,33 +122,57 @@
     return success;
 }
 
-- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame initialPose:(Mat*)initialPose outputTransform:(Mat*)transform {
-    cv::Mat imageMat = image.nativeRef;
-    lar::Frame* internalFrame = frame->_internal;
-    cv::Mat initialPoseMat = initialPose.nativeRef;
+// Diagnostic information methods
+- (NSInteger)spatialQueryCount {
+    return self->_internal->local_landmarks.size();
+}
+
+- (NSArray<NSNumber*>*)spatialQueryLandmarkIds {
+    NSMutableArray<NSNumber*>* landmarkIds = [NSMutableArray array];
     
-    // Use initial camera pose as starting point for spatial querying
-    Eigen::Matrix4d extrinsics;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            extrinsics(i, j) = initialPoseMat.at<double>(i, j);
+    for (const auto& landmark : self->_internal->local_landmarks) {
+        if (landmark) { // Check if landmark pointer is valid
+            [landmarkIds addObject:@(landmark->id)];
         }
     }
     
-    // Call the frame-based localize method with initial pose for spatial indexing
-    bool success = self->_internal->localize(imageMat, *internalFrame, extrinsics);
+    return [landmarkIds copy];
+}
+
+- (NSInteger)matchCount {
+    return self->_internal->matches.size();
+}
+
+- (NSArray<NSNumber*>*)matchLandmarkIds {
+    NSMutableArray<NSNumber*>* landmarkIds = [NSMutableArray array];
     
-    // Copy result back to output transform Mat
-    if (success) {
-        cv::Mat transformMat = transform.nativeRef;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                transformMat.at<double>(i, j) = extrinsics(i, j);
-            }
+    for (const auto& match : self->_internal->matches) {
+        if (match.first) { // Check if landmark pointer is valid
+            [landmarkIds addObject:@(match.first->id)];
         }
     }
     
-    return success;
+    return [landmarkIds copy];
+}
+
+- (NSInteger)inlierCount {
+    return self->_internal->inliers.size();
+}
+
+- (NSArray<NSNumber*>*)inlierLandmarkIds {
+    NSMutableArray<NSNumber*>* landmarkIds = [NSMutableArray array];
+    
+    for (const auto& inlier : self->_internal->inliers) {
+        if (inlier.first) { // Check if landmark pointer is valid
+            [landmarkIds addObject:@(inlier.first->id)];
+        }
+    }
+    
+    return [landmarkIds copy];
+}
+
+- (double)gravityAngleDifference {
+    return self->_internal->getLastGravityAngleDifference();
 }
 
 @end

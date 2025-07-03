@@ -25,6 +25,10 @@
 //    delete self->_internal;
 }
 
+- (long long)id {
+    return self->_internal->id;
+}
+
 - (simd_double3)position {
     Eigen::Vector3d& position = self->_internal->position;
     return simd_make_double3(position.x(), position.y(), position.z());

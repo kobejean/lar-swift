@@ -2,7 +2,7 @@
 //  EditingService.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import Foundation
@@ -54,7 +54,7 @@ class EditingService: ObservableObject {
     
     private func handleToolChange(to newTool: ExplorerTool) {
         // Clear selection and state when switching tools
-        clearSelection()
+        resetSelection()
         
         if newTool != .editEdges {
             cancelEdgeCreation()
@@ -81,12 +81,12 @@ class EditingService: ObservableObject {
     func deleteSelectedAnchors() {
         guard let map = map, !selectedAnchors.isEmpty else { return }
         
-        clearSelectionVisuals()
+        resetSelectionVisuals()
         removeAnchorsFromMap(selectedAnchors, map: map)
         selectedAnchors.removeAll()
     }
     
-    private func clearSelectionVisuals() {
+    private func resetSelectionVisuals() {
         selectedAnchors.forEach { anchorId in
             navigationManager?.setAnchorSelection(id: anchorId, selected: false)
         }
@@ -99,9 +99,9 @@ class EditingService: ObservableObject {
         }
     }
     
-    func clearSelection() {
+    func resetSelection() {
         guard !selectedAnchors.isEmpty else { return }
-        clearSelectionVisuals()
+        resetSelectionVisuals()
         selectedAnchors.removeAll()
         hidePreview()
     }
@@ -120,7 +120,7 @@ class EditingService: ObservableObject {
             let newPosition = currentPosition + offset
             
             // Convert simd_double4x4 to simd_float4x4 and update position
-			let newTransform = convertTransform(from: currentTransform, withPosition: newPosition)
+            let newTransform = convertTransform(from: currentTransform, withPosition: newPosition)
             
             // Update anchor in map
             map.updateAnchor(anchor, transform: newTransform)
@@ -194,7 +194,7 @@ class EditingService: ObservableObject {
             if sourceId != anchorId {
                 createEdge(from: sourceId, to: anchorId)
             }
-            clearEdgeCreationState()
+            resetEdgeCreationState()
         } else {
             // First click - select source anchor
             setEdgeCreationSource(anchorId)
@@ -212,13 +212,13 @@ class EditingService: ObservableObject {
               let navigationManager = navigationManager else { return }
         
         // Add edge to the map (C++ layer)
-		map.addEdge(from: sourceId, to: targetId)
+        map.addEdge(from: sourceId, to: targetId)
         
         // Add visual edge to navigation manager
         navigationManager.addNavigationEdge(from: sourceId, to: targetId)
     }
     
-    private func clearEdgeCreationState() {
+    private func resetEdgeCreationState() {
         if let sourceId = edgeCreationSourceAnchor {
             navigationManager?.setAnchorSelection(id: sourceId, selected: false)
         }
@@ -226,7 +226,7 @@ class EditingService: ObservableObject {
     }
     
     func cancelEdgeCreation() {
-        clearEdgeCreationState()
+        resetEdgeCreationState()
     }
     
     func deleteSelectedEdges() {

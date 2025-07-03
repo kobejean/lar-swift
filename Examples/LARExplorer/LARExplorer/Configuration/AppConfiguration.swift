@@ -2,7 +2,7 @@
 //  AppConfiguration.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import Foundation
@@ -35,7 +35,7 @@ enum AppConfiguration {
     }
     
     enum PointCloud {
-        static let sphereRadius: CGFloat = 0.05
+        static let sphereRadius: CGFloat = 0.02  // Red landmarks are smaller
         static let chunkSize: Int = 1000
         static let nodeNamePrefix = "landmark_"
         static let containerNodeName = "LandmarkPointCloud"
@@ -43,6 +43,23 @@ enum AppConfiguration {
         // Colors
         static let matchedLandmarkColor: NSColor = .systemGreen
         static let usableLandmarkColor: NSColor = .systemRed
+        
+        // Localization Highlighting
+        enum Localization {
+            static let highlightRadius: CGFloat = 0.03  // Larger than base landmarks
+            static let spatialQueryColor: NSColor = .white
+            static let matchColor: NSColor = .orange
+            static let inlierColor: NSColor = .green
+            
+            // Node names
+            static let spatialQueryNodeName = "SpatialQueryHighlights"
+            static let matchNodeName = "MatchHighlights"
+            static let inlierNodeName = "InlierHighlights"
+            
+            // Scale constraint
+            static let scaleDistanceFactor: CGFloat = 10.0  // Divides distance for reasonable scaling
+            static let enableScaleConstraint = true
+        }
     }
     
     enum UI {

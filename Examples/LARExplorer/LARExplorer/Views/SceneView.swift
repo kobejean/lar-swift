@@ -2,7 +2,7 @@
 //  SceneView.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import SwiftUI
@@ -13,7 +13,7 @@ import LocalizeAR
 struct SceneView: NSViewRepresentable {
     @StateObject private var viewModel = SceneViewModel()
     @ObservedObject var editingService: EditingService
-    let onSceneViewCreated: (SCNView, SCNNode) -> Void
+    let onSceneViewCreated: (SCNView, SCNNode, SceneViewModel) -> Void
     
     func makeNSView(context: Context) -> SCNView {
         let scene = SCNScene()
@@ -32,7 +32,7 @@ struct SceneView: NSViewRepresentable {
         // Configure view model and notify parent
         DispatchQueue.main.async {
             viewModel.configure(sceneView: customSceneView, mapNode: mapNode)
-            onSceneViewCreated(customSceneView, mapNode)
+            onSceneViewCreated(customSceneView, mapNode, viewModel)
         }
         
         return customSceneView
@@ -88,6 +88,12 @@ struct SceneView: NSViewRepresentable {
     
     func togglePointCloudVisibility() {
         viewModel.togglePointCloudVisibility()
+    }
+    
+    
+    // MARK: - ViewModel Access
+    var sceneViewModel: SceneViewModel {
+        return viewModel
     }
 }
 

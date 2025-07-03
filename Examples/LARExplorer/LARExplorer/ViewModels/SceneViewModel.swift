@@ -2,7 +2,7 @@
 //  SceneViewModel.swift
 //  LARExplorer
 //
-//  Created by Claude Code on 2025-06-30.
+//  Created by Jean Flaherty on 2025-06-30.
 //
 
 import SwiftUI
@@ -13,6 +13,11 @@ import LocalizeAR
 class SceneViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var isPointCloudVisible = true
+    @Published var visualizationState: LocalizationVisualization.State = .empty {
+        didSet {
+            updateLandmarkHighlights()
+        }
+    }
     
     // MARK: - Internal Properties
     private weak var sceneView: SCNView?
@@ -24,7 +29,12 @@ class SceneViewModel: ObservableObject {
         self.sceneView = sceneView
         self.mapNode = mapNode
         self.pointCloudRenderer = PointCloudRenderer()
-        setupSceneView()
+        
+        do {
+            try setupSceneView()
+        } catch {
+            print("SceneViewModel: Failed to setup scene: \(error)")
+        }
     }
     
     func loadPointCloud(from map: LARMap) {
@@ -47,21 +57,52 @@ class SceneViewModel: ObservableObject {
         mapNode?.childNode(withName: AppConfiguration.PointCloud.containerNodeName, recursively: false)?.isHidden = !isPointCloudVisible
     }
     
+    private func updateLandmarkHighlights() {
+        guard let mapNode = mapNode,
+              let renderer = pointCloudRenderer,
+              let sceneView = sceneView else { return }
+        
+        if let highlights = visualizationState.highlights {
+            renderer.highlightLandmarks(
+                spatialQueryIds: highlights.spatialQueryIds,
+                matchIds: highlights.matchIds,
+                inlierIds: highlights.inlierIds,
+                in: mapNode,
+                landmarks: highlights.landmarks,
+                sceneView: sceneView
+            )
+        } else {
+            renderer.clearLandmarkHighlights(in: mapNode)
+        }
+    }
+    
+    func updateVisualization(state: LocalizationVisualization.State) {
+        visualizationState = state
+    }
+    
+    func clearLandmarkHighlights() {
+        visualizationState = .empty
+    }
+    
     // MARK: - Private Methods
-    private func setupSceneView() {
-        guard let sceneView = sceneView else { return }
+    private func setupSceneView() throws {
+        guard let sceneView = sceneView else {
+            throw SceneViewModelError.sceneViewNotConfigured
+        }
         
         sceneView.backgroundColor = NSColor.black
         sceneView.preferredFramesPerSecond = 60
         sceneView.allowsCameraControl = true
         sceneView.showsStatistics = true
         
-        setupLighting()
-        setupCamera()
+        try setupLighting()
+        try setupCamera()
     }
     
-    private func setupLighting() {
-        guard let scene = sceneView?.scene else { return }
+    private func setupLighting() throws {
+        guard let scene = sceneView?.scene else {
+            throw SceneViewModelError.sceneNotAvailable
+        }
         
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
@@ -71,8 +112,10 @@ class SceneViewModel: ObservableObject {
         scene.rootNode.addChildNode(ambientLightNode)
     }
     
-    private func setupCamera() {
-        guard let scene = sceneView?.scene else { return }
+    private func setupCamera() throws {
+        guard let scene = sceneView?.scene else {
+            throw SceneViewModelError.sceneNotAvailable
+        }
         
         let camera = SCNCamera()
         camera.zNear = 0.1
@@ -83,5 +126,20 @@ class SceneViewModel: ObservableObject {
         cameraNode.position = SCNVector3(0, 10, 0)
         cameraNode.look(at: SCNVector3Zero)
         scene.rootNode.addChildNode(cameraNode)
+    }
+}
+
+// MARK: - Error Types
+enum SceneViewModelError: LocalizedError {
+    case sceneViewNotConfigured
+    case sceneNotAvailable
+    
+    var errorDescription: String? {
+        switch self {
+        case .sceneViewNotConfigured:
+            return "SceneView not properly configured"
+        case .sceneNotAvailable:
+            return "Scene not available for setup"
+        }
     }
 }
