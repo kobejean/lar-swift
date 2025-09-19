@@ -17,6 +17,7 @@ struct ContentView: View {
     @StateObject private var editingService = EditingService()
     @StateObject private var alignmentService = GPSAlignmentService()
     @StateObject private var localizationService = TestLocalizationService()
+    @StateObject private var landmarkInspectionService = LandmarkInspectionService()
     
     // MARK: - State
     @State private var selectedTool: ExplorerTool = .explore
@@ -42,7 +43,7 @@ struct ContentView: View {
             // Main content area
             VStack(spacing: 0) {
                 // SceneKit view on top
-                SceneView(editingService: editingService, onSceneViewCreated: handleSceneReady)
+                SceneView(editingService: editingService, landmarkInspectionService: landmarkInspectionService, explorerViewModel: explorerViewModel, onSceneViewCreated: handleSceneReady)
                     .frame(maxHeight: .infinity)
                 
                 // Divider
@@ -62,7 +63,9 @@ struct ContentView: View {
                         selectedTool: $selectedTool,
                         alignmentService: alignmentService,
                         editingService: editingService,
-                        localizationService: localizationService
+                        localizationService: localizationService,
+                        landmarkInspectionService: landmarkInspectionService,
+                        mapViewModel: mapViewModel
                     )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
@@ -82,6 +85,9 @@ struct ContentView: View {
         }
         .onChange(of: localizationService.localizationResult) { _, result in
             updateVisualizationState(for: result)
+        }
+        .onChange(of: landmarkInspectionService.selectedLandmark) { _, selectedLandmark in
+            updateLandmarkInspectionVisualization(for: selectedLandmark)
         }
         .errorAlert(message: explorerViewModel.errorMessage) {
             explorerViewModel.resetError()
@@ -165,6 +171,19 @@ struct ContentView: View {
         // Update both view models with the same state
         sceneViewModel?.updateVisualization(state: state)
         mapViewModel.updateVisualization(state: state)
+    }
+
+    private func updateLandmarkInspectionVisualization(for selectedLandmark: LARLandmark?) {
+        if let landmark = selectedLandmark {
+            // Show bounds for the selected landmark
+            let state = LocalizationVisualization.State.from(selectedLandmark: landmark)
+            mapViewModel.updateVisualization(state: state)
+            print("Showing bounds for landmark \(landmark.id)")
+        } else {
+            // Clear bounds when no landmark is selected
+            mapViewModel.updateVisualization(state: LocalizationVisualization.State.empty)
+            print("Cleared landmark bounds visualization")
+        }
     }
     
     // MARK: - Action Methods

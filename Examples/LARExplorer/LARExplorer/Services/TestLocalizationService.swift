@@ -238,7 +238,33 @@ class TestLocalizationService: ObservableObject {
                         self.isProcessing = false
                     }
                 } else {
-                    throw LocalizationError.localizationFailed
+                    // Even on failure, collect diagnostic information for debugging
+                    let spatialQueryLandmarkIds = tracker.spatialQueryLandmarkIds().map { $0.intValue }
+                    let matchLandmarkIds = tracker.matchLandmarkIds().map { $0.intValue }
+                    let inlierLandmarkIds: [Int] = [] // No inliers on failure
+                    let gravityAngleDifference = tracker.gravityAngleDifference()
+                    
+                    print("LOCALIZATION FAILED - Diagnostic info:")
+                    print("Spatial query landmarks: \(spatialQueryLandmarkIds.count)")
+                    print("Feature matches: \(matchLandmarkIds.count)")
+                    print("Inliers: 0 (failed)")
+                    print("Gravity vector angle difference: \(gravityAngleDifference) degrees")
+                    
+                    await MainActor.run {
+                        self.localizationResult = LocalizationResult(
+                            frameId: frameId,
+                            originalTransform: originalTransform,
+                            localizedTransform: cameraPose ?? simd_double4x4(1.0), // Use camera pose or identity as fallback
+                            success: false,
+                            processingTime: processingTime,
+                            spatialQueryLandmarkIds: spatialQueryLandmarkIds,
+                            matchLandmarkIds: matchLandmarkIds,
+                            inlierLandmarkIds: inlierLandmarkIds,
+                            gravityAngleDifference: gravityAngleDifference,
+                            inlierBounds: [] // No inlier bounds on failure
+                        )
+                        self.isProcessing = false
+                    }
                 }
                 
             } catch {
@@ -279,7 +305,7 @@ class TestLocalizationService: ObservableObject {
         // Extract position from camera pose (XZ plane coordinates)
         let queryX = pose.columns.3.x
         let queryZ = pose.columns.3.z
-        let queryDiameter = 10.0 // 10 meter search diameter
+        let queryDiameter = 100.0 // 10 meter search diameter
         
         return (queryX, queryZ, queryDiameter)
     }

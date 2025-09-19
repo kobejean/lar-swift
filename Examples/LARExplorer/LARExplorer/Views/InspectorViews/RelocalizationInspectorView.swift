@@ -10,7 +10,10 @@ import LocalizeAR
 
 struct RelocalizationInspectorView: View {
     @ObservedObject var localizationService: TestLocalizationService
+    @ObservedObject var mapViewModel: MapViewModel
     @State private var selectedFrame: LARFrame?
+    @State private var currentPage = 0
+    private let framesPerPage = 50
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -39,6 +42,9 @@ struct RelocalizationInspectorView: View {
                     Text("\(localizationService.frames.count) frames loaded")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .onChange(of: localizationService.frames.count) { _ in
+                            currentPage = 0 // Reset to first page when frames change
+                        }
                 }
             }
             
@@ -48,14 +54,40 @@ struct RelocalizationInspectorView: View {
             HStack(alignment: .top, spacing: 16) {
                 // Left column: Frame selection
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Select Frame")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                    
+                    HStack {
+                        Text("Select Frame")
+                            .font(.caption)
+                            .fontWeight(.medium)
+
+                        Spacer()
+
+                        // Pagination controls
+                        if localizationService.frames.count > framesPerPage {
+                            HStack(spacing: 4) {
+                                Button(action: { currentPage = max(0, currentPage - 1) }) {
+                                    Image(systemName: "chevron.left")
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(currentPage == 0)
+
+                                Text("\(currentPage + 1)/\(totalPages)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .frame(minWidth: 30)
+
+                                Button(action: { currentPage = min(totalPages - 1, currentPage + 1) }) {
+                                    Image(systemName: "chevron.right")
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(currentPage >= totalPages - 1)
+                            }
+                        }
+                    }
+
                     if !localizationService.frames.isEmpty {
                         ScrollView {
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 8) {
-                                ForEach(localizationService.frames.prefix(50), id: \.frameId) { frame in
+                                ForEach(paginatedFrames, id: \.frameId) { frame in
                                     FrameThumbnailView(
                                         frame: frame,
                                         isSelected: selectedFrame?.frameId == frame.frameId,
@@ -114,12 +146,41 @@ struct RelocalizationInspectorView: View {
                         LocalizationResultView(result: result, usedCameraPose: localizationService.usedCameraPose)
                     }
                     
+                    // Visualization controls
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Visualization")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        
+                        Toggle("Show Bounds Overlays", isOn: $mapViewModel.showBoundsOverlays)
+                            .toggleStyle(.checkbox)
+                            .controlSize(.small)
+                    }
+                    
                     Spacer()
                 }
                 .frame(minWidth: 200)
             }
         }
         .font(.caption)
+    }
+
+    private var totalPages: Int {
+        let frameCount = localizationService.frames.count
+        return (frameCount + framesPerPage - 1) / framesPerPage
+    }
+
+    private var paginatedFrames: ArraySlice<LARFrame> {
+        let startIndex = currentPage * framesPerPage
+        let endIndex = min(startIndex + framesPerPage, localizationService.frames.count)
+
+        guard startIndex < localizationService.frames.count else {
+            return ArraySlice<LARFrame>()
+        }
+
+        return localizationService.frames[startIndex..<endIndex]
     }
 }
 
@@ -178,48 +239,55 @@ struct LocalizationResultView: View {
             HStack {
                 Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundColor(result.success ? .green : .red)
-                Text(result.success ? "Success" : "Failed")
-                    .fontWeight(.medium)
+                VStack(alignment: .leading) {
+                    Text(result.success ? "Success" : "Failed")
+                        .fontWeight(.medium)
+                    if !result.success {
+                        Text("(showing debug highlights)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             
-            if result.success {
-                VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
+                if result.success {
                     Text(String(format: "Position: (%.2f, %.2f, %.2f)", 
                          result.position.x, 
                          result.position.y, 
                          result.position.z))
-                    
-                    HStack {
-                        Image(systemName: "circle.fill")
-                            .foregroundColor(.white)
-                        Text("Query: \(result.spatialQueryLandmarkIds.count)")
-                    }
-                    .font(.caption2)
-                    
-                    HStack {
-                        Image(systemName: "circle.fill")
-                            .foregroundColor(.orange)
-                        Text("Matches: \(result.matchLandmarkIds.count)")
-                    }
-                    .font(.caption2)
-                    
-                    HStack {
-                        Image(systemName: "circle.fill")
-                            .foregroundColor(.green)
-                        Text("Inliers: \(result.inlierLandmarkIds.count)")
-                    }
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    
-                    if result.gravityAngleDifference > 0 {
-                        Text(String(format: "Gravity angle: %.3f°", result.gravityAngleDifference))
-                    }
-                    
-                    Text(String(format: "Processing time: %.3f s", result.processingTime))
+                }
+                
+                HStack {
+                    Image(systemName: "circle.fill")
+                        .foregroundColor(.gray)
+                    Text("Query: \(result.spatialQueryLandmarkIds.count)")
                 }
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                
+                HStack {
+                    Image(systemName: "circle.fill")
+						.foregroundColor(.orange)
+                    Text("Matches: \(result.matchLandmarkIds.count)")
+                }
+                .font(.caption2)
+                
+                HStack {
+                    Image(systemName: "circle.fill")
+                        .foregroundColor(.green)
+                    Text("Inliers: \(result.inlierLandmarkIds.count)")
+                }
+                .font(.caption2)
+                .fontWeight(result.success ? .medium : .regular)
+                
+                if result.gravityAngleDifference > 0 {
+                    Text(String(format: "Gravity angle: %.3f°", result.gravityAngleDifference))
+                }
+                
+                Text(String(format: "Processing time: %.3f s", result.processingTime))
             }
+			.font(.caption2)
+			.foregroundColor(.secondary)
         }
     }
 }

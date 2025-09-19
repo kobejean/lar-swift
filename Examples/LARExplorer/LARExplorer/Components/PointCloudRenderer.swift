@@ -9,16 +9,6 @@ import SceneKit
 import LocalizeAR
 import AppKit
 
-/// Handles rendering of point clouds and landmark visualization for the AR map
-/// 
-/// The renderer supports two visualization modes:
-/// 1. Base point cloud: Shows all landmarks with red (unmatched) and green (matched) colors
-/// 2. Localization highlights: Overlays larger colored spheres on landmarks involved in localization
-///    - White: Spatial query results
-///    - Orange: Feature matches (excluding inliers)
-///    - Green: RANSAC inliers
-///
-/// Orange and green highlights use scale constraints to remain visible from far distances.
 @MainActor
 class PointCloudRenderer {
     // MARK: - Template Management
@@ -38,13 +28,15 @@ class PointCloudRenderer {
         
         // Add to scene on main queue
         mapNode.addChildNode(pointCloudNode)
-        print("Point cloud loaded successfully!")
+
+        print("Point cloud loaded successfully with \(map.landmarks.count) landmarks (hit-testable)")
     }
     
     // MARK: - Private Methods
     private func removeExistingPointClouds(from mapNode: SCNNode) async {
         mapNode.childNode(withName: AppConfiguration.PointCloud.containerNodeName, recursively: false)?.removeFromParentNode()
         mapNode.childNode(withName: "LODLandmarkPointCloud", recursively: false)?.removeFromParentNode()
+        mapNode.childNode(withName: "landmarkHitTestLayer", recursively: false)?.removeFromParentNode()
     }
     
     private func createPointCloudNode(
@@ -159,10 +151,15 @@ class PointCloudRenderer {
         for chunk in chunks {
             let chunkNode = SCNNode()
             
-            for (position, _) in chunk {
+            for (position, index) in chunk {
                 let clonedNode = template.clone()
                 clonedNode.position = position
-                // No individual names needed for visualization-only nodes
+
+                // Make landmarks hit-testable for inspection
+                clonedNode.categoryBitMask = PointCloudRenderer.landmarkHitTestCategory
+                // Store landmark index in node name for identification
+                clonedNode.name = "landmark_\(index)"
+
                 chunkNode.addChildNode(clonedNode)
             }
             
@@ -176,7 +173,7 @@ class PointCloudRenderer {
     
     /// Highlights landmarks based on their localization status with different colors and sizes
     /// - Parameters:
-    ///   - spatialQueryIds: Landmarks found by spatial query (shown in white)
+    ///   - spatialQueryIds: Landmarks found by spatial query (shown in yellow)
     ///   - matchIds: Landmarks that matched features (shown in orange)
     ///   - inlierIds: Landmarks that passed RANSAC validation (shown in green)
     ///   - mapNode: The scene node containing the map
@@ -192,8 +189,6 @@ class PointCloudRenderer {
     ) {
         // Remove any existing highlight nodes
         clearLandmarkHighlights(in: mapNode)
-        
-        // Don't hide the original point cloud - let red landmarks show through
         
         // Configure scale constraint if enabled
         let scaleConstraint: SCNScreenSpaceScaleConstraint?
@@ -222,18 +217,18 @@ class PointCloudRenderer {
             useScaleConstraint: false
         )
         
-        // Create match highlights (orange, with scale constraint)
+        // Create match highlights
         let matchNode = createHighlightNodes(
             landmarkIds: matchIds.filter { !inlierSet.contains($0) }, // Exclude inliers
             landmarks: landmarks,
             color: config.matchColor,
             nodeName: config.matchNodeName,
-            radius: config.highlightRadius,
+			radius: config.highlightRadius,
             useScaleConstraint: true,
             scaleConstraint: scaleConstraint
         )
         
-        // Create inlier highlights (green, with scale constraint)
+        // Create inlier highlights
         let inlierNode = createHighlightNodes(
             landmarkIds: inlierIds,
             landmarks: landmarks,
@@ -367,6 +362,10 @@ class PointCloudRenderer {
         return containerNode
     }
     
+    // MARK: - Landmark Hit Testing
+
+    static let landmarkHitTestCategory: Int = 0x04
+
     private func setNodeTreeColor(_ node: SCNNode, color: NSColor) {
         // Set color for this node
         if let geometry = node.geometry {

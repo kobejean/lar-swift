@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(readonly) simd_double2 boundsUpper;
 @property(readonly) long long lastSeen;
 @property(readonly) BOOL isMatched;
+@property(readonly) int sightings;
 #ifdef __cplusplus
     - (id)initWithInternal:(lar::Landmark*)landmark;
 #endif

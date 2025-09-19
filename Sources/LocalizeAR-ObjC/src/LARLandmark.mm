@@ -63,4 +63,8 @@
     return self->_internal->isUseable();
 }
 
+- (int)sightings {
+    return self->_internal->sightings;
+}
+
 @end

@@ -83,6 +83,7 @@ class SceneViewModel: ObservableObject {
     func clearLandmarkHighlights() {
         visualizationState = .empty
     }
+
     
     // MARK: - Private Methods
     private func setupSceneView() throws {

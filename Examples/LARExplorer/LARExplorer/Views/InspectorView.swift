@@ -14,6 +14,8 @@ struct InspectorView: View {
     @ObservedObject var alignmentService: GPSAlignmentService
     @ObservedObject var editingService: EditingService
     @ObservedObject var localizationService: TestLocalizationService
+    @ObservedObject var landmarkInspectionService: LandmarkInspectionService
+    @ObservedObject var mapViewModel: MapViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -42,7 +44,9 @@ struct InspectorView: View {
             case .alignGPS:
                 GPSAlignmentInspectorView(alignmentService: alignmentService)
             case .testRelocalization:
-                RelocalizationInspectorView(localizationService: localizationService)
+                RelocalizationInspectorView(localizationService: localizationService, mapViewModel: mapViewModel)
+            case .inspectLandmarks:
+                LandmarksInspectorView(landmarkInspectionService: landmarkInspectionService)
             }
             
             Spacer()

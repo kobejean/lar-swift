@@ -54,8 +54,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		mapper = LARLiveMapper(directory: createSessionDirctory()!)
 		Task {
 			let map = await mapper.data.map
-			map.delegate = self
 			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
+			larNavigation.additionalMapDelegate = self
 		}
 		
 		// Set the view's delegate
@@ -202,6 +202,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				)
 				let anchor = await mapper.mapper.createAnchor(transform: position.transform)
 				sceneView.session.add(anchor: LARARAnchor(anchor: anchor, transform: result.worldTransform))
+				print(position)
 				
 			}
 		}
@@ -212,7 +213,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		AudioServicesPlaySystemSound(SystemSoundID(1108))
 		Task.detached(priority: .low) { [self] in
 			await mapper.mapper.addFrame(frame)
-			await mapper.mapper.writeMetadata()
+//			await mapper.mapper.writeMetadata()
 		}
 	}
 	
@@ -228,10 +229,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		)
 		let cameraGravity = rotation.inverse * worldGravity
 		let gvec = simd_double3(cameraGravity.x, -cameraGravity.y, -cameraGravity.z)
-		let cameraPose = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode).toDouble()
+		
+		// Get GPS location for spatial query
+		guard let location = locationManager.location else {
+			print("No GPS location available for spatial query")
+			return
+		}
 		
 		Task.detached(priority: .userInitiated) { [self, pose] in
-			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, pose: cameraPose) {
+			let gpsObservations = await mapper.data.gpsObservations
+			
+			// For now, let's try using the current device position from AR tracking
+			// instead of GPS coordinates until we figure out the coordinate system
+			let cameraPose = await mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode).toDouble()
+			let queryX = cameraPose.columns.3.x
+			let queryZ = cameraPose.columns.3.z
+			
+			// Use GPS accuracy to determine search diameter
+			let gpsAccuracy = location.horizontalAccuracy
+			let queryDiameter = min(max(gpsAccuracy * 2.0, 10.0), 100.0)
+			
+			print("AR-based spatial query: x=\(queryX), z=\(queryZ), diameter=\(queryDiameter)m (GPS accuracy: \(gpsAccuracy)m)")
+			
+			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter) {
+				print("transform: \(transform)")
 				await MainActor.run {
 					mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
 				}
@@ -289,6 +310,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 	@MainActor
 	func renderDebug() async {
+		return
 		// Remove existing nodes
 		landmarkNodes.forEach { $0.removeFromParentNode() }
 		landmarkNodes.removeAll()
@@ -390,9 +412,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		if pauseGPSRecord { return }
 		Task(priority: .low) { // TODO: investigate why detaching is bad here
 			await mapper?.mapper.addLocations(locations)
-			await mapper?.processor.updateGlobalAlignment()
-			await renderDebug()
-			larNavigation.updateMapOverlays()
+//			await mapper?.processor.updateGlobalAlignment()
+//			await renderDebug()
+//			larNavigation.updateMapOverlays()
 		}
 	}
 	
@@ -422,7 +444,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		if let newAnchorNode = larNavigation.getAnchorNode(id: anchor.id) {
 			selectAnchorNode(newAnchorNode)
 		}
-		Task(priority: .low) { await renderDebug() }
+//		Task(priority: .low) { await renderDebug() }
 	}
 	
 	// MARK: - UIDocumentPickerDelegate
@@ -453,8 +475,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			// TODO: consider detaching
 			await mapper.mapper.readMetadata()
 			let map = await mapper.data.map
-			map.delegate = self
 			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
+			larNavigation.additionalMapDelegate = self
 			await mapper.updateTracker()
 		}
 	}

@@ -18,6 +18,11 @@ class MapViewModel: NSObject, ObservableObject {
             updateBoundsOverlays()
         }
     }
+    @Published var showBoundsOverlays = true {
+        didSet {
+            updateBoundsOverlays()
+        }
+    }
     
     // MARK: - Private Properties
     private weak var mapView: MKMapView?
@@ -90,19 +95,25 @@ class MapViewModel: NSObject, ObservableObject {
     
     // MARK: - Overlay Management
     private func updateBoundsOverlays() {
-        guard let map = map, map.originReady else {
-            print("Cannot create overlays: map origin not ready")
-            return
-        }
-        
-        // Remove existing polygon overlays
+        // Remove existing polygon overlays first
         let existingPolygons = overlays.compactMap { $0 as? MKPolygon }
         overlays.removeAll { $0 is MKPolygon }
         mapView?.removeOverlays(existingPolygons)
         
-        // Create new polygon overlays if bounds exist
-        guard let bounds = visualizationState.bounds else { return }
+        // Only add new overlays if they should be shown
+        guard showBoundsOverlays,
+              let map = map, 
+              map.originReady,
+              let bounds = visualizationState.bounds else {
+            if !showBoundsOverlays {
+                print("MapViewModel: Bounds overlays hidden by user")
+            } else {
+                print("MapViewModel: Cannot create overlays - map not ready or no bounds")
+            }
+            return
+        }
         
+        // Create new polygon overlays
         var newOverlays: [MKOverlay] = []
         for (lower, upper) in bounds.bounds {
             let coordinates = CoordinateConversionService.boundsToPolygon(lower: lower, upper: upper, using: map)
@@ -152,9 +163,8 @@ extension MapViewModel: MKMapViewDelegate {
         // Handle our polygon overlays
         if let polygon = overlay as? MKPolygon {
             let renderer = MKPolygonRenderer(polygon: polygon)
-            renderer.strokeColor = NSColor.systemGreen.withAlphaComponent(0.8)
-            renderer.fillColor = NSColor.systemGreen.withAlphaComponent(0.2)
-            renderer.lineWidth = 2
+            renderer.strokeColor = NSColor.systemGreen
+            renderer.lineWidth = 1
             return renderer
         }
         

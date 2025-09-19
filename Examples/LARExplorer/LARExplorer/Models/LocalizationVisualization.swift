@@ -52,10 +52,18 @@ enum LocalizationVisualization {
                 inlierIds: localizationResult.inlierLandmarkIds,
                 landmarks: landmarks
             )
-            
+
             let bounds = LandmarkBounds(bounds: localizationResult.inlierBounds)
-            
+
             return State(highlights: highlights, bounds: bounds)
+        }
+
+        static func from(selectedLandmark: LARLandmark) -> State {
+            // Create bounds from the selected landmark's spatial bounds
+            let landmarkBounds = [(selectedLandmark.boundsLower, selectedLandmark.boundsUpper)]
+            let bounds = LandmarkBounds(bounds: landmarkBounds)
+
+            return State(highlights: nil, bounds: bounds)
         }
     }
 }

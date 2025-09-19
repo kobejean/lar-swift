@@ -15,66 +15,6 @@
 #import "LARTracker.h"
 #import "LARFrame.h"
 
-// LARFrame implementation - temporary location until build system issue resolved
-@implementation LARFrame
-
-- (instancetype)init {
-    self = [super init];
-    if (self) {
-        self->_internal = new lar::Frame();
-        self->_internal->id = 0;
-        self->_internal->timestamp = 0;
-    }
-    return self;
-}
-
-- (instancetype)initWithCppFrame:(const lar::Frame&)cppFrame {
-    self = [super init];
-    if (self) {
-        self->_internal = new lar::Frame(cppFrame);
-    }
-    return self;
-}
-
-+ (nullable NSArray<LARFrame*>*)loadFramesFromFile:(NSString*)path {
-    std::ifstream file([path UTF8String]);
-    if (!file.is_open()) {
-        return nil;
-    }
-    
-    try {
-        nlohmann::json j;
-        file >> j;
-        
-        std::vector<lar::Frame> frames = j.get<std::vector<lar::Frame>>();
-        NSMutableArray<LARFrame*>* result = [NSMutableArray arrayWithCapacity:frames.size()];
-        
-        for (const auto& frame : frames) {
-            LARFrame* larFrame = [[LARFrame alloc] initWithCppFrame:frame];
-            [result addObject:larFrame];
-        }
-        
-        return result;
-        
-    } catch (const std::exception& e) {
-        NSLog(@"Error loading frames: %s", e.what());
-        return nil;
-    }
-}
-
-- (void)dealloc {
-    delete self->_internal;
-}
-
-- (NSInteger)frameId {
-    return self->_internal->id;
-}
-
-- (NSInteger)timestamp {
-    return self->_internal->timestamp;
-}
-
-@end
 
 @interface LARTracker ()
 

@@ -17,6 +17,7 @@
 #endif
 
 #import <Foundation/Foundation.h>
+#import <simd/simd.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -28,6 +29,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic,readonly) NSInteger frameId;
 @property(nonatomic,readonly) NSInteger timestamp;
+@property(nonatomic,readonly) simd_float3x3 intrinsics;
+@property(nonatomic,readonly) simd_float4x4 extrinsics;
+
+// Convenience initializer
+- (instancetype)initWithId:(NSInteger)id timestamp:(NSInteger)timestamp intrinsics:(simd_float3x3)intrinsics extrinsics:(simd_float4x4)extrinsics;
 
 // Load frames from JSON file (like C++ lar_localize.cpp)
 + (nullable NSArray<LARFrame*>*)loadFramesFromFile:(NSString*)path;

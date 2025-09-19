@@ -13,7 +13,8 @@ enum ExplorerTool: String, CaseIterable {
     case editEdges = "Edit Edges"
     case alignGPS = "Align GPS"
     case testRelocalization = "Test Relocalization"
-    
+    case inspectLandmarks = "Inspect Landmarks"
+
     var icon: String {
         switch self {
         case .explore: return "location"
@@ -21,6 +22,7 @@ enum ExplorerTool: String, CaseIterable {
         case .editEdges: return "line.diagonal"
         case .alignGPS: return "location.north.line"
         case .testRelocalization: return "camera.viewfinder"
+        case .inspectLandmarks: return "scope"
         }
     }
 }

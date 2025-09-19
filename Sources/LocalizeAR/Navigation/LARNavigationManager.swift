@@ -30,6 +30,9 @@ public class LARNavigationManager : NSObject, MKMapViewDelegate, LARMapDelegate 
 	public var userLocation: CLLocation? = nil
 	public var userLocationAnnotation: MKPointAnnotation?
     
+    // Additional delegate to forward map events
+    public weak var additionalMapDelegate: LARMapDelegate?
+    
     private let guideNode = ({
         let node = SCNNode()
         let geometry = SCNSphere(radius: Constants.guideNodeRadius)
@@ -283,12 +286,26 @@ public class LARNavigationManager : NSObject, MKMapViewDelegate, LARMapDelegate 
 	
 	// MARK: - LARMapDelegate
 	
+	public func map(_ map: LARMap, didAdd anchor: LARAnchor) {
+		// Forward to additional delegate
+		additionalMapDelegate?.map?(map, didAdd: anchor)
+	}
+	
+	public func map(_ map: LARMap, didUpdate anchor: LARAnchor) {
+		// Forward to additional delegate
+		additionalMapDelegate?.map?(map, didUpdate: anchor)
+	}
+	
 	public func map(_ map: LARMap, didUpdateOrigin transform: simd_double4x4) {
 		updateMapOverlays()
+		// Forward to additional delegate
+		additionalMapDelegate?.map?(map, didUpdateOrigin: transform)
 	}
 	
 	public func map(_ map: LARMap, willRemove anchor: LARAnchor) {
 		removeNavigationAnchor(id: anchor.id)
+		// Forward to additional delegate
+		additionalMapDelegate?.map?(map, willRemove: anchor)
 	}
 	
 	// MARK: - Anchor Management
