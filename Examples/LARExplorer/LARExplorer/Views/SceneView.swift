@@ -12,9 +12,7 @@ import LocalizeAR
 
 struct SceneView: NSViewRepresentable {
     @StateObject private var viewModel = SceneViewModel()
-    @ObservedObject var editingService: EditingService
-    @ObservedObject var landmarkInspectionService: LandmarkInspectionService
-    @ObservedObject var explorerViewModel: LARExplorerViewModel
+    @ObservedObject var interactionManager: SceneInteractionManager
     let onSceneViewCreated: (SCNView, SCNNode, SceneViewModel) -> Void
     
     func makeNSView(context: Context) -> SCNView {
@@ -41,93 +39,20 @@ struct SceneView: NSViewRepresentable {
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(editingService: editingService, landmarkInspectionService: landmarkInspectionService, explorerViewModel: explorerViewModel)
+        Coordinator(interactionManager: interactionManager)
     }
-    
-    class Coordinator: NSObject {
-        let editingService: EditingService
-        let landmarkInspectionService: LandmarkInspectionService
-        let explorerViewModel: LARExplorerViewModel
 
-        init(editingService: EditingService, landmarkInspectionService: LandmarkInspectionService, explorerViewModel: LARExplorerViewModel) {
-            self.editingService = editingService
-            self.landmarkInspectionService = landmarkInspectionService
-            self.explorerViewModel = explorerViewModel
+    class Coordinator: NSObject {
+        let interactionManager: SceneInteractionManager
+
+        init(interactionManager: SceneInteractionManager) {
+            self.interactionManager = interactionManager
         }
-        
+
         func handleClick(at location: NSPoint, in sceneView: SCNView) {
             Task { @MainActor in
-                print("Click detected at \(location), current tool: \(editingService.selectedTool)")
-
-                // Hit test only anchor nodes using category bit mask
-                let anchorHitTestOptions: [SCNHitTestOption: Any] = [
-                    .categoryBitMask: LARSCNAnchorNode.anchorCategory,
-                    .firstFoundOnly: true
-                ]
-                let anchorHitResults = sceneView.hitTest(location, options: anchorHitTestOptions)
-                print("Anchor hit test found \(anchorHitResults.count) results")
-
-                if let hitResult = anchorHitResults.first, let anchorNode = hitResult.node as? LARSCNAnchorNode {
-                    print("Anchor hit: \(anchorNode.anchorId)")
-                    await handleAnchorClick(anchorNode.anchorId)
-                    return
-                }
-
-                // If no anchor hit and in landmark inspection mode, try landmark hit test
-                if editingService.selectedTool == .inspectLandmarks {
-                    print("Trying landmark hit test")
-                    await handleLandmarkClick(at: location, in: sceneView)
-                } else {
-                    print("Not in landmark inspection mode, click ignored")
-                }
-            }
-        }
-        
-        @MainActor
-        private func handleAnchorClick(_ anchorId: Int32) {
-            switch editingService.selectedTool {
-            case .editAnchors:
-                editingService.selectAnchor(id: anchorId)
-            case .editEdges:
-                editingService.handleAnchorClickForEdgeCreation(anchorId)
-            default:
-                break
-            }
-        }
-
-        @MainActor
-        private func handleLandmarkClick(at location: NSPoint, in sceneView: SCNView) {
-            print("Handling landmark click at \(location)")
-
-            // Hit test landmark nodes directly using their category
-            let landmarkHitTestOptions: [SCNHitTestOption: Any] = [
-                .categoryBitMask: PointCloudRenderer.landmarkHitTestCategory,
-                .firstFoundOnly: true
-            ]
-            let landmarkHitResults = sceneView.hitTest(location, options: landmarkHitTestOptions)
-            print("Landmark hit test found \(landmarkHitResults.count) results")
-
-            if let hitResult = landmarkHitResults.first,
-               let landmarks = explorerViewModel.mapData?.landmarks,
-               let nodeName = hitResult.node.name,
-               nodeName.hasPrefix("landmark_") {
-
-                print("Hit landmark node: \(nodeName)")
-
-                // Extract landmark index from node name
-                let indexString = String(nodeName.dropFirst("landmark_".count))
-                if let landmarkIndex = Int(indexString), landmarkIndex < landmarks.count {
-                    let landmark = landmarks[landmarkIndex]
-                    print("Selected landmark at index \(landmarkIndex), ID: \(landmark.id)")
-                    landmarkInspectionService.selectLandmark(landmark)
-                } else {
-                    print("Invalid landmark index: \(indexString)")
-                    landmarkInspectionService.clearSelection()
-                }
-            } else {
-                print("No landmark hit or no current map")
-                // Clear selection if no hit
-                landmarkInspectionService.clearSelection()
+                // Simply delegate to the interaction manager
+                interactionManager.handleClick(at: location, in: sceneView)
             }
         }
     }

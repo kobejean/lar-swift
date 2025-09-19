@@ -18,6 +18,23 @@ struct ContentView: View {
     @StateObject private var alignmentService = GPSAlignmentService()
     @StateObject private var localizationService = TestLocalizationService()
     @StateObject private var landmarkInspectionService = LandmarkInspectionService()
+    @StateObject private var interactionManager: SceneInteractionManager
+
+    init() {
+        // Create the interaction manager with all dependencies
+        let editingService = EditingService()
+        let landmarkInspectionService = LandmarkInspectionService()
+        let explorerViewModel = LARExplorerViewModel()
+
+        _editingService = StateObject(wrappedValue: editingService)
+        _landmarkInspectionService = StateObject(wrappedValue: landmarkInspectionService)
+        _explorerViewModel = StateObject(wrappedValue: explorerViewModel)
+        _interactionManager = StateObject(wrappedValue: SceneInteractionManager(
+            editingService: editingService,
+            landmarkInspectionService: landmarkInspectionService,
+            explorerViewModel: explorerViewModel
+        ))
+    }
     
     // MARK: - State
     @State private var selectedTool: ExplorerTool = .explore
@@ -43,7 +60,7 @@ struct ContentView: View {
             // Main content area
             VStack(spacing: 0) {
                 // SceneKit view on top
-                SceneView(editingService: editingService, landmarkInspectionService: landmarkInspectionService, explorerViewModel: explorerViewModel, onSceneViewCreated: handleSceneReady)
+                SceneView(interactionManager: interactionManager, onSceneViewCreated: handleSceneReady)
                     .frame(maxHeight: .infinity)
                 
                 // Divider
@@ -79,6 +96,7 @@ struct ContentView: View {
         }
         .onChange(of: selectedTool) { _, newTool in
             editingService.selectedTool = newTool
+            interactionManager.selectedTool = newTool
         }
         .onChange(of: isPointCloudVisible) { _, isVisible in
             togglePointCloudVisibility(isVisible)
@@ -178,11 +196,9 @@ struct ContentView: View {
             // Show bounds for the selected landmark
             let state = LocalizationVisualization.State.from(selectedLandmark: landmark)
             mapViewModel.updateVisualization(state: state)
-            print("Showing bounds for landmark \(landmark.id)")
         } else {
             // Clear bounds when no landmark is selected
             mapViewModel.updateVisualization(state: LocalizationVisualization.State.empty)
-            print("Cleared landmark bounds visualization")
         }
     }
     

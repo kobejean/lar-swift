@@ -305,7 +305,7 @@ class TestLocalizationService: ObservableObject {
         // Extract position from camera pose (XZ plane coordinates)
         let queryX = pose.columns.3.x
         let queryZ = pose.columns.3.z
-        let queryDiameter = 100.0 // 10 meter search diameter
+        let queryDiameter = 10.0 // 10 meter search diameter
         
         return (queryX, queryZ, queryDiameter)
     }
