@@ -20,7 +20,7 @@ class EditingService: ObservableObject {
     
     // MARK: - Internal Properties
     private weak var navigationManager: LARNavigationManager?
-    private var map: LARMap?
+    private weak var mapService: MapService?
     @Published var edgeCreationSourceAnchor: Int32?
     
     // Position offset properties
@@ -62,9 +62,9 @@ class EditingService: ObservableObject {
     }
     
     // MARK: - Configuration
-    func configure(navigationManager: LARNavigationManager, map: LARMap) {
+    func configure(navigationManager: LARNavigationManager, mapService: MapService) {
         self.navigationManager = navigationManager
-        self.map = map
+        self.mapService = mapService
     }
     
     // MARK: - Anchor Editing
@@ -79,7 +79,7 @@ class EditingService: ObservableObject {
     }
     
     func deleteSelectedAnchors() {
-        guard let map = map, !selectedAnchors.isEmpty else { return }
+        guard let map = mapService?.mapData, !selectedAnchors.isEmpty else { return }
         
         resetSelectionVisuals()
         removeAnchorsFromMap(selectedAnchors, map: map)
@@ -107,7 +107,7 @@ class EditingService: ObservableObject {
     }
     
     func applyPositionOffset() {
-        guard let map = map, let navigationManager = navigationManager, !selectedAnchors.isEmpty else { return }
+        guard let map = mapService?.mapData, let navigationManager = navigationManager, !selectedAnchors.isEmpty else { return }
         
         let offset = simd_float3(positionOffsetX, positionOffsetY, positionOffsetZ)
         
@@ -167,7 +167,7 @@ class EditingService: ObservableObject {
         var previewPositions: [(id: Int32, position: simd_float3)] = []
         
         for anchorId in selectedAnchors {
-            guard let anchor = map?.anchors.first(where: { $0.id == anchorId }) else { continue }
+            guard let anchor = mapService?.mapData?.anchors.first(where: { $0.id == anchorId }) else { continue }
             
             let currentTransform = anchor.transform
             let currentPosition = simd_float3(
@@ -208,7 +208,7 @@ class EditingService: ObservableObject {
     }
     
     private func createEdge(from sourceId: Int32, to targetId: Int32) {
-        guard let map = map,
+        guard let map = mapService?.mapData,
               let navigationManager = navigationManager else { return }
         
         // Add edge to the map (C++ layer)

@@ -13,13 +13,13 @@ import LocalizeAR
 @MainActor
 class LandmarkInspectionStrategy: ToolInteractionStrategy {
     private let landmarkInspectionService: LandmarkInspectionService
-    private let explorerViewModel: LARExplorerViewModel
+    private let mapService: MapService
     private let hitTestManager = HitTestManager()
 
     init(landmarkInspectionService: LandmarkInspectionService,
-         explorerViewModel: LARExplorerViewModel) {
+         mapService: MapService) {
         self.landmarkInspectionService = landmarkInspectionService
-        self.explorerViewModel = explorerViewModel
+        self.mapService = mapService
     }
 
     func handleClick(at location: NSPoint, in sceneView: SCNView) {
@@ -32,7 +32,7 @@ class LandmarkInspectionStrategy: ToolInteractionStrategy {
         // Only handle landmark selections
         if case .landmark(let index) = result.type {
             // Get landmark from map data
-            if let landmarks = explorerViewModel.mapData?.landmarks,
+            if let landmarks = mapService.mapData?.landmarks,
                index < landmarks.count {
                 let landmark = landmarks[index]
                 landmarkInspectionService.selectLandmark(landmark)

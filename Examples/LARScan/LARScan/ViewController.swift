@@ -22,6 +22,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	@IBOutlet var mapView: MKMapView!
 	@IBOutlet var modeControl: UISegmentedControl!
 	@IBOutlet var actionButton: UIButton!
+	@IBOutlet var consoleText: UITextView!
 	
 	var audioPlayer: AVAudioPlayer!
 	var mapper: LARLiveMapper!
@@ -30,6 +31,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	var pauseGPSRecord = false
 	private var currentFolderURL: URL?
 	private var selectedAnchorNode: LARSCNAnchorNode?
+	private var successfulLocalizations = 0
+	private var totalLocalizationAttempts = 0
 	
 	let locationManager: CLLocationManager = {
 		let locationManager = CLLocationManager()
@@ -56,14 +59,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			let map = await mapper.data.map
 			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
 			larNavigation.additionalMapDelegate = self
+
+			await MainActor.run {
+				updateConsole("LARScan initialized")
+				updateConsole("Session: \(createSessionDirctory()?.lastPathComponent ?? "unknown")")
+			}
 		}
-		
+
 		// Set the view's delegate
 		sceneView.delegate = self
 		sceneView.session.delegate = self
 		locationManager.delegate = self
 		mapView.userTrackingMode = .follow
-		
+
 		// Show statistics such as fps and timing information
 		sceneView.showsStatistics = true
 		sceneView.debugOptions = [ .showWorldOrigin, .showFeaturePoints ]
@@ -229,34 +237,62 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		)
 		let cameraGravity = rotation.inverse * worldGravity
 		let gvec = simd_double3(cameraGravity.x, -cameraGravity.y, -cameraGravity.z)
-		
+
 		// Get GPS location for spatial query
 		guard let location = locationManager.location else {
-			print("No GPS location available for spatial query")
+			Task { @MainActor in
+				updateConsole("ERROR: No GPS location available for spatial query")
+			}
 			return
 		}
-		
+
 		Task.detached(priority: .userInitiated) { [self, pose] in
-			let gpsObservations = await mapper.data.gpsObservations
-			
-			// For now, let's try using the current device position from AR tracking
-			// instead of GPS coordinates until we figure out the coordinate system
-			let cameraPose = await mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode).toDouble()
-			let queryX = cameraPose.columns.3.x
-			let queryZ = cameraPose.columns.3.z
-			
+			await MainActor.run {
+				totalLocalizationAttempts += 1
+				updateConsole("Localization attempt #\(totalLocalizationAttempts)")
+			}
+
+			let startTime = Date()
+			let landmarks = await mapper.data.map.landmarks
+
+			// Convert GPS coordinates to relative map coordinates using the map's origin
+			let gpsGlobal = simd_double3(location.coordinate.latitude, location.coordinate.longitude, location.altitude)
+			let relativePosition = await mapper.data.map.relativePoint(from: gpsGlobal)
+			let queryX = relativePosition.x
+			let queryZ = relativePosition.z
+
 			// Use GPS accuracy to determine search diameter
 			let gpsAccuracy = location.horizontalAccuracy
 			let queryDiameter = min(max(gpsAccuracy * 2.0, 10.0), 100.0)
-			
-			print("AR-based spatial query: x=\(queryX), z=\(queryZ), diameter=\(queryDiameter)m (GPS accuracy: \(gpsAccuracy)m)")
-			
+
+			await MainActor.run {
+				updateConsole("Query: x=\(String(format: "%.2f", queryX)), z=\(String(format: "%.2f", queryZ)), diameter=\(String(format: "%.1f", queryDiameter))m")
+				updateConsole("Total landmarks: \(landmarks.count)")
+			}
+
 			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter) {
-				print("transform: \(transform)")
+				let elapsedTime = Date().timeIntervalSince(startTime)
+
 				await MainActor.run {
+					successfulLocalizations += 1
 					mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
+
+					// Count matched landmarks
+					let matchedCount = landmarks.filter { $0.isMatched }.count
+					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+
+					updateConsole("LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
+					updateConsole("Matched landmarks: \(matchedCount)/\(landmarks.count)")
+					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
 				}
 				await renderDebug()
+			} else {
+				let elapsedTime = Date().timeIntervalSince(startTime)
+				await MainActor.run {
+					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+					updateConsole("FAILED: \(String(format: "%.3f", elapsedTime))s")
+					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+				}
 			}
 		}
 	}
@@ -310,7 +346,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 	@MainActor
 	func renderDebug() async {
-		return
 		// Remove existing nodes
 		landmarkNodes.forEach { $0.removeFromParentNode() }
 		landmarkNodes.removeAll()
@@ -418,6 +453,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		}
 	}
 	
+	// MARK: - Console Debug Output
+
+	@MainActor
+	private func updateConsole(_ message: String) {
+		let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+		let logEntry = "[\(timestamp)] \(message)\n"
+		consoleText.text = (consoleText.text ?? "") + logEntry
+
+		// Auto-scroll to bottom
+		let bottom = NSMakeRange(consoleText.text.count - 1, 1)
+		consoleText.scrollRangeToVisible(bottom)
+
+		// Keep only last 100 lines to prevent memory issues
+		let lines = consoleText.text.components(separatedBy: .newlines)
+		if lines.count > 100 {
+			consoleText.text = lines.suffix(100).joined(separator: "\n")
+		}
+	}
+
 	// MARK: - Selection Management
 	
 	private func selectAnchorNode(_ node: LARSCNAnchorNode?) {
@@ -478,6 +532,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
 			larNavigation.additionalMapDelegate = self
 			await mapper.updateTracker()
+
+			await MainActor.run {
+				successfulLocalizations = 0
+				totalLocalizationAttempts = 0
+				updateConsole("Loaded map: \(selectedURL.lastPathComponent)")
+				updateConsole("Landmarks: \(map.landmarks.count)")
+				updateConsole("Tracker updated")
+			}
 		}
 	}
 	

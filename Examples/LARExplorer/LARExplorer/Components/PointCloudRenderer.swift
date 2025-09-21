@@ -61,17 +61,19 @@ class PointCloudRenderer {
                 for (index, landmark) in landmarks.enumerated() {
                     let position = landmark.position
                     let vertex = SCNVector3(position.x, position.y, position.z)
-                    
+
                     if landmark.isMatched {
                         matchedLandmarks.append((vertex, index))
                     } else {
                         usableLandmarks.append((vertex, index))
                     }
-                    
-                    // Update progress
-                    let progress = Double(index) / Double(landmarks.count) * 0.5 // First 50% for processing
-                    Task { @MainActor in
-                        progressHandler(progress)
+
+                    // Update progress every 5000 landmarks to avoid overwhelming the UI
+                    if index % 5000 == 0 || index == landmarks.count - 1 {
+                        let progress = Double(index + 1) / Double(landmarks.count) * 0.8 // First 80% for processing
+                        DispatchQueue.main.async {
+                            progressHandler(progress)
+                        }
                     }
                 }
                 
@@ -101,11 +103,12 @@ class PointCloudRenderer {
                 }
                 
                 dispatchGroup.wait()
-                
-                Task { @MainActor in
+
+                // Final progress update - node creation complete
+                DispatchQueue.main.async {
                     progressHandler(1.0) // Complete
                 }
-                
+
                 continuation.resume(returning: pointCloudNode)
             }
         }

@@ -12,27 +12,28 @@ import SceneKit
 import LocalizeAR
 
 struct ContentView: View {
-    // MARK: - View Models
-    @StateObject private var explorerViewModel = LARExplorerViewModel()
+    // MARK: - Services
+    @StateObject private var mapService = MapService()
     @StateObject private var editingService = EditingService()
     @StateObject private var alignmentService = GPSAlignmentService()
     @StateObject private var localizationService = TestLocalizationService()
     @StateObject private var landmarkInspectionService = LandmarkInspectionService()
     @StateObject private var interactionManager: SceneInteractionManager
+    @StateObject private var progressService = ProgressService()
 
     init() {
         // Create the interaction manager with all dependencies
         let editingService = EditingService()
         let landmarkInspectionService = LandmarkInspectionService()
-        let explorerViewModel = LARExplorerViewModel()
+        let mapService = MapService()
 
         _editingService = StateObject(wrappedValue: editingService)
         _landmarkInspectionService = StateObject(wrappedValue: landmarkInspectionService)
-        _explorerViewModel = StateObject(wrappedValue: explorerViewModel)
+        _mapService = StateObject(wrappedValue: mapService)
         _interactionManager = StateObject(wrappedValue: SceneInteractionManager(
             editingService: editingService,
             landmarkInspectionService: landmarkInspectionService,
-            explorerViewModel: explorerViewModel
+            mapService: mapService
         ))
     }
     
@@ -89,9 +90,9 @@ struct ContentView: View {
             }
         }
         .task {
-            await explorerViewModel.loadMap(from: defaultMapURL)
+            await mapService.loadMap(from: defaultMapURL)
         }
-        .onChange(of: explorerViewModel.isMapLoaded) { _, _ in
+        .onChange(of: mapService.mapLoadCounter) { _, _ in
             configureApplicationWithLoadedMap()
         }
         .onChange(of: selectedTool) { _, newTool in
@@ -107,8 +108,17 @@ struct ContentView: View {
         .onChange(of: landmarkInspectionService.selectedLandmark) { _, selectedLandmark in
             updateLandmarkInspectionVisualization(for: selectedLandmark)
         }
-        .errorAlert(message: explorerViewModel.errorMessage) {
-            explorerViewModel.resetError()
+        .errorAlert(message: mapService.errorMessage) {
+            mapService.resetError()
+        }
+        .overlay(
+            ProgressOverlay(progressService: progressService)
+        )
+        .onAppear {
+            progressService.configure(mapService: mapService, sceneViewModel: sceneViewModel)
+        }
+        .onChange(of: sceneViewModel) { _, newSceneViewModel in
+            progressService.configure(mapService: mapService, sceneViewModel: newSceneViewModel)
         }
     }
     
@@ -122,11 +132,11 @@ struct ContentView: View {
         self.mapNode = mapNode
         self.sceneViewModel = sceneViewModel
         MapConfigurationService.configureScene(sceneView: sceneView)
-        
+
         // Configure localization service with SceneView for camera pose access
         localizationService.configure(sceneView: sceneView)
-        
-        if explorerViewModel.isMapLoaded {
+
+        if mapService.isMapLoaded {
             configureApplicationWithLoadedMap()
         }
     }
@@ -135,36 +145,45 @@ struct ContentView: View {
         self.mapView = mapView
         mapViewModel.configure(mapView: mapView)
         
-        if explorerViewModel.isMapLoaded {
+        if mapService.isMapLoaded {
             configureApplicationWithLoadedMap()
         }
     }
     
     private func configureApplicationWithLoadedMap() {
-        guard let mapData = explorerViewModel.mapData,
+        guard let mapData = mapService.mapData,
               let mapView = mapView,
-              let mapNode = mapNode else { return }
-        
+              let mapNode = mapNode else {
+            return
+        }
+
+        // Cleanup
+        mapNode.childNodes.forEach { $0.removeFromParentNode() }
+        mapView.removeOverlays(mapView.overlays)
+
+        // Clear navigation manager reference (will be recreated)
+        navigationManager = nil
+
         // Configure all components using services
         MapConfigurationService.configureMapRegion(mapView: mapView, for: mapData)
-        alignmentService.configure(with: explorerViewModel.mapperData!)
-        
+        alignmentService.configure(with: mapService)
+
         // Initialize navigation
         navigationManager = MapConfigurationService.createNavigationManager(
             with: mapData,
             mapView: mapView,
             mapNode: mapNode
         )
-        
+
         // Set map data and navigation manager
         mapViewModel.setMapData(mapData, navigationManager: navigationManager)
-        
+
         // Configure editing service with navigation manager
-        editingService.configure(navigationManager: navigationManager!, map: mapData)
-        
+        editingService.configure(navigationManager: navigationManager!, mapService: mapService)
+
         // Configure localization service
         localizationService.configure(with: mapData)
-        
+
         // Load point cloud through SceneViewModel
         sceneViewModel?.loadPointCloud(from: mapData)
     }
@@ -176,7 +195,7 @@ struct ContentView: View {
     
     private func updateVisualizationState(for result: TestLocalizationService.LocalizationResult?) {
         guard let result = result,
-              let mapData = explorerViewModel.mapData else {
+              let mapData = mapService.mapData else {
             // Clear visualizations when result is nil
             sceneViewModel?.updateVisualization(state: LocalizationVisualization.State.empty)
             mapViewModel.updateVisualization(state: LocalizationVisualization.State.empty)
@@ -212,14 +231,14 @@ struct ContentView: View {
         
         if openPanel.runModal() == .OK, let url = openPanel.url {
             Task {
-                await explorerViewModel.loadMap(from: url)
+                await mapService.loadMap(from: url)
             }
         }
     }
     
     private func saveMap() {
-        guard let mapperData = explorerViewModel.mapperData else {
-            explorerViewModel.errorMessage = "No map data available to save"
+        guard mapService.mapProcessor != nil else {
+            mapService.errorMessage = "No map processor available to save"
             return
         }
         
@@ -232,8 +251,7 @@ struct ContentView: View {
         savePanel.prompt = "Save"
         
         if savePanel.runModal() == .OK, let url = savePanel.url {
-            let mapProcessor = LARMapProcessor(mapperData: mapperData)
-            mapProcessor.saveMap(url.path)
+            _ = mapService.saveMap(to: url.path)
             // Map saved successfully - could show success message in UI if needed
         }
     }
@@ -242,6 +260,7 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
 
 // MARK: - Extensions
 extension View {

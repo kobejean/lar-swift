@@ -15,7 +15,7 @@ class SceneInteractionManager: ObservableObject {
     // Services
     private let editingService: EditingService
     private let landmarkInspectionService: LandmarkInspectionService
-    private let explorerViewModel: LARExplorerViewModel
+    private let mapService: MapService
 
     // Strategies
     private var strategies: [ExplorerTool: ToolInteractionStrategy] = [:]
@@ -29,10 +29,10 @@ class SceneInteractionManager: ObservableObject {
 
     init(editingService: EditingService,
          landmarkInspectionService: LandmarkInspectionService,
-         explorerViewModel: LARExplorerViewModel) {
+         mapService: MapService) {
         self.editingService = editingService
         self.landmarkInspectionService = landmarkInspectionService
-        self.explorerViewModel = explorerViewModel
+        self.mapService = mapService
 
         // Initialize strategies for each tool
         strategies[.explore] = ExploreStrategy()
@@ -42,7 +42,7 @@ class SceneInteractionManager: ObservableObject {
         strategies[.testRelocalization] = ExploreStrategy() // Test relocalization doesn't need click handling
         strategies[.inspectLandmarks] = LandmarkInspectionStrategy(
             landmarkInspectionService: landmarkInspectionService,
-            explorerViewModel: explorerViewModel
+            mapService: mapService
         )
 
         // Set initial strategy

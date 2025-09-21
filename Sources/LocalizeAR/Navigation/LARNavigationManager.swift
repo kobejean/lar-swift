@@ -348,7 +348,35 @@ public class LARNavigationManager : NSObject, MKMapViewDelegate, LARMapDelegate 
 			}
 		}
 	}
-	
+
+	public func removeAllNavigationElements() {
+		// Remove all anchor nodes from the scene
+		for (_, node) in anchorNodes.nodeById {
+			node.removeFromParentNode()
+		}
+		anchorNodes.removeAll()
+
+		// Remove all guide nodes (spheres between anchors)
+		removeAllGuideNodes()
+
+		// Remove all preview nodes
+		hidePreviewNodes()
+
+		// Clear all navigation edges
+		navigationEdges.removeAll()
+
+		// Clear all anchors
+		anchors.removeAll()
+
+		// Clear selections
+		clearAllSelections()
+
+		// Clear all map overlays from MapKit
+		if let mapView = mapView {
+			mapView.removeOverlays(mapView.overlays)
+		}
+	}
+
 	private func regenerateGuideNodes() {
 		for (fromId, toId) in navigationEdges {
 			// Look up anchors fresh from the dictionary to ensure they're still valid

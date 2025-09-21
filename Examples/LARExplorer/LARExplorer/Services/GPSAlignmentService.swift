@@ -20,19 +20,17 @@ class GPSAlignmentService: ObservableObject {
     @Published var statusMessage: String?
     
     // MARK: - Private Properties
-    private var mapData: LARMap?
-    private var mapperData: LARMapper.Data?
-    private var mapProcessor: LARMapProcessor?
+    private weak var mapService: MapService?
     private var baseOrigin: simd_double4x4 = matrix_identity_double4x4
-    
+
     // MARK: - Configuration
-    func configure(with mapperData: LARMapper.Data) {
-        self.mapperData = mapperData
-        self.mapData = mapperData.map
-        // Create map processor for rescaling operations
-        self.mapProcessor = LARMapProcessor(mapperData: mapperData)
+    func configure(with mapService: MapService) {
+        self.mapService = mapService
         // Store the current origin as our baseline
-        baseOrigin = mapperData.map.origin
+        if let mapData = mapService.mapData {
+            baseOrigin = mapData.origin
+        } else {
+        }
         resetAlignment()
         statusMessage = "GPS alignment ready - sliders show offset from base position"
     }
@@ -45,7 +43,7 @@ class GPSAlignmentService: ObservableObject {
         scaleFactor = 1.0
         
         // Reset origin to base position
-        if let mapData = mapData {
+        if let mapData = mapService?.mapData {
             mapData.updateOrigin(baseOrigin)
         }
         
@@ -53,7 +51,7 @@ class GPSAlignmentService: ObservableObject {
     }
     
     func performAutoAlignment() {
-        guard let mapData = mapData else {
+        guard let mapData = mapService?.mapData else {
             statusMessage = "No map loaded"
             return
         }
@@ -76,7 +74,7 @@ class GPSAlignmentService: ObservableObject {
     }
     
     func applyManualAlignment() {
-        guard let mapData = mapData else {
+        guard let mapData = mapService?.mapData else {
             statusMessage = "No map loaded"
             return
         }
@@ -94,7 +92,7 @@ class GPSAlignmentService: ObservableObject {
     }
     
     func applyScale() {
-        guard let mapProcessor = mapProcessor else {
+        guard let mapProcessor = mapService?.mapProcessor else {
             statusMessage = "No map processor available"
             return
         }
@@ -110,7 +108,6 @@ class GPSAlignmentService: ObservableObject {
         mapProcessor.rescale(scaleFactor)
         
         statusMessage = "Scale factor \(scaleFactor) applied successfully"
-        print("🎯 Applied scale factor: \(scaleFactor)")
     }
     
     // MARK: - Private Helpers

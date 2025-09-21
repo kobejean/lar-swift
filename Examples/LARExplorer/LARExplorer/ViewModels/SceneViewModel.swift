@@ -10,7 +10,11 @@ import SceneKit
 import LocalizeAR
 
 @MainActor
-class SceneViewModel: ObservableObject {
+class SceneViewModel: ObservableObject, Equatable {
+    // MARK: - Equatable
+    static func == (lhs: SceneViewModel, rhs: SceneViewModel) -> Bool {
+        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+    }
     // MARK: - Published Properties
     @Published var isPointCloudVisible = true
     @Published var visualizationState: LocalizationVisualization.State = .empty {
@@ -18,6 +22,8 @@ class SceneViewModel: ObservableObject {
             updateLandmarkHighlights()
         }
     }
+    @Published var isLoadingPointCloud = false
+    @Published var pointCloudLoadingProgress: Double = 0.0
     
     // MARK: - Internal Properties
     private weak var sceneView: SCNView?
@@ -40,15 +46,23 @@ class SceneViewModel: ObservableObject {
     func loadPointCloud(from map: LARMap) {
         guard let mapNode = mapNode,
               let renderer = pointCloudRenderer else { return }
-        
-        Task {
+
+        isLoadingPointCloud = true
+        pointCloudLoadingProgress = 0.0
+
+        Task { @MainActor in
             await renderer.loadPointCloud(
                 from: map,
                 into: mapNode,
-                progressHandler: { progress in
-                    print("Point cloud loading: \(Int(progress * 100))%")
+                progressHandler: { [weak self] progress in
+                    Task { @MainActor in
+                        self?.pointCloudLoadingProgress = progress
+                    }
                 }
             )
+
+            self.pointCloudLoadingProgress = 1.0
+            self.isLoadingPointCloud = false
         }
     }
     

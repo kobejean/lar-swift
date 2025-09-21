@@ -49,4 +49,10 @@ public class LARSCNNodeCollection {
         anchorNodes.removeAll { $0.anchorId == anchorId }
         nodeById.removeValue(forKey: anchorId)
     }
+
+    /// Remove all nodes from the collection
+    public func removeAll() {
+        anchorNodes.removeAll()
+        nodeById.removeAll()
+    }
 }

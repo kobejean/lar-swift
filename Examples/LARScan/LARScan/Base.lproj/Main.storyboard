@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23727" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
-    <device id="iPad13_0rounded" orientation="portrait" layout="fullscreen" appearance="light"/>
+    <device id="iPad13_0rounded" orientation="landscape" layout="fullscreen" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23721"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
@@ -13,24 +13,24 @@
             <objects>
                 <viewController id="BV1-FR-VrT" customClass="ViewController" customModule="LARScan" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="U0K-SW-4ec">
-                        <rect key="frame" x="0.0" y="0.0" width="1032" height="1376"/>
+                        <rect key="frame" x="0.0" y="0.0" width="1376" height="1032"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrB-h1-WRS">
-                                <rect key="frame" x="0.0" y="0.0" width="1032" height="1076"/>
+                                <rect key="frame" x="0.0" y="0.0" width="1376" height="732"/>
                                 <gestureRecognizers/>
                                 <connections>
                                     <outletCollection property="gestureRecognizers" destination="Sau-bH-5Tj" appends="YES" id="VOx-xZ-8gH"/>
                                 </connections>
                             </arscnView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="417-dV-nQU">
-                                <rect key="frame" x="0.0" y="1076" width="1032" height="300"/>
+                                <rect key="frame" x="0.0" y="732" width="1376" height="300"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="300" id="8YO-j7-Me0"/>
                                 </constraints>
                             </mapView>
                             <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
-                                <rect key="frame" x="646.5" y="1021.5" width="335.5" height="34.5"/>
+                                <rect key="frame" x="990.5" y="677.5" width="335.5" height="34.5"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aIF-77-3d2">
                                         <rect key="frame" x="0.0" y="0.0" width="61" height="34.5"/>
@@ -69,15 +69,27 @@
                                     </button>
                                 </subviews>
                             </stackView>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VdI-s9-rI0">
+                                <rect key="frame" x="0.0" y="555" width="1376" height="100"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="100" id="NU8-7f-DfK"/>
+                                </constraints>
+                                <color key="textColor" systemColor="systemRedColor"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
+                            <constraint firstItem="pIs-TH-3LP" firstAttribute="top" secondItem="VdI-s9-rI0" secondAttribute="bottom" constant="22.5" id="2Nt-Wr-I2K"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="LXA-6p-7dx"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="LhB-A7-JJr"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
                             <constraint firstItem="fQZ-KI-GVf" firstAttribute="trailing" secondItem="pIs-TH-3LP" secondAttribute="trailing" constant="50" id="Z8h-s0-J5V"/>
+                            <constraint firstItem="VdI-s9-rI0" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="hoE-dD-8Xb"/>
+                            <constraint firstItem="VdI-s9-rI0" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="kFU-Gf-m5k"/>
                             <constraint firstAttribute="bottom" secondItem="417-dV-nQU" secondAttribute="bottom" id="owi-GV-g7G"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="uba-9y-iGT"/>
@@ -86,6 +98,7 @@
                     </view>
                     <connections>
                         <outlet property="actionButton" destination="km6-wS-6s9" id="Uwv-Ss-b8j"/>
+                        <outlet property="consoleText" destination="VdI-s9-rI0" id="33K-10-yhZ"/>
                         <outlet property="mapView" destination="417-dV-nQU" id="omc-YM-sXo"/>
                         <outlet property="modeControl" destination="hwS-jv-zN5" id="4fv-mG-rlb"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
@@ -98,7 +111,7 @@
                     </connections>
                 </tapGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="137.68115942028987" y="108.48214285714285"/>
+            <point key="canvasLocation" x="136.91860465116278" y="108.13953488372093"/>
         </scene>
     </scenes>
     <resources>
@@ -106,6 +119,9 @@
         <image name="location" catalog="system" width="128" height="119"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemRedColor">
+            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

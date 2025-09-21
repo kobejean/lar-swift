@@ -46,7 +46,7 @@ enum AppConfiguration {
         
         // Localization Highlighting
         enum Localization {
-            static let highlightRadius: CGFloat = 0.04  // Larger than base landmarks
+            static let highlightRadius: CGFloat = 0.03  // Larger than base landmarks
 			static let spatialQueryColor: NSColor = .gray
 			static let matchColor: NSColor = .orange
             static let inlierColor: NSColor = .green
