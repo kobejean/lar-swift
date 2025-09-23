@@ -89,12 +89,51 @@ The project uses a three-layer architecture:
 - SceneKit, MapKit, CoreLocation: Rendering and location services
 - Accelerate: High-performance computing
 
+## Experimental Development Philosophy
+
+This project is in the experimental phase, which shapes our development approach:
+
+### Core Principles
+
+1. **Fail Fast, Learn Fast**: Prioritize quick iterations over perfect code. Make bold architectural changes when they improve the system fundamentally.
+
+2. **Make It Work → Make It Right → Make It Fast**:
+   - First: Get working code that demonstrates the concept
+   - Second: Refactor for clean architecture and maintainability
+   - Third: Profile and optimize only identified bottlenecks
+
+3. **Aggressive Error Detection**: Unintended states should throw errors immediately, not fall back gracefully. This is not production code - we want to catch design flaws early.
+   - Use `fatalError()` liberally for "impossible" states
+   - Prefer `precondition()` over defensive nil checks
+   - Make invalid states unrepresentable when possible
+
+4. **Backwards Compatibility is Optional**: We can make breaking changes freely as long as:
+   - We can detect regressions through testing/examples
+   - The change represents a principled architectural improvement
+   - We document the reasoning for future reference
+
+### Experimental Practices
+
+- **Bold Refactoring**: Don't hesitate to restructure entire modules if it clarifies the design
+- **API Experimentation**: Try multiple API designs for the same functionality to find the best developer experience
+- **Performance Last**: Focus on correctness and clarity first; optimize only when performance becomes a concrete blocker
+- **Verbose Logging**: Add detailed logging to understand system behavior - remove it later if needed
+- **Example-Driven Development**: Use the example apps as the primary way to validate architectural decisions
+
+### Quality Gates
+
+Before considering any code "stable":
+1. Example applications demonstrate the feature working end-to-end
+2. Error states are properly detected and reported
+3. The API feels natural to use in real scenarios
+4. Core algorithms are validated against test data
+
 ## Development Workflow
 
 ### Adding New Features
 1. Implement core algorithms in C++ (`.Submodules/lar/`)
 2. Add Objective-C bridge interfaces in `Sources/LocalizeAR-ObjC/`
-3. Create Swift API wrappers in `Sources/LocalizeAR/`
+3. Create Swift extensions in `Sources/LocalizeAR/`
 4. Update example applications to demonstrate usage
 
 ### Testing
@@ -154,3 +193,4 @@ This is a performance-critical real-time AR system that requires:
 - Platform-specific optimizations (ARKit vs OpenCL)
 - Real-time processing constraints for AR applications
 - Cross-platform compatibility between iOS and macOS
+- Thread-safety

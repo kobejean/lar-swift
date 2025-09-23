@@ -45,7 +45,6 @@ struct ContentView: View {
     @State private var mapView: MKMapView?
     @State private var mapNode: SCNNode?
     @State private var navigationManager: LARNavigationManager?
-    @State private var sceneViewRef: SceneView?
     @State private var sceneViewModel: SceneViewModel?
     @StateObject private var mapViewModel = MapViewModel()
     
@@ -90,7 +89,9 @@ struct ContentView: View {
             }
         }
         .task {
-            await mapService.loadMap(from: defaultMapURL)
+            // Initialize services
+            progressService.configure(mapService: mapService, sceneViewModel: sceneViewModel)
+			mapService.loadMap(from: defaultMapURL)
         }
         .onChange(of: mapService.mapLoadCounter) { _, _ in
             configureApplicationWithLoadedMap()
@@ -108,18 +109,15 @@ struct ContentView: View {
         .onChange(of: landmarkInspectionService.selectedLandmark) { _, selectedLandmark in
             updateLandmarkInspectionVisualization(for: selectedLandmark)
         }
+        .onChange(of: sceneViewModel) { _, newSceneViewModel in
+            progressService.configure(mapService: mapService, sceneViewModel: newSceneViewModel)
+        }
         .errorAlert(message: mapService.errorMessage) {
             mapService.resetError()
         }
         .overlay(
             ProgressOverlay(progressService: progressService)
         )
-        .onAppear {
-            progressService.configure(mapService: mapService, sceneViewModel: sceneViewModel)
-        }
-        .onChange(of: sceneViewModel) { _, newSceneViewModel in
-            progressService.configure(mapService: mapService, sceneViewModel: newSceneViewModel)
-        }
     }
     
     // MARK: - Computed Properties
