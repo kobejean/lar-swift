@@ -36,17 +36,17 @@ struct MapConfigurationService {
     }
     
     // MARK: - Navigation Initialization
+    /// Creates and configures a navigation coordinator
+    /// Note: For better architecture, consider injecting this via Swinject instead
+    @available(*, deprecated, message: "Use Swinject container to resolve LARNavigationCoordinator instead")
     static func createNavigationManager(
         with map: LARMap,
         mapView: MKMapView,
         mapNode: SCNNode
-    ) -> LARNavigationManager {
-        let navigationManager = LARNavigationManager(
-            map: map,
-            mapView: mapView,
-            mapNode: mapNode
-        )
-        return navigationManager
+    ) -> LARNavigationCoordinator {
+        let coordinator = LARNavigationCoordinator(map: map)
+        coordinator.configure(sceneNode: mapNode, mapView: mapView)
+        return coordinator
     }
     
     // MARK: - Point Cloud Operations

@@ -16,12 +16,17 @@ class GPSAlignmentService: ObservableObject {
     @Published var translationY: Double = 0.0
     @Published var rotation: Double = 0.0
     @Published var scaleFactor: Double = 1.0
-    
+
     @Published var statusMessage: String?
-    
+
     // MARK: - Private Properties
     private weak var mapService: MapService?
     private var baseOrigin: simd_double4x4 = matrix_identity_double4x4
+    private var currentScale: Double = 1.0  // Track cumulative scale for absolute scaling
+
+    // MARK: - Callbacks
+    /// Called after rescaling completes, allowing UI to refresh visualizations
+    var onRescaleComplete: (() -> Void)?
 
     // MARK: - Configuration
     func configure(with mapService: MapService) {
@@ -41,12 +46,13 @@ class GPSAlignmentService: ObservableObject {
         translationY = 0.0
         rotation = 0.0
         scaleFactor = 1.0
-        
+        currentScale = 1.0  // Reset cumulative scale
+
         // Reset origin to base position
         if let mapData = mapService?.mapData {
             mapData.updateOrigin(baseOrigin)
         }
-        
+
         statusMessage = "Reset to base origin"
     }
     
@@ -96,18 +102,27 @@ class GPSAlignmentService: ObservableObject {
             statusMessage = "No map processor available"
             return
         }
-        
+
         guard scaleFactor > 0.0 else {
             statusMessage = "Invalid scale factor: \(scaleFactor)"
             return
         }
-        
-        statusMessage = "Applying scale factor: \(scaleFactor)..."
-        
-        // Apply rescaling using the map processor
-        mapProcessor.rescale(scaleFactor)
-        
+
+        // Convert absolute scale (user input) to relative scale (C++ expects)
+        let relativeScale = scaleFactor / currentScale
+
+        statusMessage = "Applying absolute scale: \(scaleFactor) (relative: \(String(format: "%.3f", relativeScale)))..."
+
+        // Apply relative rescaling to C++ (which uses cumulative approach)
+        mapProcessor.rescale(relativeScale)
+
+        // Update our tracked cumulative scale
+        currentScale = scaleFactor
+
         statusMessage = "Scale factor \(scaleFactor) applied successfully"
+
+        // Notify that rescaling is complete (triggers point cloud reload in ContentView)
+        onRescaleComplete?()
     }
     
     // MARK: - Private Helpers

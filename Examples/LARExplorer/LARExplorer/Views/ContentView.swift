@@ -10,42 +10,42 @@ import AppKit
 import MapKit
 import SceneKit
 import LocalizeAR
+import Swinject
 
 struct ContentView: View {
-    // MARK: - Services
-    @StateObject private var mapService = MapService()
-    @StateObject private var editingService = EditingService()
-    @StateObject private var alignmentService = GPSAlignmentService()
-    @StateObject private var localizationService = TestLocalizationService()
-    @StateObject private var landmarkInspectionService = LandmarkInspectionService()
+    // MARK: - Dependency Injection
+    let container: Container
+
+    // MARK: - Services (Injected)
+    @StateObject private var mapService: MapService
+    @StateObject private var editingService: EditingService
+    @StateObject private var alignmentService: GPSAlignmentService
+    @StateObject private var localizationService: TestLocalizationService
+    @StateObject private var landmarkInspectionService: LandmarkInspectionService
     @StateObject private var interactionManager: SceneInteractionManager
-    @StateObject private var progressService = ProgressService()
+    @StateObject private var progressService: ProgressService
 
-    init() {
-        // Create the interaction manager with all dependencies
-        let editingService = EditingService()
-        let landmarkInspectionService = LandmarkInspectionService()
-        let mapService = MapService()
+    init(container: Container) {
+        self.container = container
 
-        _editingService = StateObject(wrappedValue: editingService)
-        _landmarkInspectionService = StateObject(wrappedValue: landmarkInspectionService)
-        _mapService = StateObject(wrappedValue: mapService)
-        _interactionManager = StateObject(wrappedValue: SceneInteractionManager(
-            editingService: editingService,
-            landmarkInspectionService: landmarkInspectionService,
-            mapService: mapService
-        ))
+        // Resolve dependencies from container
+        _mapService = StateObject(wrappedValue: container.resolve(MapService.self)!)
+        _editingService = StateObject(wrappedValue: container.resolve(EditingService.self)!)
+        _alignmentService = StateObject(wrappedValue: container.resolve(GPSAlignmentService.self)!)
+        _localizationService = StateObject(wrappedValue: container.resolve(TestLocalizationService.self)!)
+        _landmarkInspectionService = StateObject(wrappedValue: container.resolve(LandmarkInspectionService.self)!)
+        _interactionManager = StateObject(wrappedValue: container.resolve(SceneInteractionManager.self)!)
+        _progressService = StateObject(wrappedValue: container.resolve(ProgressService.self)!)
     }
-    
+
     // MARK: - State
     @State private var selectedTool: ExplorerTool = .explore
     @State private var isPointCloudVisible = true
-    
+
     // MARK: - View References (for navigation setup)
     @State private var mapView: MKMapView?
     @State private var mapNode: SCNNode?
-    @State private var navigationManager: LARNavigationManager?
-    @State private var sceneViewRef: SceneView?
+    @State private var navigationCoordinator: LARNavigationCoordinator?
     @State private var sceneViewModel: SceneViewModel?
     @StateObject private var mapViewModel = MapViewModel()
     
@@ -90,7 +90,9 @@ struct ContentView: View {
             }
         }
         .task {
-            await mapService.loadMap(from: defaultMapURL)
+            // Initialize services
+            progressService.configure(mapService: mapService, sceneViewModel: sceneViewModel)
+			mapService.loadMap(from: defaultMapURL)
         }
         .onChange(of: mapService.mapLoadCounter) { _, _ in
             configureApplicationWithLoadedMap()
@@ -108,18 +110,15 @@ struct ContentView: View {
         .onChange(of: landmarkInspectionService.selectedLandmark) { _, selectedLandmark in
             updateLandmarkInspectionVisualization(for: selectedLandmark)
         }
+        .onChange(of: sceneViewModel) { _, newSceneViewModel in
+            progressService.configure(mapService: mapService, sceneViewModel: newSceneViewModel)
+        }
         .errorAlert(message: mapService.errorMessage) {
             mapService.resetError()
         }
         .overlay(
             ProgressOverlay(progressService: progressService)
         )
-        .onAppear {
-            progressService.configure(mapService: mapService, sceneViewModel: sceneViewModel)
-        }
-        .onChange(of: sceneViewModel) { _, newSceneViewModel in
-            progressService.configure(mapService: mapService, sceneViewModel: newSceneViewModel)
-        }
     }
     
     // MARK: - Computed Properties
@@ -161,25 +160,31 @@ struct ContentView: View {
         mapNode.childNodes.forEach { $0.removeFromParentNode() }
         mapView.removeOverlays(mapView.overlays)
 
-        // Clear navigation manager reference (will be recreated)
-        navigationManager = nil
+        // Clear navigation coordinator reference (will be recreated)
+        navigationCoordinator = nil
+
+        // Register map in DI container (needed for LARNavigationCoordinator)
+        AppAssembly.registerMap(mapData, in: container)
 
         // Configure all components using services
         MapConfigurationService.configureMapRegion(mapView: mapView, for: mapData)
         alignmentService.configure(with: mapService)
 
-        // Initialize navigation
-        navigationManager = MapConfigurationService.createNavigationManager(
-            with: mapData,
-            mapView: mapView,
-            mapNode: mapNode
-        )
+        // Set up rescale callback to reload point cloud after scaling
+        alignmentService.onRescaleComplete = { [mapService, sceneViewModel] in
+            guard let mapData = mapService.mapData else { return }
+            sceneViewModel?.loadPointCloud(from: mapData)
+        }
 
-        // Set map data and navigation manager
-        mapViewModel.setMapData(mapData, navigationManager: navigationManager)
+        // Initialize navigation coordinator from DI container
+        navigationCoordinator = container.resolve(LARNavigationCoordinator.self)!
+        navigationCoordinator!.configure(sceneNode: mapNode, mapView: mapView)
 
-        // Configure editing service with navigation manager
-        editingService.configure(navigationManager: navigationManager!, mapService: mapService)
+        // Set map data and navigation coordinator
+        mapViewModel.setMapData(mapData, navigationManager: navigationCoordinator)
+
+        // Configure editing service with navigation coordinator
+        editingService.configure(navigationManager: navigationCoordinator!, mapService: mapService)
 
         // Configure localization service
         localizationService.configure(with: mapData)
@@ -258,7 +263,9 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    let container = Container()
+    let assembler = Assembler([AppAssembly()], container: container)
+    return ContentView(container: container)
 }
 
 

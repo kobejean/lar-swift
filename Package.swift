@@ -24,13 +24,17 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
+        .package(url: "https://github.com/Swinject/Swinject.git", from: "2.8.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "LocalizeAR",
-            dependencies: [.target(name: "LocalizeAR_ObjC")],
+            dependencies: [
+                .target(name: "LocalizeAR_ObjC"),
+                .product(name: "Swinject", package: "Swinject")
+            ],
             path: "Sources/LocalizeAR",
             cxxSettings: [.unsafeFlags(["-Wno-incomplete-umbrella"])],
         ),
@@ -59,8 +63,8 @@ let package = Package(
         ),
         // Uncoment below if working with local frameworks
 //        .binaryTarget(name: "lar", path: "Frameworks/lar.xcframework"),
-       .binaryTarget(name: "g2o", path: "Frameworks/g2o.xcframework"),
-       .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
+    //    .binaryTarget(name: "g2o", path: "Frameworks/g2o.xcframework"),
+    //    .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
         
         // Recompute checksum via:
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
@@ -69,20 +73,21 @@ let package = Package(
 //            url: "https://github.com/kobejean/lar/releases/download/v0.9.0/lar.xcframework.zip",
 //            checksum: "e0637b4089b5607e0aa0b4f6f3d496b83eab2b6b7fe85b717f0504b6d058e1a2"
 //        ),
-        // .binaryTarget(
-        //     name: "g2o",
-        //     url: "https://github.com/kobejean/lar/releases/download/v0.9.0/g2o.xcframework.zip",
-        //     checksum: "4faebbcbc7d999bf3a0cdcc1d4e0b0bf58e5fa970d87bd0cf89116aa5f8211b5"
-        // ),
-//        .binaryTarget(
-//            name: "opencv2",
-//            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/opencv2.xcframework.zip",
-//            checksum: "5f2bf918896a317703ac39fa27fd4e6eb26e3dfc438e21ddf37458be59cbbf68"
-//        ),
-        
-//        .testTarget(
-//            name: "LocalizeARTests",
-//            dependencies: ["LocalizeAR"]
-//        )
+        .binaryTarget(
+            name: "g2o",
+            url: "https://github.com/kobejean/lar/releases/download/v0.10.0/g2o.xcframework.zip",
+            checksum: "428b53efb2fb6cea954f129fe7e56cb44915ee6bc670859d6398e1ee80f3849c"
+        ),
+        .binaryTarget(
+            name: "opencv2",
+            url: "https://github.com/kobejean/lar/releases/download/v0.10.0/opencv2.xcframework.zip",
+            checksum: "174092a6bf2f65b3a0267794aac193470126482de6cbc1d6dbbed3b055c8ca42"
+        ),
+
+        .testTarget(
+            name: "LocalizeARTests",
+            dependencies: ["LocalizeAR"],
+            path: "Tests/LocalizeARTests"
+        )
     ]
 )

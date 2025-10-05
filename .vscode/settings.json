@@ -1,6 +1,30 @@
 {
     "files.associations": {
         "core": "cpp",
-        "specialfunctions": "cpp"
+        "specialfunctions": "cpp",
+        "__verbose_abort": "cpp",
+        "cmath": "cpp",
+        "cstddef": "cpp",
+        "cstdint": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "execution": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "stdexcept": "cpp",
+        "typeinfo": "cpp",
+        "variant": "cpp",
+        "array": "cpp",
+        "complex": "cpp",
+        "cwctype": "cpp",
+        "iostream": "cpp",
+        "map": "cpp",
+        "optional": "cpp",
+        "sstream": "cpp",
+        "string": "cpp",
+        "future": "cpp"
     }
 }

@@ -20,16 +20,20 @@ class ProgressService: ObservableObject {
         case loadingPointCloud(progress: Double)
 
         var isLoading: Bool {
-            switch self {
-            case .idle: return false
-            case .loadingMap, .loadingPointCloud: return true
-            }
+            !isIdle
+        }
+
+        var isIdle: Bool {
+            if case .idle = self { return true }
+            return false
         }
 
         var title: String {
             switch self {
-            case .idle: return ""
-            case .loadingMap: return "Loading Map"
+            case .idle:
+                return ""
+            case .loadingMap:
+                return "Loading Map"
             case .loadingPointCloud(let progress):
                 return "Loading Point Cloud (\(Int(progress * 100))%)"
             }
@@ -37,9 +41,10 @@ class ProgressService: ObservableObject {
 
         var progress: Double {
             switch self {
-            case .idle: return 0.0
-            case .loadingMap(let progress): return progress
-            case .loadingPointCloud(let progress): return progress
+            case .idle:
+                return 0.0
+            case .loadingMap(let progress), .loadingPointCloud(let progress):
+                return progress
             }
         }
     }
@@ -48,6 +53,11 @@ class ProgressService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private weak var currentMapService: MapService?
     private weak var currentSceneViewModel: SceneViewModel?
+
+    // MARK: - Lifecycle
+    deinit {
+        cancellables.removeAll()
+    }
 
     // MARK: - Public Methods
     func configure(mapService: MapService, sceneViewModel: SceneViewModel?) {
@@ -68,8 +78,12 @@ class ProgressService: ObservableObject {
             .combineLatest(mapService.$loadingProgress)
             .sink { [weak self] (isLoading, progress) in
                 guard let self = self else { return }
+
+                // Validate progress range
+                let clampedProgress = max(0.0, min(1.0, progress))
+
                 if isLoading {
-                    self.currentProgress = .loadingMap(progress: progress)
+                    self.currentProgress = .loadingMap(progress: clampedProgress)
                 } else if case .loadingMap = self.currentProgress {
                     // Only clear if we were showing map progress
                     self.currentProgress = .idle
@@ -83,8 +97,12 @@ class ProgressService: ObservableObject {
                 .combineLatest(sceneViewModel.$pointCloudLoadingProgress)
                 .sink { [weak self] (isLoading, progress) in
                     guard let self = self else { return }
+
+                    // Validate progress range
+                    let clampedProgress = max(0.0, min(1.0, progress))
+
                     if isLoading {
-                        self.currentProgress = .loadingPointCloud(progress: progress)
+                        self.currentProgress = .loadingPointCloud(progress: clampedProgress)
                     } else if case .loadingPointCloud = self.currentProgress {
                         // Only clear if we were showing point cloud progress
                         self.currentProgress = .idle

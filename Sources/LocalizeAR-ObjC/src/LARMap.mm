@@ -186,11 +186,23 @@
                 });
             }
         });
+
+        _internal->setDidUpdateAnchorsCallback([weakSelf]() {
+            LARMap* strongSelf = weakSelf;
+            if (strongSelf && strongSelf.delegate) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if ([strongSelf.delegate respondsToSelector:@selector(mapDidUpdateAnchors:)]) {
+                        [strongSelf.delegate mapDidUpdateAnchors:strongSelf];
+                    }
+                });
+            }
+        });
     } else if (_internal) {
         _internal->setDidAddAnchorCallback([](lar::Anchor& anchor) {});
         _internal->setDidUpdateAnchorCallback([](lar::Anchor& anchor) {});
         _internal->setWillRemoveAnchorCallback([](lar::Anchor& anchor) {});
         _internal->setDidUpdateOriginCallback([](const lar::Map::Transform& transform) {});
+        _internal->setDidUpdateAnchorsCallback([]() {});
     }
 }
 

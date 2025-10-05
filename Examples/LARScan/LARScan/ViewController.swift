@@ -27,12 +27,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	var audioPlayer: AVAudioPlayer!
 	var mapper: LARLiveMapper!
 	var anchorNodes = LARSCNNodeCollection()
-	var larNavigation: LARNavigationManager!
+	var larNavigation: LARNavigationCoordinator!
 	var pauseGPSRecord = false
 	private var currentFolderURL: URL?
 	private var selectedAnchorNode: LARSCNAnchorNode?
 	private var successfulLocalizations = 0
 	private var totalLocalizationAttempts = 0
+
+	// Filtered tracker for smooth drift correction
+	private var filteredTracker: LARFilteredTracker?
+	private var lastMeasurementTime: TimeInterval = 0
+	private var useFilteredTracking = true // Enable filtered tracking
 	
 	let locationManager: CLLocationManager = {
 		let locationManager = CLLocationManager()
@@ -57,12 +62,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		mapper = LARLiveMapper(directory: createSessionDirctory()!)
 		Task {
 			let map = await mapper.data.map
-			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
+
+			// Initialize navigation coordinator with new API
+			larNavigation = LARNavigationCoordinator(map: map)
+			larNavigation.configure(sceneNode: mapNode, mapView: mapView)
 			larNavigation.additionalMapDelegate = self
+
+			// Initialize filtered tracker if enabled
+			if useFilteredTracking {
+				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
+			}
 
 			await MainActor.run {
 				updateConsole("LARScan initialized")
 				updateConsole("Session: \(createSessionDirctory()?.lastPathComponent ?? "unknown")")
+				if useFilteredTracking {
+					updateConsole("Filtered tracking enabled")
+				}
 			}
 		}
 
@@ -270,28 +286,61 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				updateConsole("Total landmarks: \(landmarks.count)")
 			}
 
-			if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter) {
+			// Use filtered tracker if available and should perform measurement update
+			if await useFilteredTracking,
+			   let filteredTracker = await filteredTracker,
+			   filteredTracker.shouldPerformMeasurementUpdate(lastMeasurementTime: await lastMeasurementTime) {
+
+				let result = filteredTracker.measurementUpdate(frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter)
 				let elapsedTime = Date().timeIntervalSince(startTime)
 
 				await MainActor.run {
-					successfulLocalizations += 1
-					mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
+					if result.success {
+						successfulLocalizations += 1
+						lastMeasurementTime = CACurrentMediaTime()
 
-					// Count matched landmarks
-					let matchedCount = landmarks.filter { $0.isMatched }.count
-					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+						let uncertainty = filteredTracker.positionUncertainty
 
-					updateConsole("LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
-					updateConsole("Matched landmarks: \(matchedCount)/\(landmarks.count)")
-					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+						updateConsole("FILTERED LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
+						updateConsole("Confidence: \(String(format: "%.2f", result.confidence))")
+						updateConsole("Uncertainty: \(String(format: "%.2f", uncertainty))m")
+						updateConsole("Matched: \(result.matchedLandmarkCount), Inliers: \(result.inlierCount)")
+						updateConsole("Animating: \(filteredTracker.isAnimating ? "Yes" : "No")")
+						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+					} else {
+						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+						updateConsole("FILTERED FAILED: \(String(format: "%.3f", elapsedTime))s")
+						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+					}
 				}
 				await renderDebug()
+
 			} else {
-				let elapsedTime = Date().timeIntervalSince(startTime)
-				await MainActor.run {
-					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
-					updateConsole("FAILED: \(String(format: "%.3f", elapsedTime))s")
-					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+				// Fallback to original tracker
+				if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter) {
+					let elapsedTime = Date().timeIntervalSince(startTime)
+
+					await MainActor.run {
+						successfulLocalizations += 1
+						mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
+
+						// Count matched landmarks
+						let matchedCount = landmarks.filter { $0.isMatched }.count
+						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+
+						updateConsole("LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
+						updateConsole("Matched landmarks: \(matchedCount)/\(landmarks.count)")
+						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+					}
+					await renderDebug()
+				} else {
+					let elapsedTime = Date().timeIntervalSince(startTime)
+					await MainActor.run {
+						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+						updateConsole("FAILED: \(String(format: "%.3f", elapsedTime))s")
+						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+					}
 				}
 			}
 		}
@@ -436,6 +485,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		let transform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
 		let position = simd_make_float3(transform.columns.3)
 		larNavigation.updateUserLocation(position: position)
+
+		// Update filtered tracker prediction step every frame
+		if useFilteredTracking {
+			filteredTracker?.updateVIOCameraPose(frame.camera.transform)
+			filteredTracker?.predictStep()
+
+			// Update map node with filtered transform if initialized
+			if let filteredTracker = filteredTracker, filteredTracker.isInitialized {
+				let larToVIOTransform = filteredTracker.getFilteredTransform()
+				// Direct application - no complex calculation needed
+				mapNode.transform = SCNMatrix4(larToVIOTransform)
+			}
+		}
+
 		Task(priority: .low) { [weak mapper] in
 			await mapper?.mapper.addPosition(position, timestamp: timestamp)
 		}
@@ -460,6 +523,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
 		let logEntry = "[\(timestamp)] \(message)\n"
 		consoleText.text = (consoleText.text ?? "") + logEntry
+		print("[CONSOLE] \(logEntry.dropLast())")
 
 		// Auto-scroll to bottom
 		let bottom = NSMakeRange(consoleText.text.count - 1, 1)
@@ -529,9 +593,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			// TODO: consider detaching
 			await mapper.mapper.readMetadata()
 			let map = await mapper.data.map
-			larNavigation = LARNavigationManager(map: map, mapView: mapView, mapNode: mapNode)
+			// Initialize navigation coordinator with new API
+			larNavigation = LARNavigationCoordinator(map: map)
+			larNavigation.configure(sceneNode: mapNode, mapView: mapView)
 			larNavigation.additionalMapDelegate = self
 			await mapper.updateTracker()
+
+			// Initialize filtered tracker for loaded map
+			if useFilteredTracking {
+				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
+				lastMeasurementTime = 0 // Reset measurement time
+			}
 
 			await MainActor.run {
 				successfulLocalizations = 0
@@ -539,6 +611,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				updateConsole("Loaded map: \(selectedURL.lastPathComponent)")
 				updateConsole("Landmarks: \(map.landmarks.count)")
 				updateConsole("Tracker updated")
+				if useFilteredTracking {
+					updateConsole("Filtered tracking initialized")
+				}
 			}
 		}
 	}

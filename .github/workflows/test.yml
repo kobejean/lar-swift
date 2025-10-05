@@ -24,8 +24,30 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive  # Fetch git submodules (C++ core)
 
-      # Runs a single command using the runners shell
-      - name: Test
-        run: xcodebuild -scheme LocalizeAR clean -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
-        # run: xcodebuild -scheme LocalizeAR clean test -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
+      # Set up Swift compiler environment
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      # Build using our custom script (uses Apple Clang)
+      - name: Build LocalizeAR
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        env:
+          CC: /usr/bin/clang
+          CXX: /usr/bin/clang++
+
+      # Run tests (when enabled)
+      - name: Run Tests
+        run: ./build.sh test
+        env:
+          CC: /usr/bin/clang
+          CXX: /usr/bin/clang++
+        continue-on-error: true  # Don't fail workflow if tests aren't implemented yet
+
+      # Optional: Build for iOS (using xcodebuild)
+      # - name: Build for iOS
+      #   run: xcodebuild -scheme LocalizeAR clean build -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15'

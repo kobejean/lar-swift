@@ -27,7 +27,7 @@ class MapViewModel: NSObject, ObservableObject {
     // MARK: - Private Properties
     private weak var mapView: MKMapView?
     private var map: LARMap?
-    private var navigationManager: LARNavigationManager?
+    private var navigationManager: LARNavigationCoordinator?
     
     // MARK: - Configuration
     func configure(mapView: MKMapView) {
@@ -35,7 +35,7 @@ class MapViewModel: NSObject, ObservableObject {
         setupMapView()
     }
     
-    func setMapData(_ map: LARMap, navigationManager: LARNavigationManager?) {
+    func setMapData(_ map: LARMap, navigationManager: LARNavigationCoordinator?) {
         self.map = map
         self.navigationManager = navigationManager
         

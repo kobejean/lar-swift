@@ -8,26 +8,49 @@ LocalizeAR is a sophisticated AR localization library for iOS/macOS that combine
 
 ## Build Commands
 
-### Swift Package Manager
+### Recommended: Use Build Script (Handles Compiler Configuration)
+
+The project includes a `build.sh` script that automatically configures the correct C++ compiler (Apple Clang) to avoid conflicts with Homebrew's gcc.
+
 ```bash
-# Build the package
-swift build
+# Build debug version (recommended)
+./build.sh
 
-# Build for release
-swift build -c release
+# Build and run tests
+./build.sh test
 
-# Test the package
-swift test
+# Build release version
+./build.sh release
 
 # Clean build artifacts
+./build.sh clean
+```
+
+**Why use build.sh?**
+- Automatically sets `CC` and `CXX` to Apple Clang
+- Prevents gcc-12 conflicts from Homebrew
+- Same configuration used in CI/CD
+- Displays compiler versions for verification
+
+### Swift Package Manager (Manual)
+
+If you need to use SPM directly, set compiler environment variables first:
+
+```bash
+# Set compilers to Apple Clang (required!)
+export CC=$(xcrun --find clang)
+export CXX=$(xcrun --find clang++)
+
+# Then use SPM commands
+swift build
+swift build -c release
+swift test
 swift package clean
-
-# Resolve dependencies
 swift package resolve
-
-# Update dependencies
 swift package update
 ```
+
+**Note:** Without setting `CC` and `CXX`, SPM may use gcc-12 from Homebrew, which will fail with unrecognized flag errors.
 
 ### Example Applications
 ```bash
@@ -70,15 +93,36 @@ The project uses a three-layer architecture:
 - `LARARAnchor.swift`: AR anchor management
 
 #### Navigation System (`/Sources/LocalizeAR/Navigation/`)
-- `LARNavigationManager.swift`: High-level navigation coordination
+
+**New SOLID Architecture (Recommended):**
+- `LARNavigationCoordinator.swift`: Facade for navigation (replaces LARNavigationManager)
+- `Protocols/`: Protocol interfaces for dependency injection
+  - `LARSceneRendering.swift`: SceneKit rendering operations
+  - `LARMapRendering.swift`: MapKit rendering operations
+  - `LARNavigationStateManaging.swift`: State management
+- `Rendering/`: Concrete implementations
+  - `LARSceneRenderer.swift`: SceneKit-only rendering
+  - `LARMapRenderer.swift`: MapKit-only rendering
+- `State/LARNavigationStateManager.swift`: Navigation state
+- `Data/LARNavigationGraphAdapter.swift`: Anchor/edge data container
+
+**Legacy (Deprecated):**
+- `LARNavigationManager.swift`: Monolithic manager (use LARNavigationCoordinator instead)
 - `LARNavigationGraph.swift`: Graph-based pathfinding
-- `LARMKUserLocationAnnotationView.swift`: MapKit integration
+
+**MapKit Integration:**
+- `LARMKUserLocationAnnotationView.swift`: User location view
+- `LARMKNavigationNodeOverlay.swift`: Navigation node overlays
+- `LARMKNavigationGuideNodeOverlay.swift`: Guide node overlays
 
 #### Rendering (`/Sources/LocalizeAR/Rendering/` & `/SceneKit/`)
 - `LARAnchorEntity.swift`: RealityKit entities
 - `LARSCNAnchorNode.swift`: SceneKit node management
 
 ### Dependencies
+
+#### External Packages (Swift PM)
+- **Swinject** (2.8.0+): Dependency injection framework for protocol-based architecture
 
 #### External Frameworks (XCFrameworks)
 - `g2o.xcframework`: Graph optimization for SLAM backend
@@ -89,12 +133,51 @@ The project uses a three-layer architecture:
 - SceneKit, MapKit, CoreLocation: Rendering and location services
 - Accelerate: High-performance computing
 
+## Experimental Development Philosophy
+
+This project is in the experimental phase, which shapes our development approach:
+
+### Core Principles
+
+1. **Fail Fast, Learn Fast**: Prioritize quick iterations over perfect code. Make bold architectural changes when they improve the system fundamentally.
+
+2. **Make It Work → Make It Right → Make It Fast**:
+   - First: Get working code that demonstrates the concept
+   - Second: Refactor for clean architecture and maintainability
+   - Third: Profile and optimize only identified bottlenecks
+
+3. **Aggressive Error Detection**: Unintended states should throw errors immediately, not fall back gracefully. This is not production code - we want to catch design flaws early.
+   - Use `fatalError()` liberally for "impossible" states
+   - Prefer `precondition()` over defensive nil checks
+   - Make invalid states unrepresentable when possible
+
+4. **Backwards Compatibility is Optional**: We can make breaking changes freely as long as:
+   - We can detect regressions through testing/examples
+   - The change represents a principled architectural improvement
+   - We document the reasoning for future reference
+
+### Experimental Practices
+
+- **Bold Refactoring**: Don't hesitate to restructure entire modules if it clarifies the design
+- **API Experimentation**: Try multiple API designs for the same functionality to find the best developer experience
+- **Performance Last**: Focus on correctness and clarity first; optimize only when performance becomes a concrete blocker
+- **Verbose Logging**: Add detailed logging to understand system behavior - remove it later if needed
+- **Example-Driven Development**: Use the example apps as the primary way to validate architectural decisions
+
+### Quality Gates
+
+Before considering any code "stable":
+1. Example applications demonstrate the feature working end-to-end
+2. Error states are properly detected and reported
+3. The API feels natural to use in real scenarios
+4. Core algorithms are validated against test data
+
 ## Development Workflow
 
 ### Adding New Features
 1. Implement core algorithms in C++ (`.Submodules/lar/`)
 2. Add Objective-C bridge interfaces in `Sources/LocalizeAR-ObjC/`
-3. Create Swift API wrappers in `Sources/LocalizeAR/`
+3. Create Swift extensions in `Sources/LocalizeAR/`
 4. Update example applications to demonstrate usage
 
 ### Testing
@@ -154,3 +237,85 @@ This is a performance-critical real-time AR system that requires:
 - Platform-specific optimizations (ARKit vs OpenCL)
 - Real-time processing constraints for AR applications
 - Cross-platform compatibility between iOS and macOS
+- Thread-safety
+
+### Dependency Injection & SOLID Principles
+
+The Swift layer uses **Swinject** for dependency injection and follows SOLID principles:
+
+#### Using LocalizeAR with DI
+
+```swift
+import Swinject
+import LocalizeAR
+
+// In your app's assembly
+class AppAssembly: Assembly {
+    func assemble(container: Container) {
+        // Import LocalizeAR's DI setup
+        _ = Assembler([LocalizeARAssembly()], container: container)
+
+        // Register your LARMap instance
+        container.register(LARMap.self) { _ in myMapData }
+
+        // Resolve navigation coordinator
+        let coordinator = container.resolve(LARNavigationCoordinator.self)!
+    }
+}
+```
+
+#### Architecture Patterns Used
+
+- **Facade Pattern**: `LARNavigationCoordinator` provides simple API
+- **Protocol-Oriented Design**: All components have protocol interfaces
+- **Dependency Injection**: Via Swinject (`LocalizeARAssembly`)
+- **Single Responsibility**: Each component has one job
+  - `LARSceneRenderer`: SceneKit rendering only
+  - `LARMapRenderer`: MapKit rendering only
+  - `LARNavigationStateManager`: State management only
+
+**See `ARCHITECTURE_REFACTOR.md` for detailed documentation.**
+
+## Troubleshooting
+
+### Build Fails with gcc-12 Errors
+
+**Symptoms:**
+```
+gcc-12: error: unrecognized command-line option '-target'
+gcc-12: error: unrecognized command-line option '-fmodules'
+```
+
+**Solution:** Use the build script or set compiler environment variables:
+```bash
+# Option 1: Use build script (recommended)
+./build.sh
+
+# Option 2: Set environment variables
+export CC=$(xcrun --find clang)
+export CXX=$(xcrun --find clang++)
+swift build
+```
+
+**Root Cause:** Homebrew's gcc-12 doesn't support Xcode-specific flags. SPM needs Apple Clang.
+
+### Submodule Issues
+
+If C++ core fails to compile:
+```bash
+# Ensure submodules are initialized
+git submodule update --init --recursive
+
+# Verify submodule is present
+ls -la .Submodules/lar/
+```
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/test.yml`) automatically:
+- Uses `build.sh` for consistent builds
+- Sets `CC` and `CXX` to Apple Clang
+- Fetches git submodules
+- Runs tests
+
+**See `CI_CD_SETUP.md` for detailed CI/CD documentation.**
