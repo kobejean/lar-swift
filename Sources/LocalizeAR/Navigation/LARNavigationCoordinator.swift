@@ -30,6 +30,9 @@ public class LARNavigationCoordinator: NSObject {
     // MARK: - Properties
     public weak var delegate: LARNavigationCoordinatorDelegate?
 
+    /// Additional map delegate for app-specific logic (e.g., auto-creating edges)
+    public weak var additionalMapDelegate: LARMapDelegate?
+
     /// All navigation anchors
     public var anchors: [Int32: LARAnchor] {
         return navigationGraph.anchors
@@ -191,6 +194,18 @@ public class LARNavigationCoordinator: NSObject {
         sceneRenderer.clearAllHighlights()
     }
 
+    /// Set anchor selection state (for backward compatibility)
+    /// - Parameters:
+    ///   - anchorId: ID of the anchor
+    ///   - selected: Whether to select or deselect
+    public func setAnchorSelection(id anchorId: Int32, selected: Bool) {
+        if selected {
+            selectAnchor(id: anchorId)
+        } else {
+            deselectAnchor(id: anchorId)
+        }
+    }
+
     /// Check if an anchor is selected
     /// - Parameter anchorId: ID of the anchor to check
     /// - Returns: True if the anchor is selected
@@ -259,6 +274,16 @@ public class LARNavigationCoordinator: NSObject {
         regenerateGuideNodes()
     }
 
+    /// Update map overlays (e.g., after origin changes or anchor updates)
+    public func updateMapOverlays() {
+        guard map.originReady else { return }
+        mapRenderer.updateAllOverlays(
+            anchors: navigationGraph.anchors,
+            edges: navigationGraph.edges,
+            using: map
+        )
+    }
+
     // MARK: - Private Helper Methods
 
     private func loadExistingNavigationData() {
@@ -294,15 +319,29 @@ public class LARNavigationCoordinator: NSObject {
             sceneRenderer.addEdgeGuideNodes(from: fromPos, to: toPos)
         }
     }
+}
 
-    private func updateMapOverlays() {
-        guard map.originReady else { return }
-        mapRenderer.updateAllOverlays(
-            anchors: navigationGraph.anchors,
-            edges: navigationGraph.edges,
-            using: map
-        )
+// MARK: - MKMapViewDelegate Forwarding
+extension LARNavigationCoordinator {
+    /// Forward MKMapViewDelegate renderer method to internal map renderer
+    /// This provides backward compatibility for apps that delegate map rendering to the coordinator
+    public func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        // Cast to concrete type to access MKMapViewDelegate methods
+        guard let concreteRenderer = mapRenderer as? LARMapRenderer else {
+            return MKOverlayRenderer(overlay: overlay)
+        }
+        return concreteRenderer.mapView(mapView, rendererFor: overlay)
     }
+
+#if canImport(UIKit)
+    /// Forward MKMapViewDelegate annotation view method to internal map renderer (iOS only)
+    public func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard let concreteRenderer = mapRenderer as? LARMapRenderer else {
+            return nil
+        }
+		return concreteRenderer.mapView(mapView, viewFor: annotation)
+    }
+#endif
 }
 
 // MARK: - LARMapDelegate
@@ -310,10 +349,13 @@ extension LARNavigationCoordinator: LARMapDelegate {
     public func map(_ map: LARMap, didAdd anchor: LARAnchor) {
         // Map delegate callback - anchor was added to map
         // We handle this through addNavigationPoint instead
+
+        // Forward to additional delegate for app-specific logic
+        additionalMapDelegate?.map?(map, didAdd: anchor)
     }
 
     public func map(_ map: LARMap, didUpdate anchor: LARAnchor) {
-        // Map delegate callback - anchor was updated
+        // Map delegate callback - single anchor was updated
         let floatTransform = simd_float4x4(
             simd_float4(anchor.transform.columns.0),
             simd_float4(anchor.transform.columns.1),
@@ -321,15 +363,51 @@ extension LARNavigationCoordinator: LARMapDelegate {
             simd_float4(anchor.transform.columns.3)
         )
         updateNavigationPoint(anchor: anchor, transform: floatTransform)
+
+        // Note: For bulk updates (e.g., rescaling), didUpdateAnchors is called instead
+        // This callback is only for individual anchor updates
+        refreshGuideNodes()
+        updateMapOverlays()
+
+        // Forward to additional delegate
+        additionalMapDelegate?.map?(map, didUpdate: anchor)
+    }
+
+    public func mapDidUpdateAnchors(_ map: LARMap) {
+        // Map delegate callback - bulk anchor update (e.g., after bundle adjustment rescaling)
+        // Update all anchor transforms from the map
+        for anchor in map.anchors {
+            let floatTransform = simd_float4x4(
+                simd_float4(anchor.transform.columns.0),
+                simd_float4(anchor.transform.columns.1),
+                simd_float4(anchor.transform.columns.2),
+                simd_float4(anchor.transform.columns.3)
+            )
+            updateNavigationPoint(anchor: anchor, transform: floatTransform)
+        }
+
+        // Refresh visualizations once after all anchors updated
+        refreshGuideNodes()
+        updateMapOverlays()
+
+        // Forward to additional delegate
+        additionalMapDelegate?.mapDidUpdateAnchors?(map)
     }
 
     public func map(_ map: LARMap, didUpdateOrigin transform: simd_double4x4) {
-        // Map origin changed - update all map overlays
+        // Map origin changed - update all map overlays and guide nodes
         updateMapOverlays()
+        refreshGuideNodes()
+
+        // Forward to additional delegate
+        additionalMapDelegate?.map?(map, didUpdateOrigin: transform)
     }
 
     public func map(_ map: LARMap, willRemove anchor: LARAnchor) {
         // Map delegate callback - anchor will be removed from map
         removeNavigationAnchor(id: anchor.id)
+
+        // Forward to additional delegate
+        additionalMapDelegate?.map?(map, willRemove: anchor)
     }
 }

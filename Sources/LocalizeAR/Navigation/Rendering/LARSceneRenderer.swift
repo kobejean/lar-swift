@@ -33,8 +33,8 @@ public class LARSceneRenderer: LARSceneRendering {
     private var anchorNodes = LARSCNNodeCollection()
     private var previewNodes: [Int32: SCNNode] = [:]
 
-    // Reusable guide node template
-    private let guideNodeTemplate: SCNNode = {
+    // Reusable guide node template (lazy to avoid Metal initialization in tests)
+    private lazy var guideNodeTemplate: SCNNode = {
         let node = SCNNode()
         let geometry = SCNSphere(radius: Constants.guideNodeRadius)
         geometry.firstMaterial?.diffuse.contents = Constants.guideNodeColor
@@ -112,8 +112,10 @@ public class LARSceneRenderer: LARSceneRendering {
             if let currentNode = anchorNodes.nodeById[anchorId] {
                 let lineNode = createPreviewLine(from: currentNode.simdPosition, to: previewPosition)
                 rootNode.addChildNode(lineNode)
-                // Store line node with negative ID to distinguish it
-                previewNodes[-anchorId] = lineNode
+                // Store line node with offset to avoid collision with anchor IDs
+                // Using Int32.max - anchorId to ensure uniqueness (can't use negative because -0 == 0)
+                let lineKey = Int32.max - anchorId
+                previewNodes[lineKey] = lineNode
             }
         }
     }
