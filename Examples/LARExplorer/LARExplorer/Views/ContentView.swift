@@ -170,6 +170,12 @@ struct ContentView: View {
         MapConfigurationService.configureMapRegion(mapView: mapView, for: mapData)
         alignmentService.configure(with: mapService)
 
+        // Set up rescale callback to reload point cloud after scaling
+        alignmentService.onRescaleComplete = { [mapService, sceneViewModel] in
+            guard let mapData = mapService.mapData else { return }
+            sceneViewModel?.loadPointCloud(from: mapData)
+        }
+
         // Initialize navigation coordinator from DI container
         navigationCoordinator = container.resolve(LARNavigationCoordinator.self)!
         navigationCoordinator!.configure(sceneNode: mapNode, mapView: mapView)

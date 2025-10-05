@@ -56,6 +56,7 @@ NS_ASSUME_NONNULL_BEGIN
 @optional -(void)map:(LARMap *)map didUpdate: (LARAnchor *)anchor;
 @optional -(void)map:(LARMap *)map willRemove: (LARAnchor *)anchor;
 @optional -(void)map:(LARMap *)map didUpdateOrigin: (simd_double4x4)transform;
+@optional -(void)mapDidUpdateAnchors:(LARMap *)map;  // Bulk update (e.g., after rescaling)
 
 @end
 
