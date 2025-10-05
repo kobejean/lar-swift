@@ -2,7 +2,7 @@
 //  LARSceneRenderer.swift
 //  LocalizeAR
 //
-//  Created by Assistant on 2025-10-05.
+//  Created by Jean Atsumi Flaherty on 2025-10-05.
 //
 
 import Foundation

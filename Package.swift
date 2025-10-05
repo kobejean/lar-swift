@@ -83,10 +83,11 @@ let package = Package(
 //            url: "https://github.com/kobejean/lar/releases/download/v0.5.0/opencv2.xcframework.zip",
 //            checksum: "5f2bf918896a317703ac39fa27fd4e6eb26e3dfc438e21ddf37458be59cbbf68"
 //        ),
-        
-//        .testTarget(
-//            name: "LocalizeARTests",
-//            dependencies: ["LocalizeAR"]
-//        )
+
+        .testTarget(
+            name: "LocalizeARTests",
+            dependencies: ["LocalizeAR"],
+            path: "Tests/LocalizeARTests"
+        )
     ]
 )
