@@ -19,7 +19,7 @@ class EditingService: ObservableObject {
     @Published var isEditingMode = false
     
     // MARK: - Internal Properties
-    private weak var navigationManager: LARNavigationManager?
+    private weak var navigationManager: LARNavigationCoordinator?
     private weak var mapService: MapService?
     @Published var edgeCreationSourceAnchor: Int32?
     
@@ -62,7 +62,7 @@ class EditingService: ObservableObject {
     }
     
     // MARK: - Configuration
-    func configure(navigationManager: LARNavigationManager, mapService: MapService) {
+    func configure(navigationManager: LARNavigationCoordinator, mapService: MapService) {
         self.navigationManager = navigationManager
         self.mapService = mapService
     }
