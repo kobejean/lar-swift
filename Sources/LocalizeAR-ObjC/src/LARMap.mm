@@ -138,71 +138,75 @@
     _delegate = delegate;
     if (delegate && _internal) {
         __weak LARMap* weakSelf = self;
-        
-        _internal->setDidAddAnchorCallback([weakSelf](lar::Anchor& anchor) {
+
+        // Helper to convert C++ anchor vector to NSArray (no copy needed - fresh array)
+        auto toObjCArray = [](const auto& anchors) -> NSArray<LARAnchor*>* {
+            NSMutableArray<LARAnchor*>* objcAnchors = [[NSMutableArray alloc] initWithCapacity:anchors.size()];
+            for (auto& anchorRef : anchors) {
+                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternal:const_cast<lar::Anchor*>(&anchorRef.get())];
+                [objcAnchors addObject:objcAnchor];
+            }
+            return objcAnchors;
+        };
+
+        // Bulk anchor add callback
+        _internal->setDidAddAnchorsCallback([weakSelf, toObjCArray](const std::vector<std::reference_wrapper<lar::Anchor>>& anchors) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
-                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternal:&anchor];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ([strongSelf.delegate respondsToSelector:@selector(map:didAdd:)]) {
-                        [strongSelf.delegate map:strongSelf didAdd:objcAnchor];
-                    }
-                });
+                if ([strongSelf.delegate respondsToSelector:@selector(map:didAddAnchors:)]) {
+                    [strongSelf.delegate map:strongSelf didAddAnchors:toObjCArray(anchors)];
+                }
             }
         });
-        
-        _internal->setDidUpdateAnchorCallback([weakSelf](lar::Anchor& anchor) {
+
+        // Bulk anchor update callback
+        _internal->setDidUpdateAnchorsCallback([weakSelf, toObjCArray](const std::vector<std::reference_wrapper<lar::Anchor>>& anchors) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
-                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternal:&anchor];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ([strongSelf.delegate respondsToSelector:@selector(map:didUpdate:)]) {
-                        [strongSelf.delegate map:strongSelf didUpdate:objcAnchor];
-                    }
-                });
+                if ([strongSelf.delegate respondsToSelector:@selector(map:didUpdateAnchors:)]) {
+                    [strongSelf.delegate map:strongSelf didUpdateAnchors:toObjCArray(anchors)];
+                }
             }
         });
-        
-        _internal->setWillRemoveAnchorCallback([weakSelf](lar::Anchor& anchor) {
+
+        // Bulk anchor removal callback
+        _internal->setWillRemoveAnchorsCallback([weakSelf, toObjCArray](const std::vector<std::reference_wrapper<const lar::Anchor>>& anchors) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
-                LARAnchor* objcAnchor = [[LARAnchor alloc] initWithInternalCopy:&anchor];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ([strongSelf.delegate respondsToSelector:@selector(map:willRemove:)]) {
-                        [strongSelf.delegate map:strongSelf willRemove:objcAnchor];
-                    }
-                });
+                if ([strongSelf.delegate respondsToSelector:@selector(map:willRemoveAnchors:)]) {
+                    [strongSelf.delegate map:strongSelf willRemoveAnchors:toObjCArray(anchors)];
+                }
             }
         });
-        
+
+        // Origin update callback
         _internal->setDidUpdateOriginCallback([weakSelf](const lar::Map::Transform& transform) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
                 simd_double4x4 simdTransform = [LARConversion simd4x4FromTransform3d:transform];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ([strongSelf.delegate respondsToSelector:@selector(map:didUpdateOrigin:)]) {
-                        [strongSelf.delegate map:strongSelf didUpdateOrigin:simdTransform];
-                    }
-                });
+                
+                if ([strongSelf.delegate respondsToSelector:@selector(map:didUpdateOrigin:)]) {
+                    [strongSelf.delegate map:strongSelf didUpdateOrigin:simdTransform];
+                }
             }
         });
 
-        _internal->setDidUpdateAnchorsCallback([weakSelf]() {
+        // Edge addition callback
+        _internal->setDidAddEdgeCallback([weakSelf](std::size_t from_id, std::size_t to_id) {
             LARMap* strongSelf = weakSelf;
             if (strongSelf && strongSelf.delegate) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ([strongSelf.delegate respondsToSelector:@selector(mapDidUpdateAnchors:)]) {
-                        [strongSelf.delegate mapDidUpdateAnchors:strongSelf];
-                    }
-                });
+                if ([strongSelf.delegate respondsToSelector:@selector(map:didAddEdgeFrom:to:)]) {
+                    [strongSelf.delegate map:strongSelf didAddEdgeFrom:(int)from_id to:(int)to_id];
+                }
             }
         });
     } else if (_internal) {
-        _internal->setDidAddAnchorCallback([](lar::Anchor& anchor) {});
-        _internal->setDidUpdateAnchorCallback([](lar::Anchor& anchor) {});
-        _internal->setWillRemoveAnchorCallback([](lar::Anchor& anchor) {});
+        // Clear all callbacks
+        _internal->setDidAddAnchorsCallback([](const std::vector<std::reference_wrapper<lar::Anchor>>& anchors) {});
+        _internal->setDidUpdateAnchorsCallback([](const std::vector<std::reference_wrapper<lar::Anchor>>& anchors) {});
+        _internal->setWillRemoveAnchorsCallback([](const std::vector<std::reference_wrapper<const lar::Anchor>>& anchors) {});
         _internal->setDidUpdateOriginCallback([](const lar::Map::Transform& transform) {});
-        _internal->setDidUpdateAnchorsCallback([]() {});
+        _internal->setDidAddEdgeCallback([](std::size_t from_id, std::size_t to_id) {});
     }
 }
 

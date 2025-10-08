@@ -52,11 +52,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol LARMapDelegate<NSObject>
 
-@optional -(void)map:(LARMap *)map didAdd: (LARAnchor *)anchor;
-@optional -(void)map:(LARMap *)map didUpdate: (LARAnchor *)anchor;
-@optional -(void)map:(LARMap *)map willRemove: (LARAnchor *)anchor;
-@optional -(void)map:(LARMap *)map didUpdateOrigin: (simd_double4x4)transform;
-@optional -(void)mapDidUpdateAnchors:(LARMap *)map;  // Bulk update (e.g., after rescaling)
+// Bulk operation callbacks (preferred)
+@optional -(void)map:(LARMap *)map didAddAnchors:(NSArray<LARAnchor*> *)anchors;
+@optional -(void)map:(LARMap *)map didUpdateAnchors:(NSArray<LARAnchor*> *)anchors;
+@optional -(void)map:(LARMap *)map willRemoveAnchors:(NSArray<LARAnchor*> *)anchors;
+@optional -(void)map:(LARMap *)map didUpdateOrigin:(simd_double4x4)transform;
+@optional -(void)map:(LARMap *)map didAddEdgeFrom:(int)fromId to:(int)toId;
 
 @end
 
