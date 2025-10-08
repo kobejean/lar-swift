@@ -64,7 +64,7 @@ let package = Package(
         // Uncoment below if working with local frameworks
 //        .binaryTarget(name: "lar", path: "Frameworks/lar.xcframework"),
     //    .binaryTarget(name: "g2o", path: "Frameworks/g2o.xcframework"),
-    //    .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
+        .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
         
         // Recompute checksum via:
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
@@ -78,11 +78,11 @@ let package = Package(
             url: "https://github.com/kobejean/lar/releases/download/v0.10.0/g2o.xcframework.zip",
             checksum: "428b53efb2fb6cea954f129fe7e56cb44915ee6bc670859d6398e1ee80f3849c"
         ),
-        .binaryTarget(
-            name: "opencv2",
-            url: "https://github.com/kobejean/lar/releases/download/v0.10.0/opencv2.xcframework.zip",
-            checksum: "174092a6bf2f65b3a0267794aac193470126482de6cbc1d6dbbed3b055c8ca42"
-        ),
+//        .binaryTarget(
+//            name: "opencv2",
+//            url: "https://github.com/kobejean/lar/releases/download/v0.10.0/opencv2.xcframework.zip",
+//            checksum: "a095d6664510a0548cb4edcc8eec1097cf03e41b8ae6d6995c2c8c64ab1deb8e"
+//        ),
 
         .testTarget(
             name: "LocalizeARTests",

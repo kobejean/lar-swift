@@ -346,37 +346,17 @@ extension LARNavigationCoordinator {
 
 // MARK: - LARMapDelegate
 extension LARNavigationCoordinator: LARMapDelegate {
-    public func map(_ map: LARMap, didAdd anchor: LARAnchor) {
-        // Map delegate callback - anchor was added to map
+    public func map(_ map: LARMap, didAdd anchors: [LARAnchor]) {
+        // Map delegate callback - anchors were added to map
         // We handle this through addNavigationPoint instead
 
         // Forward to additional delegate for app-specific logic
-        additionalMapDelegate?.map?(map, didAdd: anchor)
+        additionalMapDelegate?.map?(map, didAdd: anchors)
     }
 
-    public func map(_ map: LARMap, didUpdate anchor: LARAnchor) {
-        // Map delegate callback - single anchor was updated
-        let floatTransform = simd_float4x4(
-            simd_float4(anchor.transform.columns.0),
-            simd_float4(anchor.transform.columns.1),
-            simd_float4(anchor.transform.columns.2),
-            simd_float4(anchor.transform.columns.3)
-        )
-        updateNavigationPoint(anchor: anchor, transform: floatTransform)
-
-        // Note: For bulk updates (e.g., rescaling), didUpdateAnchors is called instead
-        // This callback is only for individual anchor updates
-        refreshGuideNodes()
-        updateMapOverlays()
-
-        // Forward to additional delegate
-        additionalMapDelegate?.map?(map, didUpdate: anchor)
-    }
-
-    public func mapDidUpdateAnchors(_ map: LARMap) {
-        // Map delegate callback - bulk anchor update (e.g., after bundle adjustment rescaling)
-        // Update all anchor transforms from the map
-        for anchor in map.anchors {
+    public func map(_ map: LARMap, didUpdate anchors: [LARAnchor]) {
+        // Map delegate callback - bulk anchor update
+        for anchor in anchors {
             let floatTransform = simd_float4x4(
                 simd_float4(anchor.transform.columns.0),
                 simd_float4(anchor.transform.columns.1),
@@ -391,7 +371,7 @@ extension LARNavigationCoordinator: LARMapDelegate {
         updateMapOverlays()
 
         // Forward to additional delegate
-        additionalMapDelegate?.mapDidUpdateAnchors?(map)
+        additionalMapDelegate?.map?(map, didUpdate: anchors)
     }
 
     public func map(_ map: LARMap, didUpdateOrigin transform: simd_double4x4) {
@@ -403,11 +383,18 @@ extension LARNavigationCoordinator: LARMapDelegate {
         additionalMapDelegate?.map?(map, didUpdateOrigin: transform)
     }
 
-    public func map(_ map: LARMap, willRemove anchor: LARAnchor) {
-        // Map delegate callback - anchor will be removed from map
-        removeNavigationAnchor(id: anchor.id)
+    public func map(_ map: LARMap, willRemove anchors: [LARAnchor]) {
+        // Map delegate callback - anchors will be removed from map
+        for anchor in anchors {
+            removeNavigationAnchor(id: anchor.id)
+        }
 
         // Forward to additional delegate
-        additionalMapDelegate?.map?(map, willRemove: anchor)
+        additionalMapDelegate?.map?(map, willRemove: anchors)
+    }
+
+    public func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
+        // Edge was added - forward to additional delegate
+        additionalMapDelegate?.map?(map, didAddEdgeFrom: fromId, to: toId)
     }
 }
