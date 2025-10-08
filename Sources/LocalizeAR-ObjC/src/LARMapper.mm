@@ -67,14 +67,14 @@ namespace fs = std::filesystem;
 
 #if TARGET_OS_IPHONE
 
-- (void)addFrame:(ARFrame*)frame {
+- (void)addFrame:(ARFrame*)frame transform:(simd_float4x4)transform {
     CVPixelBufferRef imageBuffer = frame.capturedImage;
     CVPixelBufferRef depthBuffer = frame.smoothedSceneDepth.depthMap;
     CVPixelBufferRef confidenceBuffer = frame.smoothedSceneDepth.confidenceMap;
     CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferLockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferLockBaseAddress(confidenceBuffer, kCVPixelBufferLock_ReadOnly);
-    
+
     // Convert inputs
     cv::Mat image = [LARConversion matFromBuffer:imageBuffer planeIndex:0 type: CV_8UC1];
     cv::Mat depth = [LARConversion matFromBuffer:depthBuffer planeIndex:0 type: CV_32FC1];
@@ -82,10 +82,10 @@ namespace fs = std::filesystem;
     lar::Frame aFrame;
     aFrame.timestamp = [LARConversion timestampFromInterval:frame.timestamp];
     aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
-    aFrame.extrinsics = [LARConversion eigenFromSIMD4:frame.camera.transform].cast<double>();
-    
+    aFrame.extrinsics = [LARConversion eigenFromSIMD4:transform].cast<double>();
+
     _internal->addFrame(aFrame, image, depth, confidence);
-    
+
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
     CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);

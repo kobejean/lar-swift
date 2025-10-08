@@ -235,8 +235,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	func snap() {
 		guard let frame = sceneView.session.currentFrame else { return }
 		AudioServicesPlaySystemSound(SystemSoundID(1108))
+		// Convert camera transform from ARKit coordinates to map-local coordinates
+		let mapLocalTransform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
 		Task.detached(priority: .low) { [self] in
-			await mapper.mapper.addFrame(frame)
+			await mapper.mapper.addFrame(frame, transform: mapLocalTransform)
 //			await mapper.mapper.writeMetadata()
 		}
 	}
