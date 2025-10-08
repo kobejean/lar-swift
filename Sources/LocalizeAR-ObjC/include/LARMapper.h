@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addLocation:(CLLocation*)location NS_SWIFT_NAME( addLocation(_:) );
 
 #if TARGET_OS_IPHONE
-    - (void)addFrame:(ARFrame*)frame NS_SWIFT_NAME( addFrame(_:) );
+    - (void)addFrame:(ARFrame*)frame transform:(simd_float4x4)transform NS_SWIFT_NAME( addFrame(_:transform:) );
 #endif
 
 @end
