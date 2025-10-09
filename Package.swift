@@ -47,6 +47,8 @@ let package = Package(
 				.linkedLibrary("c++"),
 				.linkedLibrary("sqlite3"),
 				.linkedLibrary("z"),
+				.linkedFramework("Metal"),
+				.linkedFramework("MetalPerformanceShaders"),
 			]
         ),
         .target(

@@ -556,24 +556,29 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	// MARK: - LARMapDelegate
 
 	func map(_ map: LARMap, didAdd anchors: [LARAnchor]) {
-		for anchor in anchors {
-			larNavigation.addNavigationPoint(anchor: anchor)
-			if let selectedId = selectedAnchorNode?.anchorId {
-				map.addEdge(from: selectedId, to: anchor.id)
-				// larNavigation.addNavigationEdge(from: selectedId, to: anchor.id)
+		Task { @MainActor in
+			for anchor in anchors {
+				larNavigation.addNavigationPoint(anchor: anchor)
+				if let selectedId = selectedAnchorNode?.anchorId {
+					map.addEdge(from: selectedId, to: anchor.id)
+					// larNavigation.addNavigationEdge(from: selectedId, to: anchor.id)
+				}
+			}
+			// Select the last added anchor
+			if let lastAnchor = anchors.last,
+			   let newAnchorNode = larNavigation.getAnchorNode(id: lastAnchor.id) {
+				selectAnchorNode(newAnchorNode)
 			}
 		}
-		// Select the last added anchor
-		if let lastAnchor = anchors.last,
-		   let newAnchorNode = larNavigation.getAnchorNode(id: lastAnchor.id) {
-			selectAnchorNode(newAnchorNode)
-		}
+		
 //		Task(priority: .low) { await renderDebug() }
 	}
 
 	func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
-		// Edge was added - update navigation visualization
-		larNavigation.addNavigationEdge(from: fromId, to: toId)
+		Task { @MainActor in
+			// Edge was added - update navigation visualization
+			larNavigation.addNavigationEdge(from: fromId, to: toId)
+		}
 	}
 	
 	// MARK: - UIDocumentPickerDelegate

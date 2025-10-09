@@ -25,6 +25,23 @@
         "optional": "cpp",
         "sstream": "cpp",
         "string": "cpp",
-        "future": "cpp"
-    }
+        "future": "cpp",
+        "__bit_reference": "cpp",
+        "__locale": "cpp",
+        "bitset": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cstdarg": "cpp",
+        "cstdio": "cpp",
+        "ctime": "cpp",
+        "ios": "cpp",
+        "locale": "cpp",
+        "mutex": "cpp",
+        "streambuf": "cpp",
+        "string_view": "cpp",
+        "algorithm": "cpp"
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": []
 }

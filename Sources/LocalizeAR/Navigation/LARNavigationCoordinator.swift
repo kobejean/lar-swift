@@ -355,40 +355,44 @@ extension LARNavigationCoordinator: LARMapDelegate {
     }
 
     public func map(_ map: LARMap, didUpdate anchors: [LARAnchor]) {
-        // Map delegate callback - bulk anchor update
-        for anchor in anchors {
-            let floatTransform = simd_float4x4(
-                simd_float4(anchor.transform.columns.0),
-                simd_float4(anchor.transform.columns.1),
-                simd_float4(anchor.transform.columns.2),
-                simd_float4(anchor.transform.columns.3)
-            )
-            updateNavigationPoint(anchor: anchor, transform: floatTransform)
-        }
+		Task { @MainActor in
+			// Map delegate callback - bulk anchor update
+			for anchor in anchors {
+				let floatTransform = simd_float4x4(
+					simd_float4(anchor.transform.columns.0),
+					simd_float4(anchor.transform.columns.1),
+					simd_float4(anchor.transform.columns.2),
+					simd_float4(anchor.transform.columns.3)
+				)
+				updateNavigationPoint(anchor: anchor, transform: floatTransform)
+			}
 
-        // Refresh visualizations once after all anchors updated
-        refreshGuideNodes()
-        updateMapOverlays()
+			// Refresh visualizations once after all anchors updated
+			refreshGuideNodes()
+			updateMapOverlays()
 
-        // Forward to additional delegate
-        additionalMapDelegate?.map?(map, didUpdate: anchors)
+			// Forward to additional delegate
+			additionalMapDelegate?.map?(map, didUpdate: anchors)
+		}
     }
 
     public func map(_ map: LARMap, didUpdateOrigin transform: simd_double4x4) {
-        // Map origin changed - update all map overlays and guide nodes
-        updateMapOverlays()
-        refreshGuideNodes()
-
+		Task { @MainActor in
+			// Map origin changed - update all map overlays and guide nodes
+			updateMapOverlays()
+			refreshGuideNodes()
+		}
         // Forward to additional delegate
         additionalMapDelegate?.map?(map, didUpdateOrigin: transform)
     }
 
     public func map(_ map: LARMap, willRemove anchors: [LARAnchor]) {
-        // Map delegate callback - anchors will be removed from map
-        for anchor in anchors {
-            removeNavigationAnchor(id: anchor.id)
-        }
-
+		Task { @MainActor in
+			// Map delegate callback - anchors will be removed from map
+			for anchor in anchors {
+				removeNavigationAnchor(id: anchor.id)
+			}
+		}
         // Forward to additional delegate
         additionalMapDelegate?.map?(map, willRemove: anchors)
     }
