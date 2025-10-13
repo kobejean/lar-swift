@@ -37,6 +37,24 @@
 
 @implementation LARFilteredTracker
 
+- (instancetype)initWithMap:(LARMap*)map {
+    return [self initWithMap:map measurementInterval:2.0];
+}
+
+- (instancetype)initWithMap:(LARMap*)map measurementInterval:(double)measurementInterval {
+    self = [super init];
+    if (self) {
+        _map = map;
+
+        // Create base tracker from map with default image size
+        auto base_tracker = std::make_unique<lar::Tracker>(*map->_internal);
+
+        // Create filtered tracker
+        _internal = std::make_unique<lar::FilteredTracker>(std::move(base_tracker), measurementInterval);
+    }
+    return self;
+}
+
 - (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight measurementInterval:(double)measurementInterval {
     self = [super init];
     if (self) {
@@ -54,6 +72,11 @@
 
 - (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight {
     return [self initWithMap:map imageWidth:imageWidth imageHeight:imageHeight measurementInterval:2.0];
+}
+
+- (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight {
+    cv::Size imageSize(imageWidth, imageHeight);
+    _internal->getBaseTracker().configureImageSize(imageSize);
 }
 
 - (BOOL)isInitialized {

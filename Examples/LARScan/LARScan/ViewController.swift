@@ -38,6 +38,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	private var filteredTracker: LARFilteredTracker?
 	private var lastMeasurementTime: TimeInterval = 0
 	private var useFilteredTracking = true // Enable filtered tracking
+	private var configuredImageSize: CGSize?
 	
 	let locationManager: CLLocationManager = {
 		let locationManager = CLLocationManager()
@@ -70,8 +71,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 			// Initialize filtered tracker if enabled
 			if useFilteredTracking {
-				// ARKit captures at 1920x1440 on most devices
-				filteredTracker = LARFilteredTracker(map: map, imageWidth: 1920, imageHeight: 1440, measurementInterval: 2.0)
+				// Uses default 1920x1440, will auto-reconfigure based on actual frame size
+				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
 			}
 
 			await MainActor.run {
@@ -244,8 +245,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		}
 	}
 	
+	// Helper to ensure tracker is configured with correct image size
+	func ensureTrackerConfigured(for frame: ARFrame) {
+		let pixelBuffer = frame.capturedImage
+		let imageWidth = CVPixelBufferGetWidth(pixelBuffer)
+		let imageHeight = CVPixelBufferGetHeight(pixelBuffer)
+		let currentSize = CGSize(width: imageWidth, height: imageHeight)
+
+		if configuredImageSize != currentSize {
+			configuredImageSize = currentSize
+
+			// Reconfigure both tracker and filtered tracker if needed
+			Task {
+				await mapper.tracker?.configureImageSize(withWidth: Int32(imageWidth), height: Int32(imageHeight))
+				filteredTracker?.configureImageSize(withWidth: Int32(imageWidth), height: Int32(imageHeight))
+
+				await MainActor.run {
+					updateConsole("Tracker reconfigured for \(imageWidth)x\(imageHeight)")
+				}
+			}
+		}
+	}
+
 	func localize() {
 		guard let frame = sceneView.session.currentFrame else { return }
+
+		// Ensure tracker is configured with correct image size
+		ensureTrackerConfigured(for: frame)
 		let pose = frame.camera.transform.toDouble()
 		// Extract gravity vector from frame extrinsics
 		let worldGravity = simd_double3(0.0, -1.0, 0.0)
@@ -618,8 +644,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 			// Initialize filtered tracker for loaded map
 			if useFilteredTracking {
-				// ARKit captures at 1920x1440 on most devices
-				filteredTracker = LARFilteredTracker(map: map, imageWidth: 1920, imageHeight: 1440, measurementInterval: 2.0)
+				// Uses default 1920x1440, will auto-reconfigure based on actual frame size
+				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
 				lastMeasurementTime = 0 // Reset measurement time
 			}
 

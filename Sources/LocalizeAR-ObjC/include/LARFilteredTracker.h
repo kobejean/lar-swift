@@ -52,7 +52,22 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL isAnimating;
 
 /**
+ * Initialize FilteredTracker with map
+ * @param map LAR map for localization
+ * Uses default image size (1920x1440) and 2.0s measurement interval.
+ */
+- (instancetype)initWithMap:(LARMap*)map;
+
+/**
  * Initialize FilteredTracker with map and measurement interval
+ * @param map LAR map for localization
+ * @param measurementInterval Update interval for LAR measurements
+ * Uses default image size (1920x1440).
+ */
+- (instancetype)initWithMap:(LARMap*)map measurementInterval:(double)measurementInterval;
+
+/**
+ * Initialize FilteredTracker with specific image dimensions
  * @param map LAR map for localization
  * @param imageWidth Image width for feature extraction
  * @param imageHeight Image height for feature extraction
@@ -60,6 +75,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight measurementInterval:(double)measurementInterval;
 - (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight; // Default 2.0s interval
+
+/**
+ * Reconfigure tracker with new image dimensions
+ * Call this if the actual image size differs from initialization
+ */
+- (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight;
 
 /**
  * Update current VIO camera pose - call every VIO frame BEFORE predictStep

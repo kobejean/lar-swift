@@ -16,8 +16,8 @@ public actor LARLiveMapper {
     public var data: LARMapper.Data { mapper.data }
     
     public func updateTracker() {
-        // ARKit captures at 1920x1440 on most devices
-        tracker = LARTracker(map: data.map, imageWidth: 1920, imageHeight: 1440)
+        // Uses default 1920x1440, will auto-reconfigure if needed
+        tracker = LARTracker(map: data.map)
     }
     
     public init(directory: URL) {

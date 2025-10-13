@@ -26,6 +26,7 @@ class TestLocalizationService: ObservableObject {
     private var tracker: LARTracker?
     private var map: LARMap?
     private weak var sceneView: SCNView?
+    private var configuredImageSize: CGSize?
     
     var hasSceneView: Bool {
         return sceneView != nil
@@ -67,9 +68,8 @@ class TestLocalizationService: ObservableObject {
     
     func configure(with map: LARMap) {
         self.map = map
-        // ARKit captures at 1920x1440 on most devices
-        // This matches the typical image resolution used in the frames.json data
-        self.tracker = LARTracker(map: map, imageWidth: 1920, imageHeight: 1440)
+        // Uses default 1920x1440, will auto-reconfigure based on actual image size
+        self.tracker = LARTracker(map: map)
     }
     
     func configure(sceneView: SCNView) {
@@ -163,21 +163,30 @@ class TestLocalizationService: ObservableObject {
             errorMessage = "Frame not found or tracker not configured"
             return
         }
-        
+
         selectedFrameId = frameId
         isProcessing = true
         errorMessage = nil
-        
+
         Task {
             do {
                 let startTime = Date()
-                
+
                 // Load image
                 let imagePath = getImagePath(directory: directory, frameId: frameId)
                 guard let nsImage = NSImage(contentsOf: imagePath),
                       let grayscaleImage = convertToGrayscale(nsImage),
                       let cvMat = convertToOpenCVMat(grayscaleImage) else {
                     throw LocalizationError.imageConversionFailed
+                }
+
+                // Ensure tracker is configured with actual image size
+                let imageSize = grayscaleImage.extent.size
+                let currentSize = CGSize(width: imageSize.width, height: imageSize.height)
+                if configuredImageSize != currentSize {
+                    configuredImageSize = currentSize
+                    tracker.configureImageSize(withWidth: Int32(imageSize.width), height: Int32(imageSize.height))
+                    print("Tracker reconfigured for image size: \(Int(imageSize.width))x\(Int(imageSize.height))")
                 }
                 
                 // Get original transform from frame's internal data

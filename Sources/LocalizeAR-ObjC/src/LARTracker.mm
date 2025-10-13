@@ -24,6 +24,14 @@
 
 @implementation LARTracker
 
+- (id)initWithMap:(LARMap*)map {
+    self = [super init];
+    // Use default image size (1920x1440) - will be reconfigured automatically if needed
+    self->_internal = new lar::Tracker(*map->_internal);
+    self.map = map;
+    return self;
+}
+
 - (id)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight {
     self = [super init];
     cv::Size imageSize(imageWidth, imageHeight);
@@ -34,6 +42,11 @@
 
 - (void)dealloc {
     delete self->_internal;
+}
+
+- (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight {
+    cv::Size imageSize(imageWidth, imageHeight);
+    self->_internal->configureImageSize(imageSize);
 }
 
 - (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform {
