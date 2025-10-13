@@ -31,9 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic,readonly) LARMap* map;
 
-- (id)initWithMap:(LARMap*)map;
-
-- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform gvec:(Mat*)gvec;
+- (id)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight;
 
 // Frame-based localization with spatial query parameters
 - (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform;

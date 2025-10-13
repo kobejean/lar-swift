@@ -70,7 +70,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 			// Initialize filtered tracker if enabled
 			if useFilteredTracking {
-				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
+				// ARKit captures at 1920x1440 on most devices
+				filteredTracker = LARFilteredTracker(map: map, imageWidth: 1920, imageHeight: 1440, measurementInterval: 2.0)
 			}
 
 			await MainActor.run {
@@ -617,7 +618,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 			// Initialize filtered tracker for loaded map
 			if useFilteredTracking {
-				filteredTracker = LARFilteredTracker(map: map, measurementInterval: 2.0)
+				// ARKit captures at 1920x1440 on most devices
+				filteredTracker = LARFilteredTracker(map: map, imageWidth: 1920, imageHeight: 1440, measurementInterval: 2.0)
 				lastMeasurementTime = 0 // Reset measurement time
 			}
 

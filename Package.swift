@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.6
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -40,7 +40,7 @@ let package = Package(
         ),
         .target(
             name: "LocalizeAR_CPP",
-            dependencies: ["g2o", "opencv2"],
+            dependencies: ["g2o", "opencv2", "MetalShaderResources"],
             path: "Sources/LocalizeAR-CPP",
             cxxSettings: cxxSettings,
             linkerSettings: [
@@ -50,6 +50,13 @@ let package = Package(
 				.linkedFramework("Metal"),
 				.linkedFramework("MetalPerformanceShaders"),
 			]
+        ),
+        .target(
+            name: "MetalShaderResources",
+            path: "Sources/MetalShaderResources",
+            resources: [
+                .process("Metal")
+            ]
         ),
         .target(
             name: "LocalizeAR_ObjC",

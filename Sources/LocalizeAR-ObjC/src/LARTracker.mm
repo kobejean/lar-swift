@@ -24,19 +24,16 @@
 
 @implementation LARTracker
 
-- (id)initWithMap:(LARMap*)map {
+- (id)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight {
     self = [super init];
-    self->_internal = new lar::Tracker(*map->_internal);
+    cv::Size imageSize(imageWidth, imageHeight);
+    self->_internal = new lar::Tracker(*map->_internal, imageSize);
     self.map = map;
     return self;
 }
 
 - (void)dealloc {
     delete self->_internal;
-}
-
-- (bool)localize:(Mat*)image intrinsics:(Mat*)intrinsics transform:(Mat*)transform gvec:(Mat*)gvec {
-	return self->_internal->localize(image.nativeRef, intrinsics.nativeRef, transform.nativeRef, gvec.nativeRef);
 }
 
 - (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform {

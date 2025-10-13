@@ -54,10 +54,12 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Initialize FilteredTracker with map and measurement interval
  * @param map LAR map for localization
+ * @param imageWidth Image width for feature extraction
+ * @param imageHeight Image height for feature extraction
  * @param measurementInterval Update interval for LAR measurements (default: 2.0s)
  */
-- (instancetype)initWithMap:(LARMap*)map measurementInterval:(double)measurementInterval;
-- (instancetype)initWithMap:(LARMap*)map; // Default 2.0s interval
+- (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight measurementInterval:(double)measurementInterval;
+- (instancetype)initWithMap:(LARMap*)map imageWidth:(int)imageWidth imageHeight:(int)imageHeight; // Default 2.0s interval
 
 /**
  * Update current VIO camera pose - call every VIO frame BEFORE predictStep

@@ -67,7 +67,9 @@ class TestLocalizationService: ObservableObject {
     
     func configure(with map: LARMap) {
         self.map = map
-        self.tracker = LARTracker(map: map)
+        // ARKit captures at 1920x1440 on most devices
+        // This matches the typical image resolution used in the frames.json data
+        self.tracker = LARTracker(map: map, imageWidth: 1920, imageHeight: 1440)
     }
     
     func configure(sceneView: SCNView) {

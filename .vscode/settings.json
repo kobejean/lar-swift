@@ -39,7 +39,13 @@
         "mutex": "cpp",
         "streambuf": "cpp",
         "string_view": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "regex": "cpp",
+        "*.metal": "cpp",
+        "alignedvector3": "cpp",
+        "valarray": "cpp"
     },
     "python-envs.defaultEnvManager": "ms-python.python:conda",
     "python-envs.defaultPackageManager": "ms-python.python:conda",
