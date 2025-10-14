@@ -171,6 +171,17 @@ public class LARNavigationCoordinator: NSObject {
         }
     }
 
+    /// Remove a navigation edge between two anchors
+    /// - Parameters:
+    ///   - from: ID of the source anchor
+    ///   - to: ID of the destination anchor
+    public func removeNavigationEdge(from: Int32, to: Int32) {
+        // Note: The edge is removed from the map elsewhere (e.g., via map.removeEdge)
+        // This method only handles visualization cleanup by regenerating all guide nodes
+        refreshGuideNodes()
+        updateMapOverlays()
+    }
+
     // MARK: - Selection Management
 
     /// Select an anchor
@@ -389,12 +400,10 @@ extension LARNavigationCoordinator: LARMapDelegate {
 		// The anchor objects contain pointers to C++ memory that will be deleted
 		// after this callback returns. We must copy the IDs synchronously.
 		let anchorIds = anchors.map { $0.id }
-		print("🟠 willRemoveAnchors callback: received \(anchorIds.count) anchor(s) with IDs: \(anchorIds)")
 
 		Task { @MainActor in
 			// Map delegate callback - anchors will be removed from map
 			for anchorId in anchorIds {
-				print("🟠 Removing anchor ID: \(anchorId)")
 				removeNavigationAnchor(id: anchorId)
 			}
 
@@ -414,5 +423,10 @@ extension LARNavigationCoordinator: LARMapDelegate {
     public func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
         // Edge was added - forward to additional delegate
         additionalMapDelegate?.map?(map, didAddEdgeFrom: fromId, to: toId)
+    }
+
+    public func map(_ map: LARMap, didRemoveEdgeFrom fromId: Int32, to toId: Int32) {
+        // Edge was removed - forward to additional delegate
+        additionalMapDelegate?.map?(map, didRemoveEdgeFrom: fromId, to: toId)
     }
 }

@@ -55,10 +55,8 @@ public class LARSceneRenderer: LARSceneRendering {
         guard let rootNode = rootNode else { return }
 
         let node = LARSCNAnchorNode.create(anchorId: anchor.id)
-        print("🟢 LARSceneRenderer: Adding anchor node with ID: \(anchor.id), node.anchorId: \(node.anchorId)")
         node.transform = SCNMatrix4(anchor.transform)
         anchorNodes.add(node)
-        print("🟢 After adding, nodeById keys: \(Array(anchorNodes.nodeById.keys).sorted())")
         rootNode.addChildNode(node)
     }
 
@@ -68,18 +66,10 @@ public class LARSceneRenderer: LARSceneRendering {
     }
 
     public func removeAnchorNode(anchorId: Int32) {
-        print("🔴 LARSceneRenderer: Attempting to remove anchor node with ID: \(anchorId)")
-        print("🔴 Current nodeById keys: \(Array(anchorNodes.nodeById.keys).sorted())")
-
         if let node = anchorNodes.nodeById[anchorId] {
-            print("🔴 Found node with anchorId: \(node.anchorId), removing from parent")
             node.removeFromParentNode()
-        } else {
-            print("🔴 WARNING: No node found with anchorId: \(anchorId)")
         }
-
         anchorNodes.remove(withId: anchorId)
-        print("🔴 After removal, nodeById keys: \(Array(anchorNodes.nodeById.keys).sorted())")
     }
 
     public func addEdgeGuideNodes(from fromPosition: simd_float3, to toPosition: simd_float3) {

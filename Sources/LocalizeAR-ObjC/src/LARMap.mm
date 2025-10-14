@@ -79,8 +79,12 @@
     return [LARConversion simd4x4FromTransform3d:_internal->origin];
 }
 
-- (void)addEdgeFrom:(int)start_id to: (int)goal_id {
+- (void)addEdgeFrom:(int)start_id to:(int)goal_id {
     _internal->addEdge(start_id, goal_id);
+}
+
+- (void)removeEdgeFrom:(int)start_id to:(int)goal_id {
+    _internal->removeEdge(start_id, goal_id);
 }
 
 - (id)initWithInternal:(lar::Map*)map {
@@ -200,6 +204,16 @@
                 }
             }
         });
+
+        // Edge removal callback
+        _internal->setDidRemoveEdgeCallback([weakSelf](std::size_t from_id, std::size_t to_id) {
+            LARMap* strongSelf = weakSelf;
+            if (strongSelf && strongSelf.delegate) {
+                if ([strongSelf.delegate respondsToSelector:@selector(map:didRemoveEdgeFrom:to:)]) {
+                    [strongSelf.delegate map:strongSelf didRemoveEdgeFrom:(int)from_id to:(int)to_id];
+                }
+            }
+        });
     } else if (_internal) {
         // Clear all callbacks
         _internal->setDidAddAnchorsCallback([](const std::vector<std::reference_wrapper<lar::Anchor>>& anchors) {});
@@ -207,6 +221,7 @@
         _internal->setWillRemoveAnchorsCallback([](const std::vector<std::reference_wrapper<const lar::Anchor>>& anchors) {});
         _internal->setDidUpdateOriginCallback([](const lar::Map::Transform& transform) {});
         _internal->setDidAddEdgeCallback([](std::size_t from_id, std::size_t to_id) {});
+        _internal->setDidRemoveEdgeCallback([](std::size_t from_id, std::size_t to_id) {});
     }
 }
 

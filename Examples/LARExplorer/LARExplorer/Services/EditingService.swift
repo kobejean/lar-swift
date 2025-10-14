@@ -93,13 +93,10 @@ class EditingService: ObservableObject {
     }
     
     private func removeAnchorsFromMap(_ anchorIds: Set<Int32>, map: LARMap) {
-        print("🔵 EditingService: removeAnchorsFromMap called with IDs: \(anchorIds.sorted())")
         for anchorId in anchorIds {
             guard let anchor = map.anchors.first(where: { $0.id == anchorId }) else {
-                print("🔵 WARNING: No anchor found in map with ID: \(anchorId)")
                 continue
             }
-            print("🔵 Found anchor with ID: \(anchor.id), calling map.removeAnchor()")
             map.removeAnchor(anchor)
         }
     }
@@ -193,11 +190,11 @@ class EditingService: ObservableObject {
     
     func handleAnchorClickForEdgeCreation(_ anchorId: Int32) {
         guard selectedTool == .editEdges else { return }
-        
+
         if let sourceId = edgeCreationSourceAnchor {
-            // Second click - create edge
+            // Second click - toggle edge (add if absent, remove if present)
             if sourceId != anchorId {
-                createEdge(from: sourceId, to: anchorId)
+                toggleEdge(from: sourceId, to: anchorId)
             }
             resetEdgeCreationState()
         } else {
@@ -212,13 +209,36 @@ class EditingService: ObservableObject {
         navigationManager?.setAnchorSelection(id: anchorId, selected: true)
     }
     
+    private func toggleEdge(from sourceId: Int32, to targetId: Int32) {
+        guard let map = mapService?.mapData,
+              let navigationManager = navigationManager else { return }
+
+        if edgeExists(from: sourceId, to: targetId, in: map) {
+            // Edge exists - remove it
+            map.removeEdge(from: sourceId, to: targetId)
+            navigationManager.removeNavigationEdge(from: sourceId, to: targetId)
+        } else {
+            // Edge doesn't exist - add it
+            map.addEdge(from: sourceId, to: targetId)
+            navigationManager.addNavigationEdge(from: sourceId, to: targetId)
+        }
+    }
+
+    private func edgeExists(from sourceId: Int32, to targetId: Int32, in map: LARMap) -> Bool {
+        // Check if there's an edge from sourceId to targetId
+        guard let edgeList = map.edges[NSNumber(value: sourceId)] as? [NSNumber] else {
+            return false
+        }
+        return edgeList.contains(NSNumber(value: targetId))
+    }
+
     private func createEdge(from sourceId: Int32, to targetId: Int32) {
         guard let map = mapService?.mapData,
               let navigationManager = navigationManager else { return }
-        
+
         // Add edge to the map (C++ layer)
         map.addEdge(from: sourceId, to: targetId)
-        
+
         // Add visual edge to navigation manager
         navigationManager.addNavigationEdge(from: sourceId, to: targetId)
     }

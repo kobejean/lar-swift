@@ -41,7 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateAnchor:(LARAnchor*)anchor transform:(simd_float4x4)transform;
 - (void)removeAnchor:(LARAnchor*)anchor;
 - (void)updateOrigin:(simd_double4x4)transform;
-- (void)addEdgeFrom:(int)start_id to: (int)goal_id;
+- (void)addEdgeFrom:(int)start_id to:(int)goal_id;
+- (void)removeEdgeFrom:(int)start_id to:(int)goal_id;
 
 
 #ifdef __cplusplus
@@ -58,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 @optional -(void)map:(LARMap *)map willRemoveAnchors:(NSArray<LARAnchor*> *)anchors;
 @optional -(void)map:(LARMap *)map didUpdateOrigin:(simd_double4x4)transform;
 @optional -(void)map:(LARMap *)map didAddEdgeFrom:(int)fromId to:(int)toId;
+@optional -(void)map:(LARMap *)map didRemoveEdgeFrom:(int)fromId to:(int)toId;
 
 @end
 
