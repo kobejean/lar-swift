@@ -9,12 +9,10 @@ import Foundation
 import LocalizeAR_ObjC
 
 /// Adapts LARMap's anchor and edge data for navigation purposes
-/// This is a lightweight data container that doesn't handle rendering
+/// This is a proper adapter that queries the map directly - no duplicate state
 public class LARNavigationGraphAdapter {
     // MARK: - Properties
     private weak var map: LARMap?
-    private(set) var anchors: [Int32: LARAnchor] = [:]
-    private(set) var edges: [(from: Int32, to: Int32)] = []
 
     // MARK: - Initialization
     public init(map: LARMap) {
@@ -23,54 +21,42 @@ public class LARNavigationGraphAdapter {
 
     // MARK: - Anchor Management
 
-    /// Add an anchor to the graph
-    /// - Parameter anchor: The anchor to add
-    public func addAnchor(_ anchor: LARAnchor) {
-        anchors[anchor.id] = anchor
-    }
-
-    /// Remove an anchor from the graph
-    /// - Parameter anchorId: ID of the anchor to remove
-    public func removeAnchor(id anchorId: Int32) {
-        anchors.removeValue(forKey: anchorId)
+    /// Get all anchors as a dictionary (computed from map)
+    public var anchors: [Int32: LARAnchor] {
+        guard let map = map else { return [:] }
+        var result: [Int32: LARAnchor] = [:]
+        for anchor in map.anchors {
+            result[anchor.id] = anchor
+        }
+        return result
     }
 
     /// Get an anchor by ID
     /// - Parameter anchorId: ID of the anchor
     /// - Returns: The anchor, or nil if not found
     public func anchor(for anchorId: Int32) -> LARAnchor? {
-        return anchors[anchorId]
-    }
-
-    /// Remove all anchors
-    public func removeAllAnchors() {
-        anchors.removeAll()
+        guard let map = map else { return nil }
+        return map.anchors.first(where: { $0.id == anchorId })
     }
 
     // MARK: - Edge Management
 
-    /// Add an edge between two anchors
-    /// - Parameters:
-    ///   - from: Source anchor ID
-    ///   - to: Destination anchor ID
-    public func addEdge(from: Int32, to: Int32) {
-        // Avoid duplicates
-        if !edges.contains(where: { ($0.from == from && $0.to == to) || ($0.from == to && $0.to == from) }) {
-            edges.append((from, to))
-        }
-    }
+    /// Get all edges as tuples (computed from map)
+    public var edges: [(from: Int32, to: Int32)] {
+        guard let map = map else { return [] }
 
-    /// Remove edges associated with an anchor
-    /// - Parameter anchorId: ID of the anchor
-    public func removeEdges(for anchorId: Int32) {
-        edges.removeAll { edge in
-            edge.from == anchorId || edge.to == anchorId
+        var result: [(from: Int32, to: Int32)] = []
+        for (fromId, toIds) in map.edges {
+            let from = Int32(truncating: fromId)
+            for toId in toIds {
+                let to = Int32(truncating: toId)
+                // Only add each edge once (avoid duplicates for bidirectional edges)
+                if to > from {
+                    result.append((from: from, to: to))
+                }
+            }
         }
-    }
-
-    /// Remove all edges
-    public func removeAllEdges() {
-        edges.removeAll()
+        return result
     }
 
     /// Get path between two anchors using BFS

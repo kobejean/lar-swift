@@ -93,8 +93,13 @@ class EditingService: ObservableObject {
     }
     
     private func removeAnchorsFromMap(_ anchorIds: Set<Int32>, map: LARMap) {
+        print("🔵 EditingService: removeAnchorsFromMap called with IDs: \(anchorIds.sorted())")
         for anchorId in anchorIds {
-            guard let anchor = map.anchors.first(where: { $0.id == anchorId }) else { continue }
+            guard let anchor = map.anchors.first(where: { $0.id == anchorId }) else {
+                print("🔵 WARNING: No anchor found in map with ID: \(anchorId)")
+                continue
+            }
+            print("🔵 Found anchor with ID: \(anchor.id), calling map.removeAnchor()")
             map.removeAnchor(anchor)
         }
     }

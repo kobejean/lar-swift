@@ -7,6 +7,7 @@ let cxxSettings: [CXXSetting] = [
     // Include header only libraries
     .headerSearchPath("../External/Headers/"),
     .define("G2O_USE_VENDORED_CERES"),
+    .define("LAR_USE_METAL_SIFT"),
     .unsafeFlags(["-std=c++17"])
 ]
 

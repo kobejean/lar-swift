@@ -15,7 +15,7 @@ enum AppConfiguration {
         static let defaultSpanDelta: Double = 0.002
         static let animationDuration: Double = 0.5
         
-        static let defaultMapPath = "/Users/kobejean/Developer/GitHub/lar-swift/.Submodules/lar/output/map"
+        static let defaultMapPath = "/Users/kobejean/Developer/GitHub/lar-swift/.Submodules/lar/output/dwell-crane-202-map"
     }
     
     enum Scene {

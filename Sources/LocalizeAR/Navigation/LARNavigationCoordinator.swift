@@ -116,7 +116,8 @@ public class LARNavigationCoordinator: NSObject {
     /// Add a navigation point to the scene and map
     /// - Parameter anchor: The anchor to add
     public func addNavigationPoint(anchor: LARAnchor) {
-        navigationGraph.addAnchor(anchor)
+        // Note: The anchor is added to the map elsewhere (e.g., via map.createAnchor)
+        // This method only handles visualization
         sceneRenderer.addAnchorNode(for: anchor)
 
         if map.originReady {
@@ -135,11 +136,12 @@ public class LARNavigationCoordinator: NSObject {
     /// Remove a navigation anchor
     /// - Parameter anchorId: ID of the anchor to remove
     public func removeNavigationAnchor(id anchorId: Int32) {
-        navigationGraph.removeAnchor(id: anchorId)
+        // Note: The anchor and its edges are removed from the map by the C++ layer
+        // This method only handles visualization cleanup
         sceneRenderer.removeAnchorNode(anchorId: anchorId)
-        removeAnchorEdges(id: anchorId)
-        refreshGuideNodes()
-        updateMapOverlays()
+
+        // Note: We DON'T refresh here because willRemove is called BEFORE the map is updated
+        // The regeneration will happen after the map delegate callback completes
     }
 
     // MARK: - Edge Management
@@ -155,7 +157,8 @@ public class LARNavigationCoordinator: NSObject {
             return
         }
 
-        navigationGraph.addEdge(from: from, to: to)
+        // Note: The edge is added to the map elsewhere (e.g., via map.addEdge)
+        // This method only handles visualization
 
         // Add visual guide nodes
         let fromPos = simd_float3(fromAnchor.transform.position)
@@ -261,8 +264,7 @@ public class LARNavigationCoordinator: NSObject {
 
     /// Remove all navigation elements
     public func removeAllNavigationElements() {
-        navigationGraph.removeAllAnchors()
-        navigationGraph.removeAllEdges()
+        // Note: This only clears visualization - map data should be cleared separately
         sceneRenderer.removeAllNavigationElements()
         mapRenderer.removeAllOverlays()
         stateManager.clearSelection()
@@ -301,10 +303,6 @@ public class LARNavigationCoordinator: NSObject {
                 addNavigationEdge(from: from, to: to)
             }
         }
-    }
-
-    private func removeAnchorEdges(id anchorId: Int32) {
-        navigationGraph.removeEdges(for: anchorId)
     }
 
     private func regenerateGuideNodes() {
@@ -387,10 +385,26 @@ extension LARNavigationCoordinator: LARMapDelegate {
     }
 
     public func map(_ map: LARMap, willRemove anchors: [LARAnchor]) {
+		// CRITICAL: Extract IDs immediately before async dispatch!
+		// The anchor objects contain pointers to C++ memory that will be deleted
+		// after this callback returns. We must copy the IDs synchronously.
+		let anchorIds = anchors.map { $0.id }
+		print("🟠 willRemoveAnchors callback: received \(anchorIds.count) anchor(s) with IDs: \(anchorIds)")
+
 		Task { @MainActor in
 			// Map delegate callback - anchors will be removed from map
-			for anchor in anchors {
-				removeNavigationAnchor(id: anchor.id)
+			for anchorId in anchorIds {
+				print("🟠 Removing anchor ID: \(anchorId)")
+				removeNavigationAnchor(id: anchorId)
+			}
+
+			// Refresh guide nodes and overlays AFTER removing all anchor nodes
+			// This ensures the map has been updated before we query it for regeneration
+			// We use a small delay to ensure the C++ layer has completed the removal
+			Task { @MainActor in
+				try? await Task.sleep(nanoseconds: 1_000_000) // 1ms delay
+				refreshGuideNodes()
+				updateMapOverlays()
 			}
 		}
         // Forward to additional delegate
