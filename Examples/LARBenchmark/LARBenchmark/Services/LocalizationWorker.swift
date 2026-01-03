@@ -16,6 +16,7 @@ class LocalizationWorker {
     private let threadId: Int
 
     init(map: LARMap, imageSize: CGSize, threadId: Int = 0) {
+        // Use convenience initializer from Swift extension
         self.tracker = LARTracker(map: map, imageSize: imageSize)
         self.threadId = threadId
     }
@@ -24,19 +25,19 @@ class LocalizationWorker {
     func localize(frameData: FrameData) -> (success: Bool, transform: [[Double]]?) {
         // Extract query position from frame extrinsics
         let extrinsics = frameData.frame.extrinsics
-        let queryX = extrinsics[0][3]
-        let queryZ = extrinsics[2][3]
+        let queryX = Double(extrinsics[0][3])  // Convert Float to Double
+        let queryZ = Double(extrinsics[2][3])  // Convert Float to Double
         let searchDiameter = 20.0  // 20 meter search radius (same as C++ version)
 
-        // Call LARTracker.localize()
+        // Call LARTracker.localize() using macOS Swift extension
         let result = tracker.localize(
-            frameData.image,
-            frame: frameData.frame,
-            queryX: queryX,
-            queryZ: queryZ,
-            queryDiameter: searchDiameter
+            frameData.image,        // CGImage
+            frame: frameData.frame, // LARFrame
+            queryX: queryX,         // Double
+            queryZ: queryZ,         // Double
+            queryDiameter: searchDiameter  // Double
         )
 
-        return (result.success, result.transform)
+        return result  // Returns (success: Bool, transform: [[Double]]?)
     }
 }

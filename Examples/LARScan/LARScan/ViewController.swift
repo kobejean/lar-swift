@@ -344,33 +344,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 					}
 				}
 				await renderDebug()
-
-			} else {
-				// Fallback to original tracker
-				if let transform = await mapper.tracker.localize(frame: frame, gvec: gvec, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter) {
-					let elapsedTime = Date().timeIntervalSince(startTime)
-
-					await MainActor.run {
-						successfulLocalizations += 1
-						mapNode.transform = SCNMatrix4((pose * transform.inverse).toFloat())
-
-						// Count matched landmarks
-						let matchedCount = landmarks.filter { $0.isMatched }.count
-						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
-
-						updateConsole("LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
-						updateConsole("Matched landmarks: \(matchedCount)/\(landmarks.count)")
-						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
-					}
-					await renderDebug()
-				} else {
-					let elapsedTime = Date().timeIntervalSince(startTime)
-					await MainActor.run {
-						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
-						updateConsole("FAILED: \(String(format: "%.3f", elapsedTime))s")
-						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
-					}
-				}
 			}
 		}
 	}
@@ -492,21 +465,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	}
 	
 	func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-		let anchors = anchors.compactMap { anchor in anchor as? LARARAnchor }
-		if anchors.isEmpty { return }
-		var updates: [(LARARAnchor, simd_float4x4)] = []
-		for anchor in anchors {
-			// TODO: see if we can use transform directly when mapping by just keeping map node at origin
-			let transform = mapNode.simdConvertTransform(anchor.transform, from: sceneView.scene.rootNode)
-			updates.append((anchor, transform))
-		}
-		Task.detached(priority: .low) { [weak mapper] in
-			guard let mapper else { return }
-			let map = await mapper.data.map
-			for (anchor, transform) in updates {
-				map.updateAnchor(anchor.anchor, transform: transform)
-			}
-		}
+//		let anchors = anchors.compactMap { anchor in anchor as? LARARAnchor }
+//		if anchors.isEmpty { return }
+//		var updates: [(LARARAnchor, simd_float4x4)] = []
+//		for anchor in anchors {
+//			// TODO: see if we can use transform directly when mapping by just keeping map node at origin
+//			let transform = mapNode.simdConvertTransform(anchor.transform, from: sceneView.scene.rootNode)
+//			updates.append((anchor, transform))
+//		}
+//		Task.detached(priority: .low) { [weak mapper] in
+//			guard let mapper else { return }
+//			let map = await mapper.data.map
+//			for (anchor, transform) in updates {
+//				map.updateAnchor(anchor.anchor, transform: transform)
+//			}
+//		}
 	}
 	
 	func session(_ session: ARSession, didUpdate frame: ARFrame) {

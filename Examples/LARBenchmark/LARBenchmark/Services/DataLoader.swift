@@ -25,8 +25,8 @@ actor DataLoader {
             throw DataLoaderError.fileNotFound("map.json not found at \(mapPath.path)")
         }
 
-        let data = try Data(contentsOf: mapPath)
-        let map = try LARMap(jsonData: data)
+        // Use ObjC bridge initializer
+        let map = LARMap(contentsOf: mapPath.path)
 
         print("✓ Loaded map from \(mapPath.path)")
         return map
@@ -42,8 +42,10 @@ actor DataLoader {
 
         print("Loading frames from \(framesPath.path)...")
 
-        let data = try Data(contentsOf: framesPath)
-        let allFrames = try LARFrame.fromJSONArray(data: data)
+        // Use ObjC bridge class method
+        guard let allFrames = LARFrame.loadFrames(fromFile: framesPath.path) else {
+            throw DataLoaderError.invalidJSON("Failed to load frames from \(framesPath.path)")
+        }
 
         let framesToLoad = Array(allFrames.prefix(limit))
         print("Loading images for \(framesToLoad.count) frames...")

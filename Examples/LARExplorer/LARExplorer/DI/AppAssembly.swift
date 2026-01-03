@@ -78,6 +78,16 @@ class AppAssembly: Assembly {
             }
         }.inObjectScope(.container)
 
+        // GPSAlignmentCoordinator - Singleton for GPS alignment workflow
+        container.register(GPSAlignmentCoordinator.self) { r in
+            MainActor.assumeIsolated {
+                GPSAlignmentCoordinator(
+                    mapRepository: r.resolve(MapRepository.self)!,
+                    renderingService: r.resolve(RenderingService.self)!
+                )
+            }
+        }.inObjectScope(.container)
+
         container.register(EditingService.self) { _ in
             MainActor.assumeIsolated {
                 EditingService()

@@ -59,6 +59,9 @@ struct ContentView: View {
     private var edgeEditCoordinator: EdgeEditCoordinator {
         container.resolve(EdgeEditCoordinator.self)!
     }
+    private var gpsAlignmentCoordinator: GPSAlignmentCoordinator {
+        container.resolve(GPSAlignmentCoordinator.self)!
+    }
     
     var body: some View {
         VStack(spacing: AppConfiguration.UI.toolbarSpacing) {
@@ -96,7 +99,8 @@ struct ContentView: View {
                         landmarkInspectionService: landmarkInspectionService,
                         mapViewModel: mapViewModel,
                         anchorEditCoordinator: anchorEditCoordinator,
-                        edgeEditCoordinator: edgeEditCoordinator
+                        edgeEditCoordinator: edgeEditCoordinator,
+                        gpsAlignmentCoordinator: gpsAlignmentCoordinator
                     )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
