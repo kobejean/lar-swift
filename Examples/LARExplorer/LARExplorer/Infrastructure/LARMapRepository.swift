@@ -215,6 +215,13 @@ final class LARMapRepository: MapRepository, ObservableObject {
         map.updateOrigin(doubleTransform)
     }
 
+    @discardableResult
+    func rescale(_ factor: Double) -> Bool {
+        guard let mapProcessor = mapService?.mapProcessor else { return false }
+        mapProcessor.rescale(factor)
+        return true
+    }
+
     func location(from position: SIMD3<Double>) -> CLLocation {
         guard let map = mapService?.mapData else {
             return CLLocation(latitude: 0, longitude: 0)

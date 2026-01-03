@@ -226,6 +226,12 @@ struct ContentView: View {
         )
         gpsAlignmentCoordinator.configure(baseOrigin: floatBaseOrigin)
 
+        // Set up rescale callback to reload point cloud after scaling
+        gpsAlignmentCoordinator.onRescaleComplete = { [mapService, sceneViewModel] in
+            guard let mapData = mapService.mapData else { return }
+            sceneViewModel?.loadPointCloud(from: mapData)
+        }
+
         // Configure localization service
         localizationService.configure(with: mapData)
 

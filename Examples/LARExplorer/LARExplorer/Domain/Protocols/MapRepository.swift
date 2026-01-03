@@ -109,6 +109,11 @@ protocol MapRepository: AnyObject {
     /// Update the map origin transform
     func updateOrigin(_ transform: simd_float4x4)
 
+    /// Rescale the map by a relative factor (e.g., 1.1 = 10% larger)
+    /// Returns true if rescaling succeeded
+    @discardableResult
+    func rescale(_ factor: Double) -> Bool
+
     /// Convert a position in map space to GPS coordinates
     func location(from position: SIMD3<Double>) -> CLLocation
 

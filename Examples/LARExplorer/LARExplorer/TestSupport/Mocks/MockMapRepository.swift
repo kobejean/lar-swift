@@ -138,6 +138,14 @@ final class MockMapRepository: MapRepository {
         stubbedOrigin = transform
     }
 
+    var rescaleCalls: [Double] = []
+
+    @discardableResult
+    func rescale(_ factor: Double) -> Bool {
+        rescaleCalls.append(factor)
+        return true
+    }
+
     func location(from position: SIMD3<Double>) -> CLLocation {
         locationCalls.append(position)
         // Return a dummy location - tests can verify the call was made

@@ -27,6 +27,14 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
     /// Base origin stored when tool activates - transforms are applied relative to this
     private var baseOrigin: simd_float4x4 = matrix_identity_float4x4
 
+    /// Track cumulative scale for absolute scaling (C++ expects relative scale)
+    private var currentScale: Double = 1.0
+
+    // MARK: - Callbacks
+
+    /// Called after rescaling completes, allowing UI to refresh visualizations (e.g., point cloud)
+    var onRescaleComplete: (() -> Void)?
+
     // MARK: - ToolCoordinator Properties
 
     let kind: ToolKind = .gpsAlignment
@@ -100,9 +108,31 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
             dispatch(.setStatusMessage("Alignment applied"))
 
         case .applyScale:
-            // Scale application would be implemented here
-            renderingService.refreshAll()
-            dispatch(.setStatusMessage("Scale applied"))
+            let scaleFactor = state.scaleFactor
+
+            guard scaleFactor > 0.0 else {
+                dispatch(.setStatusMessage("Invalid scale factor: \(scaleFactor)"))
+                return
+            }
+
+            // Convert absolute scale (user input) to relative scale (C++ expects)
+            let relativeScale = scaleFactor / currentScale
+
+            dispatch(.setStatusMessage("Applying scale: \(String(format: "%.2f", scaleFactor))..."))
+
+            // Apply relative rescaling to C++ (which uses cumulative approach)
+            if mapRepository.rescale(relativeScale) {
+                // Update our tracked cumulative scale
+                currentScale = scaleFactor
+
+                renderingService.refreshAll()
+                dispatch(.setStatusMessage("Scale factor \(String(format: "%.2f", scaleFactor)) applied"))
+
+                // Notify that rescaling is complete (triggers point cloud reload)
+                onRescaleComplete?()
+            } else {
+                dispatch(.setStatusMessage("Failed to apply scale - no map processor"))
+            }
 
         case .performAutoAlignment:
             // Auto-alignment algorithm would be implemented here
@@ -111,6 +141,7 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
         case .reset:
             // Reset origin to base position
             mapRepository.updateOrigin(baseOrigin)
+            currentScale = 1.0
             renderingService.refreshAll()
 
         default:
