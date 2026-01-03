@@ -32,8 +32,8 @@ case "$MODE" in
         xcodebuild -scheme "$SCHEME" -destination "$DESTINATION" -configuration Release build
         ;;
     test)
-        echo "Running tests..."
-        xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" -configuration Debug
+        echo "Running LARExplorer tests..."
+        xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" -configuration Debug -only-testing:LARExplorerTests
         ;;
     debug|*)
         echo "Building debug version..."
