@@ -31,6 +31,10 @@ case "$MODE" in
         echo "Building release version..."
         xcodebuild -scheme "$SCHEME" -destination "$DESTINATION" -configuration Release build
         ;;
+    test)
+        echo "Running tests..."
+        xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" -configuration Debug
+        ;;
     debug|*)
         echo "Building debug version..."
         xcodebuild -scheme "$SCHEME" -destination "$DESTINATION" -configuration Debug build
