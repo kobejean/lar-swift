@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(swift build:*)",
+      "Bash(swift test:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(./build.sh:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/secrets/**)",
+      "Bash(git push:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}
