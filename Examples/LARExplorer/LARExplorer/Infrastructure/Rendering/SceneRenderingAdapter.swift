@@ -19,6 +19,9 @@ protocol SceneRendering: AnyObject {
     /// Clear all anchor highlights
     func clearAnchorHighlights()
 
+    /// Update anchor position in the scene
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4)
+
     /// Show preview nodes at specified positions
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>])
 
@@ -94,6 +97,15 @@ final class SceneRenderingAdapter: SceneRendering {
             node.removeFromParentNode()
         }
         anchorHighlightNodes.removeAll()
+    }
+
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4) {
+        guard let scene = sceneView?.scene else { return }
+
+        // Find the anchor node by name convention
+        if let anchorNode = scene.rootNode.childNode(withName: "anchor_\(id)", recursively: true) {
+            anchorNode.simdTransform = transform
+        }
     }
 
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>]) {

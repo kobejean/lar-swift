@@ -56,12 +56,18 @@ final class MockRenderingService: RenderingService {
         let upper: SIMD2<Double>
     }
 
+    struct AnchorPositionUpdateCall: Equatable {
+        let id: Int32
+        let transform: simd_float4x4
+    }
+
     // MARK: - Recorded Calls
 
     // Anchor rendering
     var highlightAnchorsCalls: [AnchorHighlightCall] = []
     var clearAnchorHighlightsCalled = false
     var clearAnchorHighlightsCallCount = 0
+    var updateAnchorPositionCalls: [AnchorPositionUpdateCall] = []
     var showPreviewNodesCalls: [PreviewNodesCall] = []
     var hidePreviewNodesCalled = false
     var hidePreviewNodesCallCount = 0
@@ -101,6 +107,10 @@ final class MockRenderingService: RenderingService {
     func clearAnchorHighlights() {
         clearAnchorHighlightsCalled = true
         clearAnchorHighlightsCallCount += 1
+    }
+
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4) {
+        updateAnchorPositionCalls.append(AnchorPositionUpdateCall(id: id, transform: transform))
     }
 
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>]) {
@@ -177,6 +187,7 @@ final class MockRenderingService: RenderingService {
         highlightAnchorsCalls.removeAll()
         clearAnchorHighlightsCalled = false
         clearAnchorHighlightsCallCount = 0
+        updateAnchorPositionCalls.removeAll()
         showPreviewNodesCalls.removeAll()
         hidePreviewNodesCalled = false
         hidePreviewNodesCallCount = 0

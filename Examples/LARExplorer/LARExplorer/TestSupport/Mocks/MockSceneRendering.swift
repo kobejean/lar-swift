@@ -35,10 +35,16 @@ final class MockSceneRendering: SceneRendering {
         let style: HighlightStyle
     }
 
+    struct AnchorPositionUpdateCall: Equatable {
+        let id: Int32
+        let transform: simd_float4x4
+    }
+
     // Anchors
     var highlightAnchorsCalls: [HighlightCall] = []
     var clearAnchorHighlightsCalled = false
     var clearAnchorHighlightsCallCount = 0
+    var updateAnchorPositionCalls: [AnchorPositionUpdateCall] = []
 
     // Preview nodes
     var showPreviewNodesCalls: [PreviewNodesCall] = []
@@ -68,6 +74,10 @@ final class MockSceneRendering: SceneRendering {
     func clearAnchorHighlights() {
         clearAnchorHighlightsCalled = true
         clearAnchorHighlightsCallCount += 1
+    }
+
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4) {
+        updateAnchorPositionCalls.append(AnchorPositionUpdateCall(id: id, transform: transform))
     }
 
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>]) {
@@ -111,6 +121,7 @@ final class MockSceneRendering: SceneRendering {
         highlightAnchorsCalls.removeAll()
         clearAnchorHighlightsCalled = false
         clearAnchorHighlightsCallCount = 0
+        updateAnchorPositionCalls.removeAll()
         showPreviewNodesCalls.removeAll()
         hidePreviewNodesCalled = false
         hidePreviewNodesCallCount = 0

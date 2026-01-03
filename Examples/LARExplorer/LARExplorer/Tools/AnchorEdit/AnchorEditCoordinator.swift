@@ -101,12 +101,33 @@ final class AnchorEditCoordinator: ToolCoordinator, ObservableObject {
         case .applyOffset:
             guard state.canApplyOffset else { return }
 
-            // Apply offset to all selected anchors
-            for id in state.selectedAnchorIds {
-                mapRepository.updateAnchorPosition(id: id, offset: state.positionOffset)
+            // Capture values before any state changes
+            let selectedIds = state.selectedAnchorIds
+            let offset = state.positionOffset
+
+            // Apply offset to all selected anchors and update visuals
+            for id in selectedIds {
+                // Get current anchor to compute new transform
+                guard let anchor = mapRepository.anchor(id: id) else { continue }
+                let currentTransform = anchor.transform
+                let newPosition = anchor.position + offset
+
+                // Create new transform with updated position
+                let newTransform = simd_float4x4(
+                    currentTransform.columns.0,
+                    currentTransform.columns.1,
+                    currentTransform.columns.2,
+                    SIMD4<Float>(newPosition.x, newPosition.y, newPosition.z, currentTransform.columns.3.w)
+                )
+
+                // Update data in repository
+                mapRepository.updateAnchorPosition(id: id, offset: offset)
+
+                // Update visual representation
+                renderingService.updateAnchorPosition(id: id, transform: newTransform)
             }
 
-            // Refresh rendering
+            // Refresh guide nodes and map overlays
             renderingService.refreshAll()
 
             // Clear selection and offset

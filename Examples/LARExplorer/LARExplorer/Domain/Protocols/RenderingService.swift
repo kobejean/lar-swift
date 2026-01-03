@@ -38,6 +38,9 @@ protocol RenderingService: AnyObject {
     /// Clear all anchor highlights
     func clearAnchorHighlights()
 
+    /// Update anchor position in the scene (after applying offset)
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4)
+
     /// Show preview nodes at specified positions (for offset preview)
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>])
 

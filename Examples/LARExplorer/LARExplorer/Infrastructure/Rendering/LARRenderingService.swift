@@ -42,6 +42,10 @@ final class LARRenderingService: RenderingService {
         sceneRenderer.clearAnchorHighlights()
     }
 
+    func updateAnchorPosition(id: Int32, transform: simd_float4x4) {
+        sceneRenderer.updateAnchorPosition(id: id, transform: transform)
+    }
+
     func showPreviewNodes(at positions: [Int32: SIMD3<Float>]) {
         sceneRenderer.showPreviewNodes(at: positions)
     }
