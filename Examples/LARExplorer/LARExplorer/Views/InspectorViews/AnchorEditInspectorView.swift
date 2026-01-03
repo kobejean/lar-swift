@@ -110,8 +110,11 @@ struct AnchorEditInspectorView: View {
             VStack(spacing: 8) {
                 if !coordinator.state.selectedAnchorIds.isEmpty {
                     Button("Apply Position Offset") {
+                        // Note: Don't call resetLocalOffset() here!
+                        // The coordinator resets the offset after the async side effect completes.
+                        // Calling it here causes a race condition where the offset becomes .zero
+                        // before handleSideEffect can read it.
                         coordinator.dispatch(.applyOffset)
-                        resetLocalOffset()
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)

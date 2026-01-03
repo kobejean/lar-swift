@@ -69,11 +69,7 @@ final class LARRenderingServiceAdapter: RenderingService {
     }
 
     func updateAnchorPosition(id: Int32, transform: simd_float4x4) {
-        // Get the anchor from the navigation coordinator's graph
-        guard let anchor = navigationCoordinator?.anchors[id] else {
-            return
-        }
-        // Update the anchor node's visual position using the coordinator's public API
+        guard let anchor = navigationCoordinator?.anchors[id] else { return }
         navigationCoordinator?.updateNavigationPoint(anchor: anchor, transform: transform)
     }
 
