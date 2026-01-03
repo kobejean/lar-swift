@@ -62,6 +62,9 @@ struct ContentView: View {
     private var gpsAlignmentCoordinator: GPSAlignmentCoordinator {
         container.resolve(GPSAlignmentCoordinator.self)!
     }
+    private var relocalizationCoordinator: RelocalizationCoordinator {
+        container.resolve(RelocalizationCoordinator.self)!
+    }
     
     var body: some View {
         VStack(spacing: AppConfiguration.UI.toolbarSpacing) {
@@ -100,7 +103,8 @@ struct ContentView: View {
                         mapViewModel: mapViewModel,
                         anchorEditCoordinator: anchorEditCoordinator,
                         edgeEditCoordinator: edgeEditCoordinator,
-                        gpsAlignmentCoordinator: gpsAlignmentCoordinator
+                        gpsAlignmentCoordinator: gpsAlignmentCoordinator,
+                        relocalizationCoordinator: relocalizationCoordinator
                     )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)

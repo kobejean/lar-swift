@@ -20,6 +20,7 @@ struct InspectorView: View {
     @ObservedObject var anchorEditCoordinator: AnchorEditCoordinator
     @ObservedObject var edgeEditCoordinator: EdgeEditCoordinator
     @ObservedObject var gpsAlignmentCoordinator: GPSAlignmentCoordinator
+    @ObservedObject var relocalizationCoordinator: RelocalizationCoordinator
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -49,7 +50,11 @@ struct InspectorView: View {
             case .alignGPS:
                 GPSAlignmentInspectorView(coordinator: gpsAlignmentCoordinator)
             case .testRelocalization:
-                RelocalizationInspectorView(localizationService: localizationService, mapViewModel: mapViewModel)
+                RelocalizationInspectorView(
+                    coordinator: relocalizationCoordinator,
+                    localizationService: localizationService,
+                    mapViewModel: mapViewModel
+                )
             case .inspectLandmarks:
                 LandmarksInspectorView(landmarkInspectionService: landmarkInspectionService)
             }

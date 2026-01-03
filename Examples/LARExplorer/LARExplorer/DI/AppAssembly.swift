@@ -88,6 +88,16 @@ class AppAssembly: Assembly {
             }
         }.inObjectScope(.container)
 
+        // RelocalizationCoordinator - Singleton for relocalization workflow
+        container.register(RelocalizationCoordinator.self) { r in
+            MainActor.assumeIsolated {
+                RelocalizationCoordinator(
+                    mapRepository: r.resolve(MapRepository.self)!,
+                    renderingService: r.resolve(RenderingService.self)!
+                )
+            }
+        }.inObjectScope(.container)
+
         container.register(EditingService.self) { _ in
             MainActor.assumeIsolated {
                 EditingService()

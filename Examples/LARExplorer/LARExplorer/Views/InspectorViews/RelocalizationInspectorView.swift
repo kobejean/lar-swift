@@ -9,6 +9,7 @@ import SwiftUI
 import LocalizeAR
 
 struct RelocalizationInspectorView: View {
+    @ObservedObject var coordinator: RelocalizationCoordinator
     @ObservedObject var localizationService: TestLocalizationService
     @ObservedObject var mapViewModel: MapViewModel
     @State private var selectedFrame: LARFrame?
