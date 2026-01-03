@@ -68,6 +68,16 @@ class AppAssembly: Assembly {
             }
         }.inObjectScope(.container)
 
+        // EdgeEditCoordinator - Singleton for edge editing workflow
+        container.register(EdgeEditCoordinator.self) { r in
+            MainActor.assumeIsolated {
+                EdgeEditCoordinator(
+                    mapRepository: r.resolve(MapRepository.self)!,
+                    renderingService: r.resolve(RenderingService.self)!
+                )
+            }
+        }.inObjectScope(.container)
+
         container.register(EditingService.self) { _ in
             MainActor.assumeIsolated {
                 EditingService()

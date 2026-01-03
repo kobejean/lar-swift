@@ -16,8 +16,9 @@ struct InspectorView: View {
     @ObservedObject var localizationService: TestLocalizationService
     @ObservedObject var landmarkInspectionService: LandmarkInspectionService
     @ObservedObject var mapViewModel: MapViewModel
-    // New architecture coordinator
+    // New architecture coordinators
     @ObservedObject var anchorEditCoordinator: AnchorEditCoordinator
+    @ObservedObject var edgeEditCoordinator: EdgeEditCoordinator
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -43,7 +44,7 @@ struct InspectorView: View {
                 // Use new coordinator-based inspector
                 AnchorEditInspectorView(coordinator: anchorEditCoordinator)
             case .editEdges:
-                EdgeEditInspectorView(editingService: editingService)
+                EdgeEditInspectorView(coordinator: edgeEditCoordinator)
             case .alignGPS:
                 GPSAlignmentInspectorView(alignmentService: alignmentService)
             case .testRelocalization:
@@ -67,7 +68,7 @@ struct InspectorView: View {
             // Use coordinator to clear selection
             anchorEditCoordinator.dispatch(.clearSelection)
         case .editEdges:
-            editingService.cancelEdgeCreation()
+            edgeEditCoordinator.dispatch(.cancelEdgeCreation)
         default:
             break
         }

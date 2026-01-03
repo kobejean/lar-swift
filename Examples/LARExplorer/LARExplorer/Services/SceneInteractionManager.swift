@@ -21,8 +21,9 @@ class SceneInteractionManager: ObservableObject {
     private var strategies: [ExplorerTool: ToolInteractionStrategy] = [:]
     private var currentStrategy: ToolInteractionStrategy?
 
-    // New architecture coordinator (optional - used when configured)
+    // New architecture coordinators (optional - used when configured)
     private var anchorEditCoordinator: AnchorEditCoordinator?
+    private var edgeEditCoordinator: EdgeEditCoordinator?
 
     @Published var selectedTool: ExplorerTool = .explore {
         didSet {
@@ -52,7 +53,7 @@ class SceneInteractionManager: ObservableObject {
         switchToTool(selectedTool)
     }
 
-    /// Configure with new architecture coordinator
+    /// Configure with new architecture coordinator for anchor editing
     /// This replaces the legacy strategy for anchor editing
     func configureCoordinator(_ coordinator: AnchorEditCoordinator) {
         self.anchorEditCoordinator = coordinator
@@ -62,6 +63,20 @@ class SceneInteractionManager: ObservableObject {
 
         // If anchor editing is currently active, switch to the new strategy
         if selectedTool == .editAnchors {
+            switchToTool(selectedTool)
+        }
+    }
+
+    /// Configure with new architecture coordinator for edge editing
+    /// This replaces the legacy strategy for edge editing
+    func configureCoordinator(_ coordinator: EdgeEditCoordinator) {
+        self.edgeEditCoordinator = coordinator
+
+        // Replace the legacy edge editing strategy with coordinator-based strategy
+        strategies[.editEdges] = CoordinatorStrategy(coordinator: coordinator)
+
+        // If edge editing is currently active, switch to the new strategy
+        if selectedTool == .editEdges {
             switchToTool(selectedTool)
         }
     }

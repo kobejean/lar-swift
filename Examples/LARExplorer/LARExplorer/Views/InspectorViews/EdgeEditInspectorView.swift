@@ -8,39 +8,39 @@
 import SwiftUI
 
 struct EdgeEditInspectorView: View {
-    @ObservedObject var editingService: EditingService
-    
+    @ObservedObject var coordinator: EdgeEditCoordinator
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Edge Creation")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
             // Instructions
             VStack(alignment: .leading, spacing: 4) {
                 Text("Instructions:")
                     .font(.caption)
                     .fontWeight(.medium)
-                
+
                 Text("1. Click first anchor (source)")
                 Text("2. Click second anchor (target)")
-                Text("3. Edge will be created automatically")
+                Text("3. Edge will be toggled automatically")
             }
             .font(.caption)
             .foregroundColor(.secondary)
-            
+
             // Current state
-            if let sourceId = editingService.edgeCreationSourceAnchor {
+            if let sourceId = coordinator.state.sourceAnchorId {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Source anchor selected:")
                         .font(.caption)
                         .fontWeight(.medium)
-                    
+
                     Text("• Anchor \(sourceId)")
                         .font(.caption)
                         .foregroundColor(.blue)
-                    
-                    Text("Click target anchor to create edge")
+
+                    Text("Click target anchor to toggle edge")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -54,12 +54,12 @@ struct EdgeEditInspectorView: View {
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
             }
-            
+
             // Actions
             VStack(spacing: 8) {
-                if editingService.edgeCreationSourceAnchor != nil {
+                if coordinator.state.isAwaitingTarget {
                     Button("Cancel Edge Creation") {
-                        editingService.cancelEdgeCreation()
+                        coordinator.dispatch(.cancelEdgeCreation)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)

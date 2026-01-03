@@ -56,6 +56,9 @@ struct ContentView: View {
     private var anchorEditCoordinator: AnchorEditCoordinator {
         container.resolve(AnchorEditCoordinator.self)!
     }
+    private var edgeEditCoordinator: EdgeEditCoordinator {
+        container.resolve(EdgeEditCoordinator.self)!
+    }
     
     var body: some View {
         VStack(spacing: AppConfiguration.UI.toolbarSpacing) {
@@ -92,7 +95,8 @@ struct ContentView: View {
                         localizationService: localizationService,
                         landmarkInspectionService: landmarkInspectionService,
                         mapViewModel: mapViewModel,
-                        anchorEditCoordinator: anchorEditCoordinator
+                        anchorEditCoordinator: anchorEditCoordinator,
+                        edgeEditCoordinator: edgeEditCoordinator
                     )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
@@ -198,6 +202,7 @@ struct ContentView: View {
         // Configure new architecture components
         renderingAdapter.configure(navigationCoordinator: navigationCoordinator!, mapViewModel: mapViewModel)
         interactionManager.configureCoordinator(anchorEditCoordinator)
+        interactionManager.configureCoordinator(edgeEditCoordinator)
 
         // Configure localization service
         localizationService.configure(with: mapData)
