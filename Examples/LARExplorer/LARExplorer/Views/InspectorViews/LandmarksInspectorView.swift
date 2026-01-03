@@ -9,6 +9,7 @@ import SwiftUI
 import LocalizeAR
 
 struct LandmarksInspectorView: View {
+    @ObservedObject var coordinator: LandmarksCoordinator
     @ObservedObject var landmarkInspectionService: LandmarkInspectionService
 
     var body: some View {
@@ -94,9 +95,4 @@ struct LandmarksInspectorView: View {
     }
 }
 
-#Preview {
-    let service = LandmarkInspectionService()
-
-    return LandmarksInspectorView(landmarkInspectionService: service)
-        .frame(width: 300, height: 400)
-}
+// Preview disabled - requires DI container for coordinator

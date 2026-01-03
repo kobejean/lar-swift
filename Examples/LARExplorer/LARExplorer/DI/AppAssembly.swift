@@ -98,6 +98,16 @@ class AppAssembly: Assembly {
             }
         }.inObjectScope(.container)
 
+        // LandmarksCoordinator - Singleton for landmark inspection workflow
+        container.register(LandmarksCoordinator.self) { r in
+            MainActor.assumeIsolated {
+                LandmarksCoordinator(
+                    mapRepository: r.resolve(MapRepository.self)!,
+                    renderingService: r.resolve(RenderingService.self)!
+                )
+            }
+        }.inObjectScope(.container)
+
         container.register(EditingService.self) { _ in
             MainActor.assumeIsolated {
                 EditingService()
