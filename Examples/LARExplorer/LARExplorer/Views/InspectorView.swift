@@ -16,7 +16,9 @@ struct InspectorView: View {
     @ObservedObject var localizationService: TestLocalizationService
     @ObservedObject var landmarkInspectionService: LandmarkInspectionService
     @ObservedObject var mapViewModel: MapViewModel
-    
+    // New architecture coordinator
+    @ObservedObject var anchorEditCoordinator: AnchorEditCoordinator
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
@@ -30,15 +32,16 @@ struct InspectorView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
             }
-            
+
             Divider()
-            
+
             // Tool-specific content
             switch selectedTool {
             case .explore:
                 ExploreInspectorView()
             case .editAnchors:
-                AnchorEditInspectorView(editingService: editingService)
+                // Use new coordinator-based inspector
+                AnchorEditInspectorView(coordinator: anchorEditCoordinator)
             case .editEdges:
                 EdgeEditInspectorView(editingService: editingService)
             case .alignGPS:
@@ -48,18 +51,21 @@ struct InspectorView: View {
             case .inspectLandmarks:
                 LandmarksInspectorView(landmarkInspectionService: landmarkInspectionService)
             }
-            
+
             Spacer()
         }
         .padding()
         .frame(minWidth: 500, maxWidth: 600)
         .background(.ultraThinMaterial)
     }
-    
+
     private func resetCurrentTool() {
         switch selectedTool {
         case .alignGPS:
             alignmentService.resetAlignment()
+        case .editAnchors:
+            // Use coordinator to clear selection
+            anchorEditCoordinator.dispatch(.clearSelection)
         case .editEdges:
             editingService.cancelEdgeCreation()
         default:

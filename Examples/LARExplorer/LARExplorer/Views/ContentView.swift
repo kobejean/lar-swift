@@ -48,6 +48,14 @@ struct ContentView: View {
     @State private var navigationCoordinator: LARNavigationCoordinator?
     @State private var sceneViewModel: SceneViewModel?
     @StateObject private var mapViewModel = MapViewModel()
+
+    // MARK: - New Architecture Components
+    private var renderingAdapter: LARRenderingServiceAdapter {
+        container.resolve(LARRenderingServiceAdapter.self)!
+    }
+    private var anchorEditCoordinator: AnchorEditCoordinator {
+        container.resolve(AnchorEditCoordinator.self)!
+    }
     
     var body: some View {
         VStack(spacing: AppConfiguration.UI.toolbarSpacing) {
@@ -83,7 +91,8 @@ struct ContentView: View {
                         editingService: editingService,
                         localizationService: localizationService,
                         landmarkInspectionService: landmarkInspectionService,
-                        mapViewModel: mapViewModel
+                        mapViewModel: mapViewModel,
+                        anchorEditCoordinator: anchorEditCoordinator
                     )
                 }
                 .frame(height: AppConfiguration.UI.mapViewHeight)
@@ -185,6 +194,10 @@ struct ContentView: View {
 
         // Configure editing service with navigation coordinator
         editingService.configure(navigationManager: navigationCoordinator!, mapService: mapService)
+
+        // Configure new architecture components
+        renderingAdapter.configure(navigationCoordinator: navigationCoordinator!, mapViewModel: mapViewModel)
+        interactionManager.configureCoordinator(anchorEditCoordinator)
 
         // Configure localization service
         localizationService.configure(with: mapData)

@@ -21,6 +21,9 @@ class SceneInteractionManager: ObservableObject {
     private var strategies: [ExplorerTool: ToolInteractionStrategy] = [:]
     private var currentStrategy: ToolInteractionStrategy?
 
+    // New architecture coordinator (optional - used when configured)
+    private var anchorEditCoordinator: AnchorEditCoordinator?
+
     @Published var selectedTool: ExplorerTool = .explore {
         didSet {
             switchToTool(selectedTool)
@@ -34,7 +37,7 @@ class SceneInteractionManager: ObservableObject {
         self.landmarkInspectionService = landmarkInspectionService
         self.mapService = mapService
 
-        // Initialize strategies for each tool
+        // Initialize strategies for each tool (legacy approach)
         strategies[.explore] = ExploreStrategy()
         strategies[.editAnchors] = AnchorEditingStrategy(editingService: editingService)
         strategies[.editEdges] = EdgeEditingStrategy(editingService: editingService)
@@ -47,6 +50,20 @@ class SceneInteractionManager: ObservableObject {
 
         // Set initial strategy
         switchToTool(selectedTool)
+    }
+
+    /// Configure with new architecture coordinator
+    /// This replaces the legacy strategy for anchor editing
+    func configureCoordinator(_ coordinator: AnchorEditCoordinator) {
+        self.anchorEditCoordinator = coordinator
+
+        // Replace the legacy anchor editing strategy with coordinator-based strategy
+        strategies[.editAnchors] = CoordinatorStrategy(coordinator: coordinator)
+
+        // If anchor editing is currently active, switch to the new strategy
+        if selectedTool == .editAnchors {
+            switchToTool(selectedTool)
+        }
     }
 
     /// Handle click events by delegating to current strategy

@@ -27,6 +27,47 @@ class AppAssembly: Assembly {
             }
         }.inObjectScope(.container)
 
+        // MARK: - Domain Layer (New Architecture)
+
+        // LARMapRepository - Singleton that adapts MapService to MapRepository protocol
+        container.register(LARMapRepository.self) { r in
+            MainActor.assumeIsolated {
+                let repository = LARMapRepository()
+                repository.configure(with: r.resolve(MapService.self)!)
+                return repository
+            }
+        }.inObjectScope(.container)
+
+        // MapRepository protocol - Points to LARMapRepository singleton
+        container.register(MapRepository.self) { r in
+            r.resolve(LARMapRepository.self)!
+        }
+
+        // LARRenderingServiceAdapter - Singleton for rendering coordination
+        // Note: Must be configured with navigationCoordinator after map loads
+        container.register(LARRenderingServiceAdapter.self) { _ in
+            MainActor.assumeIsolated {
+                LARRenderingServiceAdapter()
+            }
+        }.inObjectScope(.container)
+
+        // RenderingService protocol - Points to LARRenderingServiceAdapter singleton
+        container.register(RenderingService.self) { r in
+            r.resolve(LARRenderingServiceAdapter.self)!
+        }
+
+        // MARK: - Tool Coordinators (New Architecture)
+
+        // AnchorEditCoordinator - Singleton for anchor editing workflow
+        container.register(AnchorEditCoordinator.self) { r in
+            MainActor.assumeIsolated {
+                AnchorEditCoordinator(
+                    mapRepository: r.resolve(MapRepository.self)!,
+                    renderingService: r.resolve(RenderingService.self)!
+                )
+            }
+        }.inObjectScope(.container)
+
         container.register(EditingService.self) { _ in
             MainActor.assumeIsolated {
                 EditingService()
