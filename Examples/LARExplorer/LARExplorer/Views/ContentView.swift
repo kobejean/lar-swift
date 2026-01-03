@@ -216,6 +216,16 @@ struct ContentView: View {
         interactionManager.configureCoordinator(anchorEditCoordinator)
         interactionManager.configureCoordinator(edgeEditCoordinator)
 
+        // Configure GPS alignment coordinator with base origin from loaded map
+        let baseOrigin = mapData.origin
+        let floatBaseOrigin = simd_float4x4(
+            simd_float4(Float(baseOrigin.columns.0.x), Float(baseOrigin.columns.0.y), Float(baseOrigin.columns.0.z), Float(baseOrigin.columns.0.w)),
+            simd_float4(Float(baseOrigin.columns.1.x), Float(baseOrigin.columns.1.y), Float(baseOrigin.columns.1.z), Float(baseOrigin.columns.1.w)),
+            simd_float4(Float(baseOrigin.columns.2.x), Float(baseOrigin.columns.2.y), Float(baseOrigin.columns.2.z), Float(baseOrigin.columns.2.w)),
+            simd_float4(Float(baseOrigin.columns.3.x), Float(baseOrigin.columns.3.y), Float(baseOrigin.columns.3.z), Float(baseOrigin.columns.3.w))
+        )
+        gpsAlignmentCoordinator.configure(baseOrigin: floatBaseOrigin)
+
         // Configure localization service
         localizationService.configure(with: mapData)
 

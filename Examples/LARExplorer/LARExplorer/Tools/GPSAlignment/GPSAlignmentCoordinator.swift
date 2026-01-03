@@ -22,6 +22,11 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
     private let mapRepository: MapRepository
     private let renderingService: RenderingService
 
+    // MARK: - Private State
+
+    /// Base origin stored when tool activates - transforms are applied relative to this
+    private var baseOrigin: simd_float4x4 = matrix_identity_float4x4
+
     // MARK: - ToolCoordinator Properties
 
     let kind: ToolKind = .gpsAlignment
@@ -37,6 +42,8 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
 
     func activate() {
         state = .initial
+        // Store the current origin as baseline for transforms
+        baseOrigin = mapRepository.origin()
     }
 
     func deactivate() {
@@ -64,16 +71,28 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
         Task { await handleSideEffect(action) }
     }
 
+    // MARK: - Public Methods
+
+    /// Configure with a new base origin (call when map loads)
+    func configure(baseOrigin: simd_float4x4) {
+        self.baseOrigin = baseOrigin
+    }
+
     // MARK: - Private Methods
 
     private func handleSideEffect(_ action: GPSAlignmentAction) async {
         switch action {
         case .applyAlignment:
-            guard state.hasAdjustments else { return }
+            guard state.hasAdjustments else {
+                dispatch(.setStatusMessage("No adjustments to apply"))
+                return
+            }
 
-            // Build transform from translation and rotation
-            let currentOrigin = mapRepository.origin()
-            let newOrigin = applyAdjustments(to: currentOrigin)
+            // Build transform from current slider values
+            let transform = createTransformFromCurrentValues()
+
+            // Apply as absolute offset from base origin (not cumulative)
+            let newOrigin = simd_mul(baseOrigin, transform)
 
             mapRepository.updateOrigin(newOrigin)
             renderingService.refreshAll()
@@ -89,26 +108,35 @@ final class GPSAlignmentCoordinator: ToolCoordinator, ObservableObject {
             // Auto-alignment algorithm would be implemented here
             dispatch(.setStatusMessage("Auto-alignment complete"))
 
+        case .reset:
+            // Reset origin to base position
+            mapRepository.updateOrigin(baseOrigin)
+            renderingService.refreshAll()
+
         default:
             break
         }
     }
 
-    private func applyAdjustments(to origin: simd_float4x4) -> simd_float4x4 {
-        // Apply translation
-        var result = origin
-        result.columns.3.x += Float(state.translationX)
-        result.columns.3.z += Float(state.translationY) // Y translation maps to Z in world space
+    /// Create transform matrix from current slider values (matches old GPSAlignmentService)
+    private func createTransformFromCurrentValues() -> simd_float4x4 {
+        // Convert degrees to radians
+        let ry = Float(state.rotation * .pi / 180)
 
-        // Apply rotation around Y axis
-        let rotationRadians = Float(state.rotation * .pi / 180.0)
-        let rotationMatrix = simd_float4x4(
-            simd_float4(cos(rotationRadians), 0, sin(rotationRadians), 0),
+        // Create rotation matrix around Y-axis (vertical axis for GPS heading)
+        let rotY = simd_float4x4(
+            simd_float4(cos(ry), 0, sin(ry), 0),
             simd_float4(0, 1, 0, 0),
-            simd_float4(-sin(rotationRadians), 0, cos(rotationRadians), 0),
+            simd_float4(-sin(ry), 0, cos(ry), 0),
             simd_float4(0, 0, 0, 1)
         )
 
-        return rotationMatrix * result
+        // Create translation matrix (translation in meters)
+        // X = East/West, Y = Up/Down, Z = North/South
+        var translation = matrix_identity_float4x4
+        translation.columns.3 = simd_float4(Float(state.translationX), 0, Float(state.translationY), 1)
+
+        // Combine translation and rotation (translation applied THEN rotation)
+        return simd_mul(translation, rotY)
     }
 }
