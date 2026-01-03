@@ -224,4 +224,19 @@ final class MockRenderingService: RenderingService {
     var lastPreviewNodes: PreviewNodesCall? {
         showPreviewNodesCalls.last
     }
+
+    /// Convenience: Get the last highlighted anchor IDs
+    var highlightedAnchorIds: Set<Int32>? {
+        highlightAnchorsCalls.last?.ids
+    }
+
+    /// Convenience: Get the last highlight style used for anchors
+    var lastHighlightStyle: HighlightStyle? {
+        highlightAnchorsCalls.last?.style
+    }
+
+    /// Convenience: Get the last preview node positions
+    var previewNodePositions: [Int32: SIMD3<Float>]? {
+        showPreviewNodesCalls.last?.positions
+    }
 }

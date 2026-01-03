@@ -192,6 +192,22 @@ final class MockMapRepository: MapRepository {
         stubbedAnchors = Dictionary(uniqueKeysWithValues: anchors.map { ($0.id, $0) })
     }
 
+    /// Convenience property for setting anchors directly
+    var mockAnchors: [AnchorData] {
+        get { Array(stubbedAnchors.values) }
+        set { setupAnchors(newValue) }
+    }
+
+    /// Convenience alias for updateAnchorPositionCalls
+    var updatePositionCalls: [AnchorPositionUpdate] {
+        updateAnchorPositionCalls
+    }
+
+    /// Convenience to get deleted anchor IDs
+    var deletedAnchorIds: Set<Int32> {
+        Set(deleteAnchorCalls)
+    }
+
     /// Convenience method to set up test edges
     func setupEdges(_ edges: [EdgeData]) {
         stubbedEdges = Set(edges)
