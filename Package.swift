@@ -43,6 +43,9 @@ let package = Package(
             name: "LocalizeAR_CPP",
             dependencies: ["g2o", "opencv2", "MetalShaderResources"],
             path: "Sources/LocalizeAR-CPP",
+            // gRPC navigation server is a CMake-only server component (LAR_BUILD_SERVICE);
+            // it requires grpcpp which isn't part of the iOS/macOS framework build.
+            exclude: ["src/service"],
             cxxSettings: cxxSettings,
             linkerSettings: [
 				.linkedLibrary("c++"),

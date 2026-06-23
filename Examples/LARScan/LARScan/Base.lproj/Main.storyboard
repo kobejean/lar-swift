@@ -25,11 +25,8 @@
                             </arscnView>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="417-dV-nQU">
                                 <rect key="frame" x="0.0" y="732" width="1376" height="300"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="300" id="8YO-j7-Me0"/>
-                                </constraints>
                             </mapView>
-                            <stackView opaque="NO" contentMode="scaleToFill" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
+                            <stackView opaque="NO" contentMode="scaleToFill" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="pIs-TH-3LP">
                                 <rect key="frame" x="990.5" y="677.5" width="335.5" height="34.5"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aIF-77-3d2">
@@ -72,10 +69,10 @@
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VdI-s9-rI0">
                                 <rect key="frame" x="0.0" y="555" width="1376" height="100"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="100" id="NU8-7f-DfK"/>
+                                    <constraint firstAttribute="height" constant="72" id="NU8-7f-DfK"/>
                                 </constraints>
                                 <color key="textColor" systemColor="systemRedColor"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="14"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="11"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
                         </subviews>
@@ -87,10 +84,11 @@
                             <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="BrB-h1-WRS" secondAttribute="bottom" id="LXA-6p-7dx"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="LhB-A7-JJr"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
-                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="trailing" secondItem="pIs-TH-3LP" secondAttribute="trailing" constant="50" id="Z8h-s0-J5V"/>
+                            <constraint firstItem="fQZ-KI-GVf" firstAttribute="trailing" secondItem="pIs-TH-3LP" secondAttribute="trailing" constant="12" id="Z8h-s0-J5V"/>
                             <constraint firstItem="VdI-s9-rI0" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="hoE-dD-8Xb"/>
                             <constraint firstItem="VdI-s9-rI0" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="kFU-Gf-m5k"/>
                             <constraint firstAttribute="bottom" secondItem="417-dV-nQU" secondAttribute="bottom" id="owi-GV-g7G"/>
+                            <constraint firstItem="417-dV-nQU" firstAttribute="height" secondItem="fQZ-KI-GVf" secondAttribute="height" multiplier="0.3" id="map-hgt-prop"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="uba-9y-iGT"/>
                             <constraint firstItem="417-dV-nQU" firstAttribute="top" secondItem="pIs-TH-3LP" secondAttribute="bottom" constant="20" id="waT-Pd-CGa"/>

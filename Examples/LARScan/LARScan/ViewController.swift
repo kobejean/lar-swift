@@ -101,7 +101,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		
 		// Create a session configuration
 		let configuration = ARWorldTrackingConfiguration()
-		configuration.frameSemantics = .smoothedSceneDepth
+		// LiDAR depth is disabled: the COLMAP-based mapping pipeline doesn't use depth maps,
+		// and localization relies on grayscale features only. Skipping scene depth saves
+		// power/thermals and lets the app run on non-LiDAR devices.
 		configuration.worldAlignment = .gravity
 		configuration.planeDetection = .horizontal
 		
