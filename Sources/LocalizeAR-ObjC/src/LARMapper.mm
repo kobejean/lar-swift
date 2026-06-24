@@ -7,6 +7,8 @@
 
 #include <filesystem>
 
+#import <opencv2/imgproc.hpp>
+
 #import <lar/mapping/mapper.h>
 
 #import "Helpers/LARConversion.h"
@@ -69,26 +71,26 @@ namespace fs = std::filesystem;
 
 - (void)addFrame:(ARFrame*)frame transform:(simd_float4x4)transform {
     CVPixelBufferRef imageBuffer = frame.capturedImage;
-    CVPixelBufferRef depthBuffer = frame.smoothedSceneDepth.depthMap;
-    CVPixelBufferRef confidenceBuffer = frame.smoothedSceneDepth.confidenceMap;
     CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
-    CVPixelBufferLockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
-    CVPixelBufferLockBaseAddress(confidenceBuffer, kCVPixelBufferLock_ReadOnly);
 
-    // Convert inputs
-    cv::Mat image = [LARConversion matFromBuffer:imageBuffer planeIndex:0 type: CV_8UC1];
-    cv::Mat depth = [LARConversion matFromBuffer:depthBuffer planeIndex:0 type: CV_32FC1];
-    cv::Mat confidence = [LARConversion matFromBuffer:confidenceBuffer planeIndex:0 type: CV_8UC1];
+    // Capture in color during mapping. ARKit's captured image is biplanar YCbCr
+    // (plane 0 = full-res luma, plane 1 = half-res CbCr); combine both planes into BGR.
+    // Localization uses grayscale (luma plane) directly elsewhere for efficiency.
+    cv::Mat luma = [LARConversion matFromBuffer:imageBuffer planeIndex:0 type: CV_8UC1];
+    cv::Mat chroma = [LARConversion matFromBuffer:imageBuffer planeIndex:1 type: CV_8UC2];
+    cv::Mat image;
+    cv::cvtColorTwoPlane(luma, chroma, image, cv::COLOR_YUV2BGR_NV12);
+
     lar::Frame aFrame;
     aFrame.timestamp = [LARConversion timestampFromInterval:frame.timestamp];
     aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
     aFrame.extrinsics = [LARConversion eigenFromSIMD4:transform].cast<double>();
 
-    _internal->addFrame(aFrame, image, depth, confidence);
+    // Depth/confidence intentionally omitted (LiDAR disabled): pass empty mats so the
+    // mapper skips writing depth.pfm/confidence.pfm. The COLMAP pipeline doesn't use them.
+    _internal->addFrame(aFrame, image, cv::Mat(), cv::Mat());
 
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
-    CVPixelBufferUnlockBaseAddress(depthBuffer, kCVPixelBufferLock_ReadOnly);
-    CVPixelBufferUnlockBaseAddress(confidenceBuffer, kCVPixelBufferLock_ReadOnly);
 }
 
 #endif

@@ -5,4 +5,6 @@
 xcuserdata/
 DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-/Frameworks/
+# Ignore vendored frameworks, except opencv2 which is tracked (flattened for iOS)
+/Frameworks/*
+!/Frameworks/opencv2.xcframework
