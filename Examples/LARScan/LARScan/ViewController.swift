@@ -488,7 +488,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		let timestamp = dateFrom(uptime: frame.timestamp)
 		let transform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
 		let position = simd_make_float3(transform.columns.3)
-		larNavigation.updateUserLocation(position: position)
+		// larNavigation is initialized asynchronously in viewDidLoad; ARSession can
+		// start delivering frames before then, so guard against the early-nil race.
+		larNavigation?.updateUserLocation(position: position)
 
 		// Update filtered tracker prediction step every frame
 		if useFilteredTracking {

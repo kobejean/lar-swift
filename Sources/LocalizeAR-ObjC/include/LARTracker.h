@@ -7,10 +7,7 @@
 
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincomplete-umbrella"
-#import <opencv2/Mat.h>
-#pragma clang diagnostic pop
+#import <simd/simd.h>
 
 #ifdef __cplusplus
     #include <lar/tracking/tracker.h>
@@ -52,8 +49,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight;
 
-// Frame-based localization with spatial query parameters
-- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform;
+// Frame-based localization with spatial query parameters.
+// Takes a grayscale (CV_8UC1) image as raw bytes; opencv stays in the .mm implementation.
+- (bool)localizeWithGrayscaleData:(const void*)data width:(int)width height:(int)height bytesPerRow:(int)bytesPerRow frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(simd_double4x4*)outTransform;
 
 // Diagnostic information (available after localization)
 - (NSInteger)spatialQueryCount;

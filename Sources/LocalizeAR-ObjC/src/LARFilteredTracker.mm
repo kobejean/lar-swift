@@ -106,15 +106,21 @@
     _internal->predictStep();
 }
 
-- (LARFilteredTrackerResult*)measurementUpdateWithImage:(Mat*)image
-                                                  frame:(LARFrame*)frame
-                                                 queryX:(double)queryX
-                                                 queryZ:(double)queryZ
-                                          queryDiameter:(double)queryDiameter {
+- (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data
+                                                          width:(int)width
+                                                         height:(int)height
+                                                    bytesPerRow:(int)bytesPerRow
+                                                          frame:(LARFrame*)frame
+                                                         queryX:(double)queryX
+                                                         queryZ:(double)queryZ
+                                                  queryDiameter:(double)queryDiameter {
+
+    // Wrap the caller's grayscale bytes in a cv::Mat (no copy).
+    cv::Mat imageMat(height, width, CV_8UC1, (void*)data, (size_t)bytesPerRow);
 
     // Perform measurement update
     lar::FilteredTracker::MeasurementResult result = _internal->measurementUpdate(
-        image.nativeRef,
+        imageMat,
         *frame->_internal,
         queryX,
         queryZ,

@@ -49,26 +49,24 @@
     self->_internal->configureImageSize(imageSize);
 }
 
-- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform {
-    cv::Mat imageMat = image.nativeRef;
+- (bool)localizeWithGrayscaleData:(const void*)data width:(int)width height:(int)height bytesPerRow:(int)bytesPerRow frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(simd_double4x4*)outTransform {
+    // Wrap the caller's grayscale bytes in a cv::Mat (no copy).
+    cv::Mat imageMat(height, width, CV_8UC1, (void*)data, (size_t)bytesPerRow);
     lar::Frame* internalFrame = frame->_internal;
-    
-    // Prepare result transform
+
     Eigen::Matrix4d resultTransform;
-    
-    // Call the frame-based localize method with explicit spatial query parameters
     bool success = self->_internal->localize(imageMat, *internalFrame, queryX, queryZ, queryDiameter, resultTransform);
-    
-    // Copy result back to output transform Mat
-    if (success) {
-        cv::Mat transformMat = transform.nativeRef;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                transformMat.at<double>(i, j) = resultTransform(i, j);
-            }
-        }
+
+    if (success && outTransform) {
+        // simd matrices are column-major: each simd_double4 is a column of the transform.
+        *outTransform = simd_matrix(
+            (simd_double4){ resultTransform(0,0), resultTransform(1,0), resultTransform(2,0), resultTransform(3,0) },
+            (simd_double4){ resultTransform(0,1), resultTransform(1,1), resultTransform(2,1), resultTransform(3,1) },
+            (simd_double4){ resultTransform(0,2), resultTransform(1,2), resultTransform(2,2), resultTransform(3,2) },
+            (simd_double4){ resultTransform(0,3), resultTransform(1,3), resultTransform(2,3), resultTransform(3,3) }
+        );
     }
-    
+
     return success;
 }
 

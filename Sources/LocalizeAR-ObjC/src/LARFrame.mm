@@ -11,10 +11,6 @@
 #import "lar/core/utils/json.h"
 #import "lar/mapping/frame.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincomplete-umbrella"
-#import <opencv2/Mat.h>
-#pragma clang diagnostic pop
 
 #import "LARFrame.h"
 

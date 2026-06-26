@@ -7,11 +7,6 @@
 
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincomplete-umbrella"
-#import <opencv2/Mat.h>
-#pragma clang diagnostic pop
-
 #ifdef __cplusplus
     #include <lar/mapping/frame.h>
 #endif
