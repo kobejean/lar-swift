@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 };
 
 @property(nonatomic, readonly) LARMap* map;
+@property(nonatomic, readonly) double measurementInterval;
 @property(nonatomic, readonly) BOOL isInitialized;
 @property(nonatomic, readonly) double positionUncertainty;
 @property(nonatomic, readonly) BOOL isAnimating;

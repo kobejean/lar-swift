@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive  # Fetch git submodules (C++ core)
+          lfs: true              # Fetch Git LFS objects (Frameworks/**/*.a, e.g. libopencv2.a)
 
       # Set up Swift compiler environment
       - name: Select Xcode version

@@ -75,6 +75,21 @@ git submodule update --init --recursive
 git submodule update --remote .Submodules/lar
 ```
 
+### Git LFS (required)
+The prebuilt static libraries shipped in `Frameworks/**/*.a` (e.g.
+`opencv2.xcframework/.../libopencv2.a`) are stored via **Git LFS** (see
+`.gitattributes`). You must have Git LFS installed *before* cloning, or you'll get
+text pointer files instead of real archives and the linker will fail with a confusing
+error rather than a clear "LFS not installed" message.
+```bash
+# One-time, system-wide:
+git lfs install
+
+# If you already cloned without LFS, hydrate the pointers:
+git lfs pull
+```
+CI fetches these via `lfs: true` on `actions/checkout` (`.github/workflows/test.yml`).
+
 ## Architecture
 
 ### Multi-Language Stack

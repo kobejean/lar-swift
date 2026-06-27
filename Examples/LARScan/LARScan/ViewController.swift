@@ -215,7 +215,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		if let hitResult = hitResults.first, let anchorNode = hitResult.node as? LARSCNAnchorNode {
 			// Connect from selected anchorNode
 			if let selectedNode = selectedAnchorNode, selectedNode != anchorNode {
-				larNavigation.addNavigationEdge(from: selectedNode.anchorId, to: anchorNode.anchorId)
+				larNavigation?.addNavigationEdge(from: selectedNode.anchorId, to: anchorNode.anchorId)
 			}
 			selectAnchorNode(anchorNode.isSelected ? nil : anchorNode)
 		} else {
@@ -547,13 +547,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	private func selectAnchorNode(_ node: LARSCNAnchorNode?) {
 		// Deselect previously selected node
 		if let previousId = selectedAnchorNode?.anchorId {
-			larNavigation.setAnchorSelection(id: previousId, selected: false)
+			larNavigation?.setAnchorSelection(id: previousId, selected: false)
 		}
-		
+
 		// Select new node
 		selectedAnchorNode = node
 		if let newId = node?.anchorId {
-			larNavigation.setAnchorSelection(id: newId, selected: true)
+			larNavigation?.setAnchorSelection(id: newId, selected: true)
 		}
 	}
 	
@@ -562,7 +562,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	func map(_ map: LARMap, didAdd anchors: [LARAnchor]) {
 		Task { @MainActor in
 			for anchor in anchors {
-				larNavigation.addNavigationPoint(anchor: anchor)
+				larNavigation?.addNavigationPoint(anchor: anchor)
 				if let selectedId = selectedAnchorNode?.anchorId {
 					map.addEdge(from: selectedId, to: anchor.id)
 					// larNavigation.addNavigationEdge(from: selectedId, to: anchor.id)
@@ -570,7 +570,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			}
 			// Select the last added anchor
 			if let lastAnchor = anchors.last,
-			   let newAnchorNode = larNavigation.getAnchorNode(id: lastAnchor.id) {
+			   let newAnchorNode = larNavigation?.getAnchorNode(id: lastAnchor.id) {
 				selectAnchorNode(newAnchorNode)
 			}
 		}
@@ -581,7 +581,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
 		Task { @MainActor in
 			// Edge was added - update navigation visualization
-			larNavigation.addNavigationEdge(from: fromId, to: toId)
+			larNavigation?.addNavigationEdge(from: fromId, to: toId)
 		}
 	}
 	

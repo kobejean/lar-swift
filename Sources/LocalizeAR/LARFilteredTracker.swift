@@ -94,7 +94,7 @@ public extension LARFilteredTracker {
     /// - Returns: Whether a measurement update should be performed
     func shouldPerformMeasurementUpdate(lastMeasurementTime: TimeInterval) -> Bool {
         let currentTime = CACurrentMediaTime()
-        return (currentTime - lastMeasurementTime) >= 2.0 // Default 2s interval
+        return (currentTime - lastMeasurementTime) >= measurementInterval
     }
 }
 

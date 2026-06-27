@@ -50,8 +50,9 @@
 }
 
 - (bool)localizeWithGrayscaleData:(const void*)data width:(int)width height:(int)height bytesPerRow:(int)bytesPerRow frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(simd_double4x4*)outTransform {
-    // Wrap the caller's grayscale bytes in a cv::Mat (no copy).
-    cv::Mat imageMat(height, width, CV_8UC1, (void*)data, (size_t)bytesPerRow);
+    // Wrap the caller's grayscale bytes in a cv::Mat (no copy). const_cast is safe:
+    // cv::Mat's ctor only accepts void*, and localize treats the buffer read-only.
+    cv::Mat imageMat(height, width, CV_8UC1, const_cast<void*>(data), (size_t)bytesPerRow);
     lar::Frame* internalFrame = frame->_internal;
 
     Eigen::Matrix4d resultTransform;
