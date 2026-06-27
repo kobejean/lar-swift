@@ -14,6 +14,7 @@
 
 #import "LARTracker.h"
 #import "LARFrame.h"
+#import "Helpers/LARConversion.h"
 
 
 @interface LARTracker ()
@@ -59,13 +60,7 @@
     bool success = self->_internal->localize(imageMat, *internalFrame, queryX, queryZ, queryDiameter, resultTransform);
 
     if (success && outTransform) {
-        // simd matrices are column-major: each simd_double4 is a column of the transform.
-        *outTransform = simd_matrix(
-            (simd_double4){ resultTransform(0,0), resultTransform(1,0), resultTransform(2,0), resultTransform(3,0) },
-            (simd_double4){ resultTransform(0,1), resultTransform(1,1), resultTransform(2,1), resultTransform(3,1) },
-            (simd_double4){ resultTransform(0,2), resultTransform(1,2), resultTransform(2,2), resultTransform(3,2) },
-            (simd_double4){ resultTransform(0,3), resultTransform(1,3), resultTransform(2,3), resultTransform(3,3) }
-        );
+        *outTransform = [LARConversion simd4x4DoubleFromMatrix4d:resultTransform];
     }
 
     return success;

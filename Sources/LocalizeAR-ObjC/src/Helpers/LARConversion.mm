@@ -91,4 +91,23 @@
     return cv::Mat(height, width, type, data);
 }
 
+// simd matrices are column-major: each simd_*4 column is a column of the Eigen matrix.
++ (simd_float4x4)simd4x4FloatFromMatrix4d:(Eigen::Matrix4d)mat {
+    return simd_matrix(
+        (simd_float4){ (float)mat(0,0), (float)mat(1,0), (float)mat(2,0), (float)mat(3,0) },
+        (simd_float4){ (float)mat(0,1), (float)mat(1,1), (float)mat(2,1), (float)mat(3,1) },
+        (simd_float4){ (float)mat(0,2), (float)mat(1,2), (float)mat(2,2), (float)mat(3,2) },
+        (simd_float4){ (float)mat(0,3), (float)mat(1,3), (float)mat(2,3), (float)mat(3,3) }
+    );
+}
+
++ (simd_double4x4)simd4x4DoubleFromMatrix4d:(Eigen::Matrix4d)mat {
+    return simd_matrix(
+        (simd_double4){ mat(0,0), mat(1,0), mat(2,0), mat(3,0) },
+        (simd_double4){ mat(0,1), mat(1,1), mat(2,1), mat(3,1) },
+        (simd_double4){ mat(0,2), mat(1,2), mat(2,2), mat(3,2) },
+        (simd_double4){ mat(0,3), mat(1,3), mat(2,3), mat(3,3) }
+    );
+}
+
 @end

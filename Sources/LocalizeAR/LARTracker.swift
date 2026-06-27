@@ -68,14 +68,17 @@ public extension LARTracker {
         let width = image.width
         let height = image.height
 
-        // Render to grayscale bytes (CoreGraphics only — no opencv).
-        var pixelData = [UInt8](repeating: 0, count: width * height)
+        // Render to grayscale bytes (CoreGraphics only — no opencv). Pad each row to a
+        // 4-byte boundary: CGContext can return nil for an unaligned bytesPerRow (e.g.
+        // odd widths), which would otherwise make every localize silently fail.
+        let bytesPerRow = (width + 3) & ~3
+        var pixelData = [UInt8](repeating: 0, count: bytesPerRow * height)
         guard let context = CGContext(
             data: &pixelData,
             width: width,
             height: height,
             bitsPerComponent: 8,
-            bytesPerRow: width,
+            bytesPerRow: bytesPerRow,
             space: CGColorSpaceCreateDeviceGray(),
             bitmapInfo: CGImageAlphaInfo.none.rawValue
         ) else {
@@ -87,7 +90,7 @@ public extension LARTracker {
         let success = pixelData.withUnsafeBytes { raw -> Bool in
             self.localize(withGrayscaleData: raw.baseAddress!,
                           width: Int32(width), height: Int32(height),
-                          bytesPerRow: Int32(width),
+                          bytesPerRow: Int32(bytesPerRow),
                           frame: frame,
                           queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter,
                           outputTransform: &transform)

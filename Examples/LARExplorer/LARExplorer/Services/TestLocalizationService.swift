@@ -7,10 +7,8 @@
 
 import SwiftUI
 import AppKit
-import CoreImage
 import SceneKit
 import LocalizeAR
-import opencv2
 import simd
 
 class TestLocalizationService: ObservableObject {
@@ -172,46 +170,41 @@ class TestLocalizationService: ObservableObject {
             do {
                 let startTime = Date()
 
-                // Load image
+                // Load image as CGImage (opencv stays inside the C++/ObjC layer).
                 let imagePath = getImagePath(directory: directory, frameId: frameId)
                 guard let nsImage = NSImage(contentsOf: imagePath),
-                      let grayscaleImage = convertToGrayscale(nsImage),
-                      let cvMat = convertToOpenCVMat(grayscaleImage) else {
+                      let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
                     throw LocalizationError.imageConversionFailed
                 }
 
                 // Ensure tracker is configured with actual image size
-                let imageSize = grayscaleImage.extent.size
-                let currentSize = CGSize(width: imageSize.width, height: imageSize.height)
+                let currentSize = CGSize(width: cgImage.width, height: cgImage.height)
                 if configuredImageSize != currentSize {
                     configuredImageSize = currentSize
-                    tracker.configureImageSize(withWidth: Int32(imageSize.width), height: Int32(imageSize.height))
-                    print("Tracker reconfigured for image size: \(Int(imageSize.width))x\(Int(imageSize.height))")
+                    tracker.configureImageSize(withWidth: Int32(cgImage.width), height: Int32(cgImage.height))
+                    print("Tracker reconfigured for image size: \(cgImage.width)x\(cgImage.height)")
                 }
-                
+
                 // Get original transform from frame's internal data
                 let originalTransform = getFrameTransform(frame)
-                
+
                 // Get camera position for spatial querying
                 let cameraPose = getCurrentCameraPose()
                 let (queryX, queryZ, queryDiameter) = extractSpatialQueryParams(cameraPose: cameraPose)
-                
+
                 await MainActor.run {
                     self.usedCameraPose = cameraPose != nil
                 }
-                
+
                 print("Spatial query: x=\(queryX), z=\(queryZ), diameter=\(queryDiameter)")
-                
-                // Create output transform Mat
-                let outputTransform = Mat(rows: 4, cols: 4, type: CvType.CV_64FC1)
-                
-                // Perform frame-based localization with spatial query parameters
-                let success = tracker.localize(withImage: cvMat, frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter, outputTransform: outputTransform)
-                
+
+                // Perform frame-based localization with spatial query parameters.
+                let (success, transformRows) = tracker.localize(cgImage, frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter)
+
                 let processingTime = Date().timeIntervalSince(startTime)
-                
-                if success {
-                    let localizedTransform = outputTransform.toSIMD()
+
+                if success, let transformRows = transformRows {
+                    let localizedTransform = simd4x4(fromRows: transformRows)
                     
                     // Get diagnostic information from tracker
                     let spatialQueryLandmarkIds = tracker.spatialQueryLandmarkIds().map { $0.intValue }
@@ -294,17 +287,15 @@ class TestLocalizationService: ObservableObject {
         return simd_double4x4(1.0)  // Identity matrix as placeholder
     }
     
-    private func simdToMat(_ transform: simd_double4x4) -> Mat {
-        let mat = Mat(rows: 4, cols: 4, type: CvType.CV_64FC1)
-        
-        for i in 0..<4 {
-            for j in 0..<4 {
-                let value = transform[j][i] // Note: SIMD matrices are column-major
-                try! mat.put(row: Int32(i), col: Int32(j), data: [value] as [Double])
-            }
-        }
-        
-        return mat
+    /// Build a column-major simd_double4x4 from the row-major [[Double]] returned by
+    /// LARTracker.localize(_:frame:queryX:queryZ:queryDiameter:).
+    private func simd4x4(fromRows rows: [[Double]]) -> simd_double4x4 {
+        simd_double4x4(columns: (
+            simd_double4(rows[0][0], rows[1][0], rows[2][0], rows[3][0]),
+            simd_double4(rows[0][1], rows[1][1], rows[2][1], rows[3][1]),
+            simd_double4(rows[0][2], rows[1][2], rows[2][2], rows[3][2]),
+            simd_double4(rows[0][3], rows[1][3], rows[2][3], rows[3][3])
+        ))
     }
     
     private func extractSpatialQueryParams(cameraPose: simd_double4x4?) -> (Double, Double, Double) {
@@ -319,57 +310,6 @@ class TestLocalizationService: ObservableObject {
         let queryDiameter = 10.0 // 10 meter search diameter
         
         return (queryX, queryZ, queryDiameter)
-    }
-    
-    private func convertToGrayscale(_ image: NSImage) -> CIImage? {
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            return nil
-        }
-        
-        let ciImage = CIImage(cgImage: cgImage)
-        
-        guard let filter = CIFilter(name: "CIColorControls") else {
-            return nil
-        }
-        
-        filter.setValue(ciImage, forKey: kCIInputImageKey)
-        filter.setValue(0.0, forKey: kCIInputSaturationKey)
-        
-        return filter.outputImage
-    }
-    
-    private func convertToOpenCVMat(_ ciImage: CIImage) -> Mat? {
-        let context = CIContext()
-        let extent = ciImage.extent
-        
-        guard let cgImage = context.createCGImage(ciImage, from: extent) else {
-            return nil
-        }
-        
-        let width = Int(extent.width)
-        let height = Int(extent.height)
-        
-        // Create Mat with proper size and type
-        let mat = Mat(rows: Int32(height), cols: Int32(width), type: CvType.CV_8UC1)
-        
-        // Create bitmap context
-        let colorSpace = CGColorSpaceCreateDeviceGray()
-        guard let bitmapContext = CGContext(
-            data: mat.dataPointer(),
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: mat.step1(0),
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.none.rawValue
-        ) else {
-            return nil
-        }
-        
-        // Draw image into context
-        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-        
-        return mat
     }
     
     func reset() {

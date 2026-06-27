@@ -27,7 +27,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	var audioPlayer: AVAudioPlayer!
 	var mapper: LARLiveMapper!
 	var anchorNodes = LARSCNNodeCollection()
-	var larNavigation: LARNavigationCoordinator!
+	var larNavigation: LARNavigationCoordinator?
 	var pauseGPSRecord = false
 	private var currentFolderURL: URL?
 	private var selectedAnchorNode: LARSCNAnchorNode?
@@ -65,9 +65,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			let map = await mapper.data.map
 
 			// Initialize navigation coordinator with new API
-			larNavigation = LARNavigationCoordinator(map: map)
-			larNavigation.configure(sceneNode: mapNode, mapView: mapView)
-			larNavigation.additionalMapDelegate = self
+			let navigation = LARNavigationCoordinator(map: map)
+			navigation.configure(sceneNode: mapNode, mapView: mapView)
+			navigation.additionalMapDelegate = self
+			larNavigation = navigation
 
 			// Initialize filtered tracker if enabled
 			if useFilteredTracking {
@@ -614,9 +615,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			await mapper.mapper.readMetadata()
 			let map = await mapper.data.map
 			// Initialize navigation coordinator with new API
-			larNavigation = LARNavigationCoordinator(map: map)
-			larNavigation.configure(sceneNode: mapNode, mapView: mapView)
-			larNavigation.additionalMapDelegate = self
+			let navigation = LARNavigationCoordinator(map: map)
+			navigation.configure(sceneNode: mapNode, mapView: mapView)
+			navigation.additionalMapDelegate = self
+			larNavigation = navigation
 			await mapper.updateTracker()
 
 			// Initialize filtered tracker for loaded map

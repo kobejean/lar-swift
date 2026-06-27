@@ -8,6 +8,7 @@
 #import "LARFilteredTracker.h"
 #import "LARMap.h"
 #import "LARFrame.h"
+#import "Helpers/LARConversion.h"
 
 #include <lar/tracking/tracker.h>
 #include <lar/tracking/filtered_tracker.h>
@@ -153,20 +154,9 @@
         );
 
         // Convert transform to simd format
-        simd_float4x4 simd_transform = simd_matrix(
-            (simd_float4){ 1.0f, 0.0f, 0.0f, 0.0f },
-            (simd_float4){ 0.0f, 1.0f, 0.0f, 0.0f },
-            (simd_float4){ 0.0f, 0.0f, 1.0f, 0.0f },
-            (simd_float4){ 0.0f, 0.0f, 0.0f, 1.0f }
-        );
+        simd_float4x4 simd_transform = matrix_identity_float4x4;
         if (result.success) {
-            const Eigen::Matrix4d& mat = result.map_to_vio_transform;
-            simd_transform = simd_matrix(
-                (simd_float4){ (float)mat(0,0), (float)mat(1,0), (float)mat(2,0), (float)mat(3,0) },
-                (simd_float4){ (float)mat(0,1), (float)mat(1,1), (float)mat(2,1), (float)mat(3,1) },
-                (simd_float4){ (float)mat(0,2), (float)mat(1,2), (float)mat(2,2), (float)mat(3,2) },
-                (simd_float4){ (float)mat(0,3), (float)mat(1,3), (float)mat(2,3), (float)mat(3,3) }
-            );
+            simd_transform = [LARConversion simd4x4FloatFromMatrix4d:result.map_to_vio_transform];
         }
 
         // Extract inlier landmark IDs
@@ -192,13 +182,7 @@
 - (simd_float4x4)getFilteredTransform {
     __block simd_float4x4 result;
     dispatch_sync(_trackerQueue, ^{
-        Eigen::Matrix4d mat = _internal->getFilteredTransform();
-        result = simd_matrix(
-            (simd_float4){ (float)mat(0,0), (float)mat(1,0), (float)mat(2,0), (float)mat(3,0) },
-            (simd_float4){ (float)mat(0,1), (float)mat(1,1), (float)mat(2,1), (float)mat(3,1) },
-            (simd_float4){ (float)mat(0,2), (float)mat(1,2), (float)mat(2,2), (float)mat(3,2) },
-            (simd_float4){ (float)mat(0,3), (float)mat(1,3), (float)mat(2,3), (float)mat(3,3) }
-        );
+        result = [LARConversion simd4x4FloatFromMatrix4d:_internal->getFilteredTransform()];
     });
     return result;
 }
