@@ -282,9 +282,10 @@ class TestLocalizationService: ObservableObject {
     }
     
     private func getFrameTransform(_ frame: LARFrame) -> simd_double4x4 {
-        // Access the frame's internal extrinsics matrix
-        // For now, create a dummy transform - this should be improved to access the actual data
-        return simd_double4x4(1.0)  // Identity matrix as placeholder
+        // The frame's recorded camera pose (map coordinates), same frame as the localized
+        // transform — so positionDifference reflects the localization error vs. where the
+        // frame was originally captured. extrinsics is float32; widen to double.
+        return simd_double4x4(frame.extrinsics)
     }
     
     /// Build a column-major simd_double4x4 from the row-major [[Double]] returned by
