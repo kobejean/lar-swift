@@ -40,9 +40,14 @@
 // _trackerQueue. The per-frame predictStep/updateVIOCameraPose calls arrive on the
 // ARKit delegate thread while measurementUpdate runs on a background task; the C++
 // object has no internal locking, so without this serialization they would race.
-// Note: a long measurementUpdate still briefly serializes against per-frame calls;
-// fully decoupling it would require splitting feature extraction from the filter
-// apply step in lar's FilteredTracker (a core follow-up).
+//
+// The cheap per-frame calls (updateVIOCameraPose/predictStep) dispatch_async so they
+// never block the ARKit delegate thread. The serial queue still preserves their FIFO
+// order. The slow measurementUpdate stays dispatch_sync (the caller wants its result).
+// Caveat: while a measurementUpdate (~0.5-2s) is running, queued per-frame work and any
+// synchronous reader (e.g. getFilteredTransform) still wait behind it. Fully decoupling
+// would require splitting feature extraction from the filter apply step in lar's
+// FilteredTracker so per-frame prediction never waits on CV matching (a core follow-up).
 @implementation LARFilteredTracker {
     dispatch_queue_t _trackerQueue;
 }
@@ -114,7 +119,9 @@
 }
 
 - (void)updateVIOCameraPose:(simd_float4x4)transform {
-    dispatch_sync(_trackerQueue, ^{
+    // Non-blocking: per-frame call from the ARKit delegate thread. `transform` is a value
+    // type captured by copy, so it stays valid for the async block.
+    dispatch_async(_trackerQueue, ^{
         // Convert simd_float4x4 to Eigen::Matrix4d
         Eigen::Matrix4d mat;
         mat << transform.columns[0][0], transform.columns[1][0], transform.columns[2][0], transform.columns[3][0],
@@ -127,7 +134,8 @@
 }
 
 - (void)predictStep {
-    dispatch_sync(_trackerQueue, ^{ _internal->predictStep(); });
+    // Non-blocking: runs FIFO after any queued updateVIOCameraPose on the serial queue.
+    dispatch_async(_trackerQueue, ^{ _internal->predictStep(); });
 }
 
 - (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data

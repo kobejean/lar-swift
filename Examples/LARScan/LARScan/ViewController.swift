@@ -16,6 +16,13 @@ import Combine
 import AVFoundation
 
 
+// Main-actor isolated: filteredTracker / useFilteredTracking / lastMeasurementTime and
+// the UI/scene state are all touched from UIKit callbacks and async tasks. Isolating the
+// whole controller removes the data race where the ARKit delegate (a background queue)
+// read filteredTracker while it was reassigned on the main thread. Delegate methods that
+// ARKit/SceneKit/CoreLocation invoke off the main thread are marked `nonisolated` and hop
+// to the main actor before touching isolated state.
+@MainActor
 class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CLLocationManagerDelegate, LARMapDelegate, UIDocumentPickerDelegate {
 	
 	@IBOutlet var sceneView: ARSCNView!
@@ -242,7 +249,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		AudioServicesPlaySystemSound(SystemSoundID(1108))
 		// Convert camera transform from ARKit coordinates to map-local coordinates
 		let mapLocalTransform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
-		Task.detached(priority: .low) { [self] in
+		let mapper = self.mapper!
+		Task.detached(priority: .low) { [frame, mapLocalTransform, mapper] in
 			await mapper.mapper.addFrame(frame, transform: mapLocalTransform)
 //			await mapper.mapper.writeMetadata()
 		}
@@ -275,26 +283,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 		// Ensure tracker is configured with correct image size
 		ensureTrackerConfigured(for: frame)
-		let pose = frame.camera.transform.toDouble()
-		// Extract gravity vector from frame extrinsics
-		let worldGravity = simd_double3(0.0, -1.0, 0.0)
-		let rotation = simd_double3x3(
-			simd_double3(pose.columns.0.x, pose.columns.0.y, pose.columns.0.z),
-			simd_double3(pose.columns.1.x, pose.columns.1.y, pose.columns.1.z),
-			simd_double3(pose.columns.2.x, pose.columns.2.y, pose.columns.2.z)
-		)
-		let cameraGravity = rotation.inverse * worldGravity
-		let gvec = simd_double3(cameraGravity.x, -cameraGravity.y, -cameraGravity.z)
 
 		// Get GPS location for spatial query
 		guard let location = locationManager.location else {
-			Task { @MainActor in
-				updateConsole("ERROR: No GPS location available for spatial query")
-			}
+			updateConsole("ERROR: No GPS location available for spatial query")
 			return
 		}
 
-		Task.detached(priority: .userInitiated) { [self, pose] in
+		// localize() is an explicit user action (the "Localize" button), so we always run
+		// a measurement update and deliberately do NOT apply shouldPerformMeasurementUpdate's
+		// per-frame rate limit, which is only appropriate for the automatic path. Capture the
+		// main-isolated dependencies up front so the detached task never touches self's
+		// actor-isolated stored properties directly.
+		guard useFilteredTracking, let filteredTracker = filteredTracker else {
+			updateConsole("Filtered tracking is disabled or the tracker is not ready yet")
+			return
+		}
+		let mapper = self.mapper!
+
+		Task.detached(priority: .userInitiated) { [self, frame, filteredTracker, mapper, location] in
 			await MainActor.run {
 				totalLocalizationAttempts += 1
 				updateConsole("Localization attempt #\(totalLocalizationAttempts)")
@@ -318,36 +325,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				updateConsole("Total landmarks: \(landmarks.count)")
 			}
 
-			// Use filtered tracker if available and should perform measurement update
-			if await useFilteredTracking,
-			   let filteredTracker = await filteredTracker,
-			   filteredTracker.shouldPerformMeasurementUpdate(lastMeasurementTime: await lastMeasurementTime) {
+			let result = filteredTracker.measurementUpdate(frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter)
+			let elapsedTime = Date().timeIntervalSince(startTime)
 
-				let result = filteredTracker.measurementUpdate(frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter)
-				let elapsedTime = Date().timeIntervalSince(startTime)
+			await MainActor.run {
+				if result.success {
+					successfulLocalizations += 1
+					lastMeasurementTime = CACurrentMediaTime()
 
-				await MainActor.run {
-					if result.success {
-						successfulLocalizations += 1
-						lastMeasurementTime = CACurrentMediaTime()
+					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+					let uncertainty = filteredTracker.positionUncertainty
 
-						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
-						let uncertainty = filteredTracker.positionUncertainty
-
-						updateConsole("FILTERED LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
-						updateConsole("Confidence: \(String(format: "%.2f", result.confidence))")
-						updateConsole("Uncertainty: \(String(format: "%.2f", uncertainty))m")
-						updateConsole("Matched: \(result.matchedLandmarkCount), Inliers: \(result.inlierCount)")
-						updateConsole("Animating: \(filteredTracker.isAnimating ? "Yes" : "No")")
-						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
-					} else {
-						let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
-						updateConsole("FILTERED FAILED: \(String(format: "%.3f", elapsedTime))s")
-						updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
-					}
+					updateConsole("FILTERED LOCALIZED: \(String(format: "%.3f", elapsedTime))s")
+					updateConsole("Confidence: \(String(format: "%.2f", result.confidence))")
+					updateConsole("Uncertainty: \(String(format: "%.2f", uncertainty))m")
+					updateConsole("Matched: \(result.matchedLandmarkCount), Inliers: \(result.inlierCount)")
+					updateConsole("Animating: \(filteredTracker.isAnimating ? "Yes" : "No")")
+					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
+				} else {
+					let successRate = Double(successfulLocalizations) / Double(totalLocalizationAttempts) * 100
+					updateConsole("FILTERED FAILED: \(String(format: "%.3f", elapsedTime))s")
+					updateConsole("Success rate: \(successfulLocalizations)/\(totalLocalizationAttempts) (\(String(format: "%.1f", successRate))%)")
 				}
-				await renderDebug()
 			}
+			await renderDebug()
 		}
 	}
 	
@@ -359,7 +360,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	let landmarkNode = SCNNode.sphere(radius: 0.002, color: UIColor.green)
 	
 	//     Override to create and configure nodes for anchors added to the view's session.
-	func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
+	//     Called on SceneKit's render thread (off the main actor); touches no isolated state.
+	nonisolated func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
 		return nil
 	}
 	
@@ -453,21 +455,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	// MARK: - ARSessionDelegate
 	
 	
-	func session(_ session: ARSession, didFailWithError error: Error) {
+	nonisolated func session(_ session: ARSession, didFailWithError error: Error) {
 		// Present an error message to the user
-		
+
 	}
-	
-	func sessionWasInterrupted(_ session: ARSession) {
+
+	nonisolated func sessionWasInterrupted(_ session: ARSession) {
 		// Inform the user that the session has been interrupted, for example, by presenting an overlay
-		
+
 	}
-	
-	func sessionInterruptionEnded(_ session: ARSession) {
+
+	nonisolated func sessionInterruptionEnded(_ session: ARSession) {
 		// Reset tracking and/or remove existing anchors if consistent tracking is required
 	}
-	
-	func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
+
+	nonisolated func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
 //		let anchors = anchors.compactMap { anchor in anchor as? LARARAnchor }
 //		if anchors.isEmpty { return }
 //		var updates: [(LARARAnchor, simd_float4x4)] = []
@@ -485,37 +487,42 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 //		}
 	}
 	
-	func session(_ session: ARSession, didUpdate frame: ARFrame) {
+	nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
+		// ARSession delivers frames on a background queue. Extract Sendable values from the
+		// ARFrame here (don't retain the frame itself — holding ARFrames stalls capture),
+		// then hop to the main actor for all isolated UI / tracker state. The per-frame
+		// tracker calls are non-blocking (dispatch_async in the bridge).
+		let cameraTransform = frame.camera.transform
 		let timestamp = dateFrom(uptime: frame.timestamp)
-		let transform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
-		let position = simd_make_float3(transform.columns.3)
-		// larNavigation is initialized asynchronously in viewDidLoad; ARSession can
-		// start delivering frames before then, so guard against the early-nil race.
-		larNavigation?.updateUserLocation(position: position)
+		Task { @MainActor in
+			let transform = mapNode.simdConvertTransform(cameraTransform, from: sceneView.scene.rootNode)
+			let position = simd_make_float3(transform.columns.3)
+			// larNavigation is initialized asynchronously in viewDidLoad; ARSession can
+			// start delivering frames before then, so guard against the early-nil race.
+			larNavigation?.updateUserLocation(position: position)
 
-		// Update filtered tracker prediction step every frame
-		if useFilteredTracking {
-			filteredTracker?.updateVIOCameraPose(frame.camera.transform)
-			filteredTracker?.predictStep()
+			// Update filtered tracker prediction step every frame
+			if useFilteredTracking {
+				filteredTracker?.updateVIOCameraPose(cameraTransform)
+				filteredTracker?.predictStep()
 
-			// Update map node with filtered transform if initialized
-			if let filteredTracker = filteredTracker, filteredTracker.isInitialized {
-				let larToVIOTransform = filteredTracker.getFilteredTransform()
-				// Direct application - no complex calculation needed
-				mapNode.transform = SCNMatrix4(larToVIOTransform)
+				// Update map node with filtered transform if initialized
+				if let filteredTracker = filteredTracker, filteredTracker.isInitialized {
+					let larToVIOTransform = filteredTracker.getFilteredTransform()
+					// Direct application - no complex calculation needed
+					mapNode.transform = SCNMatrix4(larToVIOTransform)
+				}
 			}
-		}
 
-		Task(priority: .low) { [weak mapper] in
 			await mapper?.mapper.addPosition(position, timestamp: timestamp)
 		}
 	}
 	
 	// MARK: - CLLocationManagerDelegate
 	
-	func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-		if pauseGPSRecord { return }
-		Task(priority: .low) { // TODO: investigate why detaching is bad here
+	nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+		Task { @MainActor in // TODO: investigate why detaching is bad here
+			if pauseGPSRecord { return }
 			await mapper?.mapper.addLocations(locations)
 //			await mapper?.processor.updateGlobalAlignment()
 //			await renderDebug()
@@ -560,7 +567,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	
 	// MARK: - LARMapDelegate
 
-	func map(_ map: LARMap, didAdd anchors: [LARAnchor]) {
+	nonisolated func map(_ map: LARMap, didAdd anchors: [LARAnchor]) {
 		Task { @MainActor in
 			for anchor in anchors {
 				larNavigation?.addNavigationPoint(anchor: anchor)
@@ -579,7 +586,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 //		Task(priority: .low) { await renderDebug() }
 	}
 
-	func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
+	nonisolated func map(_ map: LARMap, didAddEdgeFrom fromId: Int32, to toId: Int32) {
 		Task { @MainActor in
 			// Edge was added - update navigation visualization
 			larNavigation?.addNavigationEdge(from: fromId, to: toId)
