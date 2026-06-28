@@ -14,6 +14,7 @@
 
 #import "LARTracker.h"
 #import "LARFrame.h"
+#import "Helpers/LARConversion.h"
 
 
 @interface LARTracker ()
@@ -49,26 +50,19 @@
     self->_internal->configureImageSize(imageSize);
 }
 
-- (bool)localizeWithImage:(Mat*)image frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(Mat*)transform {
-    cv::Mat imageMat = image.nativeRef;
+- (bool)localizeWithGrayscaleData:(const void*)data width:(int)width height:(int)height bytesPerRow:(int)bytesPerRow frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(simd_double4x4*)outTransform {
+    // Wrap the caller's grayscale bytes in a cv::Mat (no copy). const_cast is safe:
+    // cv::Mat's ctor only accepts void*, and localize treats the buffer read-only.
+    cv::Mat imageMat(height, width, CV_8UC1, const_cast<void*>(data), (size_t)bytesPerRow);
     lar::Frame* internalFrame = frame->_internal;
-    
-    // Prepare result transform
+
     Eigen::Matrix4d resultTransform;
-    
-    // Call the frame-based localize method with explicit spatial query parameters
     bool success = self->_internal->localize(imageMat, *internalFrame, queryX, queryZ, queryDiameter, resultTransform);
-    
-    // Copy result back to output transform Mat
-    if (success) {
-        cv::Mat transformMat = transform.nativeRef;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                transformMat.at<double>(i, j) = resultTransform(i, j);
-            }
-        }
+
+    if (success && outTransform) {
+        *outTransform = [LARConversion simd4x4DoubleFromMatrix4d:resultTransform];
     }
-    
+
     return success;
 }
 

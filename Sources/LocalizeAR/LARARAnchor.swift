@@ -6,7 +6,10 @@
 //
 
 import Foundation
-#if canImport(ARKit)
+// ARAnchor is iOS-only. Guard on os(iOS) (matching LARTracker/LARFilteredTracker)
+// rather than canImport(ARKit): recent macOS SDKs ship an ARKit module that
+// satisfies canImport but still does not expose ARAnchor, which broke the macOS build.
+#if os(iOS)
 import ARKit
 import LocalizeAR_ObjC
 

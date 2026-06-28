@@ -11,7 +11,6 @@
 #if os(iOS)
 
 import ARKit
-import opencv2
 
 /// Result of a filtered tracker measurement update
 public extension LARFilteredTrackerResult {
@@ -39,7 +38,8 @@ public extension LARFilteredTracker {
         CVPixelBufferLockBaseAddress(buffer, [.readOnly])
         defer { CVPixelBufferUnlockBaseAddress(buffer, [.readOnly]) }
 
-        guard let image = Mat(buffer: buffer, 0) else {
+        // Plane 0 of the YCbCr buffer is the full-resolution luma (grayscale).
+        guard let base = CVPixelBufferGetBaseAddressOfPlane(buffer, 0) else {
             return LARFilteredTrackerResult(
                 success: false,
                 transform: simd_float4x4(1.0),
@@ -49,6 +49,9 @@ public extension LARFilteredTracker {
                 inlierLandmarkIds: nil
             )
         }
+        let width = CVPixelBufferGetWidthOfPlane(buffer, 0)
+        let height = CVPixelBufferGetHeightOfPlane(buffer, 0)
+        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
 
         // Create a LARFrame with the intrinsics and transform
         let intrinsics = frame.camera.intrinsics
@@ -57,7 +60,9 @@ public extension LARFilteredTracker {
                                intrinsics: intrinsics,
                                extrinsics: extrinsics)
 
-        return measurementUpdate(withImage: image,
+        return measurementUpdate(withGrayscaleData: base,
+                               width: Int32(width), height: Int32(height),
+                               bytesPerRow: Int32(bytesPerRow),
                                frame: larFrame,
                                queryX: queryX,
                                queryZ: queryZ,
@@ -89,7 +94,7 @@ public extension LARFilteredTracker {
     /// - Returns: Whether a measurement update should be performed
     func shouldPerformMeasurementUpdate(lastMeasurementTime: TimeInterval) -> Bool {
         let currentTime = CACurrentMediaTime()
-        return (currentTime - lastMeasurementTime) >= 2.0 // Default 2s interval
+        return (currentTime - lastMeasurementTime) >= measurementInterval
     }
 }
 

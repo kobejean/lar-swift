@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import opencv2
 import simd
 
 public extension LARFrame {

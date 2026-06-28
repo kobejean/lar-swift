@@ -11,12 +11,9 @@
 #import "lar/core/utils/json.h"
 #import "lar/mapping/frame.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincomplete-umbrella"
-#import <opencv2/Mat.h>
-#pragma clang diagnostic pop
 
 #import "LARFrame.h"
+#import "Helpers/LARConversion.h"
 
 @implementation LARFrame
 
@@ -53,14 +50,8 @@
 }
 
 - (simd_float4x4)extrinsics {
-    // Convert Eigen::Matrix4d to simd_float4x4
     Eigen::Matrix4d mat = self->_internal->extrinsics;
-    return simd_matrix(
-        (simd_float4){ (float)mat(0,0), (float)mat(1,0), (float)mat(2,0), (float)mat(3,0) },
-        (simd_float4){ (float)mat(0,1), (float)mat(1,1), (float)mat(2,1), (float)mat(3,1) },
-        (simd_float4){ (float)mat(0,2), (float)mat(1,2), (float)mat(2,2), (float)mat(3,2) },
-        (simd_float4){ (float)mat(0,3), (float)mat(1,3), (float)mat(2,3), (float)mat(3,3) }
-    );
+    return [LARConversion simd4x4FloatFromMatrix4d:mat];
 }
 
 - (instancetype)initWithId:(NSInteger)id timestamp:(NSInteger)timestamp intrinsics:(simd_float3x3)intrinsics extrinsics:(simd_float4x4)extrinsics {

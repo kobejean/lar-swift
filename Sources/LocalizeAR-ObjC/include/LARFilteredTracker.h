@@ -7,11 +7,6 @@
 
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincomplete-umbrella"
-#import <opencv2/Mat.h>
-#pragma clang diagnostic pop
-
 #ifdef __cplusplus
     #include <lar/tracking/filtered_tracker.h>
 #endif
@@ -47,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 };
 
 @property(nonatomic, readonly) LARMap* map;
+@property(nonatomic, readonly) double measurementInterval;
 @property(nonatomic, readonly) BOOL isInitialized;
 @property(nonatomic, readonly) double positionUncertainty;
 @property(nonatomic, readonly) BOOL isAnimating;
@@ -102,11 +98,15 @@ NS_ASSUME_NONNULL_BEGIN
  * @param queryDiameter GPS query radius in meters
  * @return Measurement result with success status and transform
  */
-- (LARFilteredTrackerResult*)measurementUpdateWithImage:(Mat*)image
-                                                  frame:(LARFrame*)frame
-                                                 queryX:(double)queryX
-                                                 queryZ:(double)queryZ
-                                          queryDiameter:(double)queryDiameter;
+// Takes a grayscale (CV_8UC1) image as raw bytes; opencv stays in the .mm implementation.
+- (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data
+                                                          width:(int)width
+                                                         height:(int)height
+                                                    bytesPerRow:(int)bytesPerRow
+                                                          frame:(LARFrame*)frame
+                                                         queryX:(double)queryX
+                                                         queryZ:(double)queryZ
+                                                  queryDiameter:(double)queryDiameter;
 
 /**
  * Get current filtered VIO → LAR map transform

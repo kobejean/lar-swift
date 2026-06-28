@@ -2,6 +2,19 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import Foundation
+
+// Select which opencv2 xcframework to link.
+// Default is the debug-symbols build (Frameworks/opencv2.xcframework). Set
+// OPENCV_OPTIMIZED=1 to link the smaller, stripped build instead.
+// NOTE: this is read when the *manifest* is evaluated, so it only takes effect via
+// the environment of that process — e.g. `OPENCV_OPTIMIZED=1 swift build`. An Xcode
+// scheme env var does NOT reach the SPM manifest subprocess (and Xcode caches package
+// resolution), so toggling it in a scheme has no effect.
+// Both variants are produced by lar's build_opencv_framework.bash.
+let opencvFrameworkPath = ProcessInfo.processInfo.environment["OPENCV_OPTIMIZED"] == "1"
+    ? "Frameworks/opencv2-optimized.xcframework"
+    : "Frameworks/opencv2.xcframework"
 
 let cxxSettings: [CXXSetting] = [
     // Include header only libraries
@@ -77,7 +90,7 @@ let package = Package(
         // Uncoment below if working with local frameworks
 //        .binaryTarget(name: "lar", path: "Frameworks/lar.xcframework"),
     //    .binaryTarget(name: "g2o", path: "Frameworks/g2o.xcframework"),
-        .binaryTarget(name: "opencv2", path: "Frameworks/opencv2.xcframework"),
+        .binaryTarget(name: "opencv2", path: opencvFrameworkPath),
         
         // Recompute checksum via:
         // `swift package --package-path /path/to/package compute-checksum *.xcframework.zip`
