@@ -36,20 +36,18 @@
 
 @end
 
-// All access to the underlying lar::FilteredTracker (_internal) is serialized on
-// _trackerQueue. The per-frame predictStep/updateVIOCameraPose calls arrive on the
-// ARKit delegate thread while measurementUpdate runs on a background task; the C++
-// object has no internal locking, so without this serialization they would race.
+// lar::FilteredTracker is now internally thread-safe (its state_mutex_ guards the filter
+// and VIO pose state). So the lightweight per-frame / state methods call straight through
+// to C++ with no dispatch — they take that mutex for microseconds and, crucially, never
+// block on a running measurementUpdate (its expensive CV runs unlocked in C++).
 //
-// The cheap per-frame calls (updateVIOCameraPose/predictStep) dispatch_async so they
-// never block the ARKit delegate thread. The serial queue still preserves their FIFO
-// order. The slow measurementUpdate stays dispatch_sync (the caller wants its result).
-// Caveat: while a measurementUpdate (~0.5-2s) is running, queued per-frame work and any
-// synchronous reader (e.g. getFilteredTransform) still wait behind it. Fully decoupling
-// would require splitting feature extraction from the filter apply step in lar's
-// FilteredTracker so per-frame prediction never waits on CV matching (a core follow-up).
+// The only methods that touch the underlying base tracker (its CV state, which is NOT
+// mutex-guarded by design) are measurementUpdate and configureImageSize. Per the
+// FilteredTracker caller contract those must not run concurrently with each other, so we
+// keep a single serial queue, _measurementQueue, just for them. Per-frame ops deliberately
+// bypass that queue.
 @implementation LARFilteredTracker {
-    dispatch_queue_t _trackerQueue;
+    dispatch_queue_t _measurementQueue;
 }
 
 - (instancetype)initWithMap:(LARMap*)map {
@@ -61,7 +59,7 @@
     if (self) {
         _map = map;
         _measurementInterval = measurementInterval;
-        _trackerQueue = dispatch_queue_create("com.localizar.filteredtracker", DISPATCH_QUEUE_SERIAL);
+        _measurementQueue = dispatch_queue_create("com.localizar.filteredtracker.measurement", DISPATCH_QUEUE_SERIAL);
 
         // Create base tracker from map with default image size
         auto base_tracker = std::make_unique<lar::Tracker>(*map->_internal);
@@ -77,7 +75,7 @@
     if (self) {
         _map = map;
         _measurementInterval = measurementInterval;
-        _trackerQueue = dispatch_queue_create("com.localizar.filteredtracker", DISPATCH_QUEUE_SERIAL);
+        _measurementQueue = dispatch_queue_create("com.localizar.filteredtracker.measurement", DISPATCH_QUEUE_SERIAL);
 
         // Create base tracker from map with image size
         cv::Size imageSize(imageWidth, imageHeight);
@@ -94,48 +92,42 @@
 }
 
 - (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight {
-    dispatch_sync(_trackerQueue, ^{
+    // Touches the base tracker's CV state: serialize with measurementUpdate.
+    dispatch_sync(_measurementQueue, ^{
         cv::Size imageSize(imageWidth, imageHeight);
         _internal->getBaseTracker().configureImageSize(imageSize);
     });
 }
 
 - (BOOL)isInitialized {
-    __block BOOL result;
-    dispatch_sync(_trackerQueue, ^{ result = _internal->isInitialized(); });
-    return result;
+    // Direct: FilteredTracker locks its own state_mutex_ briefly.
+    return _internal->isInitialized();
 }
 
 - (double)positionUncertainty {
-    __block double result;
-    dispatch_sync(_trackerQueue, ^{ result = _internal->getPositionUncertainty(); });
-    return result;
+    return _internal->getPositionUncertainty();
 }
 
 - (BOOL)isAnimating {
-    __block BOOL result;
-    dispatch_sync(_trackerQueue, ^{ result = _internal->isAnimating(); });
-    return result;
+    return _internal->isAnimating();
 }
 
 - (void)updateVIOCameraPose:(simd_float4x4)transform {
-    // Non-blocking: per-frame call from the ARKit delegate thread. `transform` is a value
-    // type captured by copy, so it stays valid for the async block.
-    dispatch_async(_trackerQueue, ^{
-        // Convert simd_float4x4 to Eigen::Matrix4d
-        Eigen::Matrix4d mat;
-        mat << transform.columns[0][0], transform.columns[1][0], transform.columns[2][0], transform.columns[3][0],
-               transform.columns[0][1], transform.columns[1][1], transform.columns[2][1], transform.columns[3][1],
-               transform.columns[0][2], transform.columns[1][2], transform.columns[2][2], transform.columns[3][2],
-               transform.columns[0][3], transform.columns[1][3], transform.columns[2][3], transform.columns[3][3];
+    // Direct, per-frame: FilteredTracker locks state_mutex_ for microseconds and never
+    // blocks on a running measurementUpdate (its CV runs unlocked in C++).
+    Eigen::Matrix4d mat;
+    mat << transform.columns[0][0], transform.columns[1][0], transform.columns[2][0], transform.columns[3][0],
+           transform.columns[0][1], transform.columns[1][1], transform.columns[2][1], transform.columns[3][1],
+           transform.columns[0][2], transform.columns[1][2], transform.columns[2][2], transform.columns[3][2],
+           transform.columns[0][3], transform.columns[1][3], transform.columns[2][3], transform.columns[3][3];
 
-        _internal->updateVIOCameraPose(mat);
-    });
+    _internal->updateVIOCameraPose(mat);
 }
 
 - (void)predictStep {
-    // Non-blocking: runs FIFO after any queued updateVIOCameraPose on the serial queue.
-    dispatch_async(_trackerQueue, ^{ _internal->predictStep(); });
+    // Direct, per-frame. Call after updateVIOCameraPose on the same (ARKit) thread to
+    // preserve ordering.
+    _internal->predictStep();
 }
 
 - (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data
@@ -147,7 +139,10 @@
                                                          queryZ:(double)queryZ
                                                   queryDiameter:(double)queryDiameter {
     __block LARFilteredTrackerResult* output = nil;
-    dispatch_sync(_trackerQueue, ^{
+    // Serialized on _measurementQueue: this is the only heavy op (plus configureImageSize)
+    // that touches the base tracker's CV state. Per-frame ops run concurrently — they don't
+    // use this queue.
+    dispatch_sync(_measurementQueue, ^{
         // Wrap the caller's grayscale bytes in a cv::Mat (no copy). const_cast is safe:
         // cv::Mat's ctor only accepts void*, and the tracker treats the buffer read-only.
         cv::Mat imageMat(height, width, CV_8UC1, const_cast<void*>(data), (size_t)bytesPerRow);
@@ -188,15 +183,14 @@
 }
 
 - (simd_float4x4)getFilteredTransform {
-    __block simd_float4x4 result;
-    dispatch_sync(_trackerQueue, ^{
-        result = [LARConversion simd4x4FloatFromMatrix4d:_internal->getFilteredTransform()];
-    });
-    return result;
+    // Direct, per-frame: reads filter + VIO state under state_mutex_ in C++.
+    return [LARConversion simd4x4FloatFromMatrix4d:_internal->getFilteredTransform()];
 }
 
 - (void)reset {
-    dispatch_sync(_trackerQueue, ^{ _internal->reset(); });
+    // Direct: only touches filter/VIO state (state_mutex_), not the base tracker. A
+    // concurrent measurementUpdate re-checks isInitialized() under the lock.
+    _internal->reset();
 }
 
 @end
