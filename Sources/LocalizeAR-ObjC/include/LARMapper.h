@@ -48,6 +48,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 #if TARGET_OS_IPHONE
     - (void)addFrame:(ARFrame*)frame transform:(simd_float4x4)transform NS_SWIFT_NAME( addFrame(_:transform:) );
+
+    // Variant that takes a CVPixelBuffer (+ camera params) instead of an ARFrame. Deep-copy the
+    // ARFrame's pixel buffer and call this so the ARFrame returns to ARKit's pool immediately
+    // rather than being pinned across the async actor hop ("ARSessionDelegate is retaining N
+    // ARFrames"). `timestamp` is the ARFrame timestamp (seconds, mach-uptime based).
+    - (void)addFramePixelBuffer:(CVPixelBufferRef)pixelBuffer
+                     intrinsics:(simd_float3x3)intrinsics
+                      timestamp:(NSTimeInterval)timestamp
+                      transform:(simd_float4x4)transform
+        NS_SWIFT_NAME( addFrame(pixelBuffer:intrinsics:timestamp:transform:) );
 #endif
 
 @end

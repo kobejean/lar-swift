@@ -25,61 +25,39 @@ public extension LARFilteredTracker {
 
     // Note: convenience init(map:) already provided by Objective-C implementation
 
-    /// Measurement update using VIO frame with GPS coordinates
-    /// - Parameters:
-    ///   - frame: VIO frame containing image and camera data (ARKit: ARFrame)
-    ///   - queryX: GPS query center X coordinate
-    ///   - queryZ: GPS query center Z coordinate
-    ///   - queryDiameter: GPS query radius in meters
-    /// - Returns: Measurement result with success status and transform
-    func measurementUpdate(frame: ARFrame, queryX: Double, queryZ: Double, queryDiameter: Double) -> LARFilteredTrackerResult {
-        let buffer = frame.capturedImage
-        // Lock/unlock base address
-        CVPixelBufferLockBaseAddress(buffer, [.readOnly])
-        defer { CVPixelBufferUnlockBaseAddress(buffer, [.readOnly]) }
-
-        // Plane 0 of the YCbCr buffer is the full-resolution luma (grayscale).
-        guard let base = CVPixelBufferGetBaseAddressOfPlane(buffer, 0) else {
-            return LARFilteredTrackerResult(
-                success: false,
-                transform: simd_float4x4(1.0),
-                confidence: 0.0,
-                matchedLandmarkCount: 0,
-                inlierCount: 0,
-                inlierLandmarkIds: nil
-            )
-        }
-        let width = CVPixelBufferGetWidthOfPlane(buffer, 0)
-        let height = CVPixelBufferGetHeightOfPlane(buffer, 0)
-        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
-
-        // Create a LARFrame with the intrinsics and transform
-        let intrinsics = frame.camera.intrinsics
-        let extrinsics = frame.camera.transform
-        let larFrame = LARFrame(id: 0, timestamp: Int(frame.timestamp * 1000),
-                               intrinsics: intrinsics,
-                               extrinsics: extrinsics)
-
-        return measurementUpdate(withGrayscaleData: base,
-                               width: Int32(width), height: Int32(height),
-                               bytesPerRow: Int32(bytesPerRow),
-                               frame: larFrame,
-                               queryX: queryX,
-                               queryZ: queryZ,
-                               queryDiameter: queryDiameter)
+    private static func failureResult() -> LARFilteredTrackerResult {
+        LARFilteredTrackerResult(success: false, transform: simd_float4x4(1.0), confidence: 0.0,
+                                 matchedLandmarkCount: 0, inlierCount: 0, inlierLandmarkIds: nil)
     }
 
-    /// Simplified measurement update using GPS coordinates
+    /// Measurement update from a captured image + frame (see `LARImageFrame`).
+    ///
+    /// Capture the `LARImageFrame` synchronously on the ARKit delegate thread (it copies the
+    /// luma + pose, releasing the `ARFrame`), then call this from the background task.
+    func measurementUpdate(_ imageFrame: LARImageFrame, query: LARSpatialQuery) -> LARFilteredTrackerResult {
+        imageFrame.withImage { image in
+            measurementUpdate(image: image, frame: imageFrame.frame, query: query)
+        }
+    }
+
+    /// Measurement update directly from a VIO frame and a spatial query.
+    /// - Note: Reads + processes the frame synchronously. For async use, capture a
+    ///   `LARImageFrame` first and call `measurementUpdate(_:query:)` so the `ARFrame` isn't
+    ///   pinned across the `await`.
+    func measurementUpdate(frame: ARFrame, query: LARSpatialQuery) -> LARFilteredTrackerResult {
+        guard let imageFrame = LARImageFrame(arFrame: frame) else { return Self.failureResult() }
+        return measurementUpdate(imageFrame, query: query)
+    }
+
+    /// Simplified measurement update using a GPS coordinate as the query center.
     /// - Parameters:
     ///   - frame: VIO frame containing image and camera data (ARKit: ARFrame)
     ///   - gpsCoordinate: GPS coordinate (x, z) for spatial query
     ///   - queryRadius: Search radius around GPS coordinate (default: 50m)
-    /// - Returns: Measurement result
     func measurementUpdate(frame: ARFrame, gpsCoordinate: simd_double2, queryRadius: Double = 50.0) -> LARFilteredTrackerResult {
         return measurementUpdate(frame: frame,
-                               queryX: gpsCoordinate.x,
-                               queryZ: gpsCoordinate.y,
-                               queryDiameter: queryRadius * 2.0)
+                                 query: LARSpatialQuery(x: gpsCoordinate.x, z: gpsCoordinate.y,
+                                                        diameter: queryRadius * 2.0))
     }
 
     /// Apply filtered transform to a VIO pose to get map-aligned pose

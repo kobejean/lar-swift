@@ -10,6 +10,7 @@
 		3D2B4C1B27A6A4CA00D52692 /* Conversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1A27A6A4CA00D52692 /* Conversion.swift */; };
 		3D2B4C1D27A6A58E00D52692 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1C27A6A58E00D52692 /* Misc.swift */; };
 		3D2B4C1F27A7660A00D52692 /* SCNNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C1E27A7660A00D52692 /* SCNNode.swift */; };
+		E8C50021CF18A5F42A68F98B /* CVPixelBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E7C0A0F3FB671042ECFE4A /* CVPixelBuffer.swift */; };
 		3D2B4C2127A76CBC00D52692 /* SCNScreenSpaceScaleConstraint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2B4C2027A76CBC00D52692 /* SCNScreenSpaceScaleConstraint.swift */; };
 		3D37D252279D77480046A168 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D251279D77480046A168 /* AppDelegate.swift */; };
 		3D37D256279D77480046A168 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D37D255279D77480046A168 /* ViewController.swift */; };
@@ -44,6 +45,7 @@
 		3D2B4C1A27A6A4CA00D52692 /* Conversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversion.swift; sourceTree = "<group>"; };
 		3D2B4C1C27A6A58E00D52692 /* Misc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Misc.swift; sourceTree = "<group>"; };
 		3D2B4C1E27A7660A00D52692 /* SCNNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCNNode.swift; sourceTree = "<group>"; };
+		A6E7C0A0F3FB671042ECFE4A /* CVPixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBuffer.swift; sourceTree = "<group>"; };
 		3D2B4C2027A76CBC00D52692 /* SCNScreenSpaceScaleConstraint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCNScreenSpaceScaleConstraint.swift; sourceTree = "<group>"; };
 		3D37D24E279D77480046A168 /* LARScan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LARScan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D37D251279D77480046A168 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				3D2B4C1A27A6A4CA00D52692 /* Conversion.swift */,
 				3D2B4C1C27A6A58E00D52692 /* Misc.swift */,
 				3D2B4C1E27A7660A00D52692 /* SCNNode.swift */,
+				A6E7C0A0F3FB671042ECFE4A /* CVPixelBuffer.swift */,
 				3D2B4C2027A76CBC00D52692 /* SCNScreenSpaceScaleConstraint.swift */,
 			);
 			path = Utilities;
@@ -301,6 +304,7 @@
 				3D2B4C2127A76CBC00D52692 /* SCNScreenSpaceScaleConstraint.swift in Sources */,
 				3D37D252279D77480046A168 /* AppDelegate.swift in Sources */,
 				3D2B4C1F27A7660A00D52692 /* SCNNode.swift in Sources */,
+				E8C50021CF18A5F42A68F98B /* CVPixelBuffer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,7 +496,7 @@
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -526,7 +530,7 @@
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
