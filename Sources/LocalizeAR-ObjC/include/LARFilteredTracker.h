@@ -14,6 +14,8 @@
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
 
+#import "LARImageInput.h"    // canonical def: lar/tracking/image_input.h
+#import "LARSpatialQuery.h"  // canonical def: lar/core/spatial/spatial_query.h
 #import "LARMap.h"
 #import "LARFrame.h"
 
@@ -91,22 +93,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Measurement update - call every measurement interval
- * @param image Input image for localization
+ * @param image Grayscale (CV_8UC1) image input for localization
  * @param frame Frame data with GPS and camera info
- * @param queryX GPS query center X coordinate
- * @param queryZ GPS query center Z coordinate
- * @param queryDiameter GPS query radius in meters
+ * @param query Spatial query (map-local center + search diameter)
  * @return Measurement result with success status and transform
  */
-// Takes a grayscale (CV_8UC1) image as raw bytes; opencv stays in the .mm implementation.
-- (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data
-                                                          width:(int)width
-                                                         height:(int)height
-                                                    bytesPerRow:(int)bytesPerRow
-                                                          frame:(LARFrame*)frame
-                                                         queryX:(double)queryX
-                                                         queryZ:(double)queryZ
-                                                  queryDiameter:(double)queryDiameter;
+// `image` is a grayscale (CV_8UC1) buffer; opencv stays in the .mm implementation.
+- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImageInput)image
+                                                  frame:(LARFrame*)frame
+                                                  query:(LARSpatialQuery)query
+    NS_SWIFT_NAME( measurementUpdate(image:frame:query:) );
 
 /**
  * Get current filtered VIO → LAR map transform

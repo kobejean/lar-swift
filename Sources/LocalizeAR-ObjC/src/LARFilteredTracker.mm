@@ -130,30 +130,20 @@
     _internal->predictStep();
 }
 
-- (LARFilteredTrackerResult*)measurementUpdateWithGrayscaleData:(const void*)data
-                                                          width:(int)width
-                                                         height:(int)height
-                                                    bytesPerRow:(int)bytesPerRow
-                                                          frame:(LARFrame*)frame
-                                                         queryX:(double)queryX
-                                                         queryZ:(double)queryZ
-                                                  queryDiameter:(double)queryDiameter {
+- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImageInput)image
+                                                  frame:(LARFrame*)frame
+                                                  query:(LARSpatialQuery)query {
     __block LARFilteredTrackerResult* output = nil;
     // Serialized on _measurementQueue: this is the only heavy op (plus configureImageSize)
     // that touches the base tracker's CV state. Per-frame ops run concurrently — they don't
     // use this queue.
     dispatch_sync(_measurementQueue, ^{
-        // Wrap the caller's grayscale bytes in a cv::Mat (no copy). const_cast is safe:
-        // cv::Mat's ctor only accepts void*, and the tracker treats the buffer read-only.
-        cv::Mat imageMat(height, width, CV_8UC1, const_cast<void*>(data), (size_t)bytesPerRow);
-
-        // Perform measurement update
+        // cv::Mat wrapping now happens inside lar::FilteredTracker::measurementUpdate (the
+        // struct overload), so the bridge just forwards the plain-C structs.
         lar::FilteredTracker::MeasurementResult result = _internal->measurementUpdate(
-            imageMat,
+            image,
             *frame->_internal,
-            queryX,
-            queryZ,
-            queryDiameter
+            query
         );
 
         // Convert transform to simd format

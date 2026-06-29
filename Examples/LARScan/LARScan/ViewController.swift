@@ -104,19 +104,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 //		startMusic()
 	}
 	
-	override func viewWillAppear(_ animated: Bool) {
-		super.viewWillAppear(animated)
-		
-		// Create a session configuration
+	// Builds the AR session configuration. Extracted so session recovery
+	// (see `session(_:didFailWithError:)`) can re-run the same config.
+	func makeARConfiguration() -> ARWorldTrackingConfiguration {
 		let configuration = ARWorldTrackingConfiguration()
 		// LiDAR depth is disabled: the COLMAP-based mapping pipeline doesn't use depth maps,
 		// and localization relies on grayscale features only. Skipping scene depth saves
 		// power/thermals and lets the app run on non-LiDAR devices.
 		configuration.worldAlignment = .gravity
 		configuration.planeDetection = .horizontal
-		
+		return configuration
+	}
+
+	override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+
 		// Run the view's session
-		sceneView.session.run(configuration)
+		sceneView.session.run(makeARConfiguration())
 		sceneView.scene.rootNode.addChildNode(mapNode)
 		
 		// This constraint allows landmarks to be visible from far away
@@ -249,9 +253,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		AudioServicesPlaySystemSound(SystemSoundID(1108))
 		// Convert camera transform from ARKit coordinates to map-local coordinates
 		let mapLocalTransform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
+		let intrinsics = frame.camera.intrinsics
+		let timestamp = frame.timestamp
+		// Deep-copy the pixel buffer so the ARFrame returns to ARKit's frame pool immediately,
+		// instead of being pinned for the duration of the async actor hop + disk write below
+		// (which causes "ARSessionDelegate is retaining N ARFrames" and dropped camera frames).
+		guard let pixelBuffer = frame.capturedImage.larDeepCopy() else {
+			updateConsole("ERROR: could not copy camera image for snap")
+			return
+		}
 		let mapper = self.mapper!
-		Task.detached(priority: .low) { [frame, mapLocalTransform, mapper] in
-			await mapper.mapper.addFrame(frame, transform: mapLocalTransform)
+		Task.detached(priority: .low) { [pixelBuffer, intrinsics, timestamp, mapLocalTransform, mapper] in
+			await mapper.mapper.addFrame(pixelBuffer: pixelBuffer, intrinsics: intrinsics,
+										 timestamp: timestamp, transform: mapLocalTransform)
 //			await mapper.mapper.writeMetadata()
 		}
 	}
@@ -301,7 +315,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		}
 		let mapper = self.mapper!
 
-		Task.detached(priority: .userInitiated) { [self, frame, filteredTracker, mapper, location] in
+		// Copy the grayscale image out of the ARFrame now so it returns to ARKit's frame pool
+		// immediately, instead of being pinned for the duration of the async CV work below.
+		guard let snapshot = LARGrayscaleFrameSnapshot(frame: frame) else {
+			updateConsole("ERROR: could not read camera image for localization")
+			return
+		}
+
+		Task.detached(priority: .userInitiated) { [self, snapshot, filteredTracker, mapper, location] in
 			await MainActor.run {
 				totalLocalizationAttempts += 1
 				updateConsole("Localization attempt #\(totalLocalizationAttempts)")
@@ -325,7 +346,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 				updateConsole("Total landmarks: \(landmarks.count)")
 			}
 
-			let result = filteredTracker.measurementUpdate(frame: frame, queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter)
+			let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
+			let result = filteredTracker.measurementUpdate(snapshot: snapshot, query: query)
 			let elapsedTime = Date().timeIntervalSince(startTime)
 
 			await MainActor.run {
@@ -456,17 +478,38 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	
 	
 	nonisolated func session(_ session: ARSession, didFailWithError error: Error) {
-		// Present an error message to the user
-
+		// Recover from transient capture-pipeline failures. The common one is
+		// Code=102 "Required sensor failed" wrapping AVError -11819
+		// (AVErrorMediaServicesWereReset): the media server reset under sustained
+		// load and killed the camera. Restart the session rather than leaving it dead.
+		// (Camera-unauthorized isn't recoverable by restarting, so it's excluded.)
+		let description = error.localizedDescription
+		let code = (error as? ARError)?.code
+		Task { @MainActor in
+			updateConsole("ARSession failed: \(description)")
+			guard let code else { return }
+			switch code {
+			case .sensorFailed, .sensorUnavailable, .worldTrackingFailed:
+				updateConsole("Restarting AR session…")
+				// Delay slightly: restarting immediately can race the media-services reset.
+				try? await Task.sleep(nanoseconds: 1_000_000_000)
+				sceneView.session.run(makeARConfiguration(),
+									  options: [.resetTracking, .removeExistingAnchors])
+			default:
+				break
+			}
+		}
 	}
 
 	nonisolated func sessionWasInterrupted(_ session: ARSession) {
-		// Inform the user that the session has been interrupted, for example, by presenting an overlay
-
+		// e.g. phone call, backgrounding, or another app grabbing the camera.
+		Task { @MainActor in updateConsole("AR session interrupted") }
 	}
 
 	nonisolated func sessionInterruptionEnded(_ session: ARSession) {
-		// Reset tracking and/or remove existing anchors if consistent tracking is required
+		// Let ARKit attempt relocalization against the existing session on its own
+		// (don't reset here, which would discard the world origin / accumulated map).
+		Task { @MainActor in updateConsole("AR session interruption ended") }
 	}
 
 	nonisolated func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
@@ -651,5 +694,54 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 	func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
 		print("Document picker was cancelled")
 	}
-	
+
+}
+
+fileprivate extension CVPixelBuffer {
+	/// Returns an independent copy of the pixel buffer, so the source (e.g. an `ARFrame`'s
+	/// `capturedImage`) can be released back to ARKit's pool while downstream code keeps working
+	/// on the copy. Handles both planar (e.g. biplanar YCbCr) and packed formats.
+	func larDeepCopy() -> CVPixelBuffer? {
+		let width = CVPixelBufferGetWidth(self)
+		let height = CVPixelBufferGetHeight(self)
+		let format = CVPixelBufferGetPixelFormatType(self)
+		let attrs: CFDictionary = [
+			kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary
+		] as CFDictionary
+
+		var maybeCopy: CVPixelBuffer?
+		guard CVPixelBufferCreate(kCFAllocatorDefault, width, height, format, attrs, &maybeCopy) == kCVReturnSuccess,
+			  let copy = maybeCopy else { return nil }
+
+		CVPixelBufferLockBaseAddress(self, .readOnly)
+		CVPixelBufferLockBaseAddress(copy, [])
+		defer {
+			CVPixelBufferUnlockBaseAddress(copy, [])
+			CVPixelBufferUnlockBaseAddress(self, .readOnly)
+		}
+
+		if CVPixelBufferIsPlanar(self) {
+			for plane in 0..<CVPixelBufferGetPlaneCount(self) {
+				guard let src = CVPixelBufferGetBaseAddressOfPlane(self, plane),
+					  let dst = CVPixelBufferGetBaseAddressOfPlane(copy, plane) else { return nil }
+				let srcBPR = CVPixelBufferGetBytesPerRowOfPlane(self, plane)
+				let dstBPR = CVPixelBufferGetBytesPerRowOfPlane(copy, plane)
+				let planeHeight = CVPixelBufferGetHeightOfPlane(self, plane)
+				let rowBytes = min(srcBPR, dstBPR)
+				for row in 0..<planeHeight {
+					memcpy(dst + row * dstBPR, src + row * srcBPR, rowBytes)
+				}
+			}
+		} else {
+			guard let src = CVPixelBufferGetBaseAddress(self),
+				  let dst = CVPixelBufferGetBaseAddress(copy) else { return nil }
+			let srcBPR = CVPixelBufferGetBytesPerRow(self)
+			let dstBPR = CVPixelBufferGetBytesPerRow(copy)
+			let rowBytes = min(srcBPR, dstBPR)
+			for row in 0..<height {
+				memcpy(dst + row * dstBPR, src + row * srcBPR, rowBytes)
+			}
+		}
+		return copy
+	}
 }

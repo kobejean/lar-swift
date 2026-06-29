@@ -29,11 +29,10 @@ public extension LARTracker {
                                extrinsics: frame.camera.transform)
 
         var transform = matrix_identity_double4x4
-        let success = self.localize(withGrayscaleData: base,
-                                    width: Int32(width), height: Int32(height),
-                                    bytesPerRow: Int32(bytesPerRow),
-                                    frame: larFrame,
-                                    queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter,
+        let image = LARImageInput(data: base, width: Int32(width), height: Int32(height),
+                                  bytesPerRow: Int32(bytesPerRow))
+        let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
+        let success = self.localize(image: image, frame: larFrame, query: query,
                                     outputTransform: &transform)
         return success ? transform : nil
     }
@@ -87,13 +86,12 @@ public extension LARTracker {
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
         var transform = matrix_identity_double4x4
+        let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
         let success = pixelData.withUnsafeBytes { raw -> Bool in
-            self.localize(withGrayscaleData: raw.baseAddress!,
-                          width: Int32(width), height: Int32(height),
-                          bytesPerRow: Int32(bytesPerRow),
-                          frame: frame,
-                          queryX: queryX, queryZ: queryZ, queryDiameter: queryDiameter,
-                          outputTransform: &transform)
+            let image = LARImageInput(data: raw.baseAddress!, width: Int32(width),
+                                      height: Int32(height), bytesPerRow: Int32(bytesPerRow))
+            return self.localize(image: image, frame: frame, query: query,
+                                 outputTransform: &transform)
         }
         guard success else { return (false, nil) }
 

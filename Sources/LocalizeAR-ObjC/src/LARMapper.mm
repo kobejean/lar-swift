@@ -70,7 +70,16 @@ namespace fs = std::filesystem;
 #if TARGET_OS_IPHONE
 
 - (void)addFrame:(ARFrame*)frame transform:(simd_float4x4)transform {
-    CVPixelBufferRef imageBuffer = frame.capturedImage;
+    [self addFramePixelBuffer:frame.capturedImage
+                   intrinsics:frame.camera.intrinsics
+                    timestamp:frame.timestamp
+                    transform:transform];
+}
+
+- (void)addFramePixelBuffer:(CVPixelBufferRef)imageBuffer
+                 intrinsics:(simd_float3x3)intrinsics
+                  timestamp:(NSTimeInterval)timestamp
+                  transform:(simd_float4x4)transform {
     CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
 
     // Capture in color during mapping. ARKit's captured image is biplanar YCbCr
@@ -82,8 +91,8 @@ namespace fs = std::filesystem;
     cv::cvtColorTwoPlane(luma, chroma, image, cv::COLOR_YUV2BGR_NV12);
 
     lar::Frame aFrame;
-    aFrame.timestamp = [LARConversion timestampFromInterval:frame.timestamp];
-    aFrame.intrinsics = [LARConversion eigenFromSIMD3:frame.camera.intrinsics].cast<double>();
+    aFrame.timestamp = [LARConversion timestampFromInterval:timestamp];
+    aFrame.intrinsics = [LARConversion eigenFromSIMD3:intrinsics].cast<double>();
     aFrame.extrinsics = [LARConversion eigenFromSIMD4:transform].cast<double>();
 
     // Depth/confidence intentionally omitted (LiDAR disabled): pass empty mats so the

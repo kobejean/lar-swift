@@ -15,6 +15,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "LARImageInput.h"    // canonical def: lar/tracking/image_input.h
+#import "LARSpatialQuery.h"  // canonical def: lar/core/spatial/spatial_query.h
 #import "LARMap.h"
 #import "LARFrame.h"
 
@@ -49,9 +51,13 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)configureImageSizeWithWidth:(int)imageWidth height:(int)imageHeight;
 
-// Frame-based localization with spatial query parameters.
-// Takes a grayscale (CV_8UC1) image as raw bytes; opencv stays in the .mm implementation.
-- (bool)localizeWithGrayscaleData:(const void*)data width:(int)width height:(int)height bytesPerRow:(int)bytesPerRow frame:(LARFrame*)frame queryX:(double)queryX queryZ:(double)queryZ queryDiameter:(double)queryDiameter outputTransform:(simd_double4x4*)outTransform;
+// Frame-based localization with a spatial query.
+// `image` is a grayscale (CV_8UC1) buffer; opencv stays in the .mm implementation.
+- (bool)localizeWithImage:(LARImageInput)image
+                    frame:(LARFrame*)frame
+                    query:(LARSpatialQuery)query
+          outputTransform:(simd_double4x4*)outTransform
+    NS_SWIFT_NAME( localize(image:frame:query:outputTransform:) );
 
 // Diagnostic information (available after localization)
 - (NSInteger)spatialQueryCount;
