@@ -29,7 +29,7 @@ public extension LARTracker {
                                extrinsics: frame.camera.transform)
 
         var transform = matrix_identity_double4x4
-        let image = LARImageInput(data: base, width: Int32(width), height: Int32(height),
+        let image = LARImage(data: base, width: Int32(width), height: Int32(height),
                                   bytesPerRow: Int32(bytesPerRow))
         let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
         let success = self.localize(image: image, frame: larFrame, query: query,
@@ -88,7 +88,7 @@ public extension LARTracker {
         var transform = matrix_identity_double4x4
         let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
         let success = pixelData.withUnsafeBytes { raw -> Bool in
-            let image = LARImageInput(data: raw.baseAddress!, width: Int32(width),
+            let image = LARImage(data: raw.baseAddress!, width: Int32(width),
                                       height: Int32(height), bytesPerRow: Int32(bytesPerRow))
             return self.localize(image: image, frame: frame, query: query,
                                  outputTransform: &transform)

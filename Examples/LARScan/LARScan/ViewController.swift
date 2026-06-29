@@ -317,12 +317,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 
 		// Copy the grayscale image out of the ARFrame now so it returns to ARKit's frame pool
 		// immediately, instead of being pinned for the duration of the async CV work below.
-		guard let snapshot = LARGrayscaleFrameSnapshot(frame: frame) else {
+		guard let imageFrame = LARImageFrame(arFrame: frame) else {
 			updateConsole("ERROR: could not read camera image for localization")
 			return
 		}
 
-		Task.detached(priority: .userInitiated) { [self, snapshot, filteredTracker, mapper, location] in
+		Task.detached(priority: .userInitiated) { [self, imageFrame, filteredTracker, mapper, location] in
 			await MainActor.run {
 				totalLocalizationAttempts += 1
 				updateConsole("Localization attempt #\(totalLocalizationAttempts)")
@@ -347,7 +347,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 			}
 
 			let query = LARSpatialQuery(x: queryX, z: queryZ, diameter: queryDiameter)
-			let result = filteredTracker.measurementUpdate(snapshot: snapshot, query: query)
+			let result = filteredTracker.measurementUpdate(imageFrame, query: query)
 			let elapsedTime = Date().timeIntervalSince(startTime)
 
 			await MainActor.run {

@@ -50,7 +50,7 @@
     self->_internal->configureImageSize(imageSize);
 }
 
-- (bool)localizeWithImage:(LARImageInput)image
+- (bool)localizeWithImage:(LARImage)image
                     frame:(LARFrame*)frame
                     query:(LARSpatialQuery)query
           outputTransform:(simd_double4x4*)outTransform {

@@ -20,45 +20,6 @@ public extension LARFilteredTrackerResult {
     }
 }
 
-/// A self-contained, value-copied snapshot of an `ARFrame`'s grayscale (luma) image plus
-/// its camera parameters.
-///
-/// ARKit hands out frames from a small fixed pool (~16). If an `ARFrame` is captured into an
-/// async task and held across an `await` (e.g. while waiting on a busy actor or running CV),
-/// ARKit can't recycle it and starts dropping camera frames
-/// ("ARSessionDelegate is retaining N ARFrames"). Capturing this snapshot on the delegate/main
-/// thread and passing *it* into the async work lets the `ARFrame` return to the pool immediately.
-public struct LARGrayscaleFrameSnapshot {
-    /// Copied luma plane (one byte per pixel, `bytesPerRow`-strided).
-    public let pixels: Data
-    public let width: Int32
-    public let height: Int32
-    public let bytesPerRow: Int32
-    /// Camera intrinsics/extrinsics + timestamp, as a LARFrame.
-    public let frame: LARFrame
-
-    /// Copies the full-resolution luma plane out of an `ARFrame` so the frame can be released.
-    /// Returns `nil` if the buffer's base address is unavailable.
-    public init?(frame arFrame: ARFrame) {
-        let buffer = arFrame.capturedImage
-        CVPixelBufferLockBaseAddress(buffer, [.readOnly])
-        defer { CVPixelBufferUnlockBaseAddress(buffer, [.readOnly]) }
-
-        // Plane 0 of the YCbCr buffer is the full-resolution luma (grayscale).
-        guard let base = CVPixelBufferGetBaseAddressOfPlane(buffer, 0) else { return nil }
-        let height = CVPixelBufferGetHeightOfPlane(buffer, 0)
-        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
-
-        self.pixels = Data(bytes: base, count: bytesPerRow * height)
-        self.width = Int32(CVPixelBufferGetWidthOfPlane(buffer, 0))
-        self.height = Int32(height)
-        self.bytesPerRow = Int32(bytesPerRow)
-        self.frame = LARFrame(id: 0, timestamp: Int(arFrame.timestamp * 1000),
-                              intrinsics: arFrame.camera.intrinsics,
-                              extrinsics: arFrame.camera.transform)
-    }
-}
-
 /// Swift extensions for LARFilteredTracker
 public extension LARFilteredTracker {
 
@@ -69,27 +30,23 @@ public extension LARFilteredTracker {
                                  matchedLandmarkCount: 0, inlierCount: 0, inlierLandmarkIds: nil)
     }
 
-    /// Measurement update from a pre-copied grayscale snapshot (see `LARGrayscaleFrameSnapshot`).
+    /// Measurement update from a captured image + frame (see `LARImageFrame`).
     ///
-    /// Prefer this over `measurementUpdate(frame:)` for asynchronous work: capture the snapshot
-    /// synchronously on the ARKit delegate thread so the `ARFrame` is released, then call this
-    /// from the background task.
-    func measurementUpdate(snapshot: LARGrayscaleFrameSnapshot, query: LARSpatialQuery) -> LARFilteredTrackerResult {
-        return snapshot.pixels.withUnsafeBytes { raw -> LARFilteredTrackerResult in
-            guard let base = raw.baseAddress else { return Self.failureResult() }
-            let image = LARImageInput(data: base, width: snapshot.width,
-                                      height: snapshot.height, bytesPerRow: snapshot.bytesPerRow)
-            return measurementUpdate(image: image, frame: snapshot.frame, query: query)
+    /// Capture the `LARImageFrame` synchronously on the ARKit delegate thread (it copies the
+    /// luma + pose, releasing the `ARFrame`), then call this from the background task.
+    func measurementUpdate(_ imageFrame: LARImageFrame, query: LARSpatialQuery) -> LARFilteredTrackerResult {
+        imageFrame.withImage { image in
+            measurementUpdate(image: image, frame: imageFrame.frame, query: query)
         }
     }
 
-    /// Measurement update using a VIO frame and a spatial query.
+    /// Measurement update directly from a VIO frame and a spatial query.
     /// - Note: Reads + processes the frame synchronously. For async use, capture a
-    ///   `LARGrayscaleFrameSnapshot` first and call `measurementUpdate(snapshot:query:)` so the
-    ///   `ARFrame` isn't pinned across the `await`.
+    ///   `LARImageFrame` first and call `measurementUpdate(_:query:)` so the `ARFrame` isn't
+    ///   pinned across the `await`.
     func measurementUpdate(frame: ARFrame, query: LARSpatialQuery) -> LARFilteredTrackerResult {
-        guard let snapshot = LARGrayscaleFrameSnapshot(frame: frame) else { return Self.failureResult() }
-        return measurementUpdate(snapshot: snapshot, query: query)
+        guard let imageFrame = LARImageFrame(arFrame: frame) else { return Self.failureResult() }
+        return measurementUpdate(imageFrame, query: query)
     }
 
     /// Simplified measurement update using a GPS coordinate as the query center.

@@ -130,7 +130,7 @@
     _internal->predictStep();
 }
 
-- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImageInput)image
+- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImage)image
                                                   frame:(LARFrame*)frame
                                                   query:(LARSpatialQuery)query {
     __block LARFilteredTrackerResult* output = nil;

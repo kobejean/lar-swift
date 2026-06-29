@@ -14,7 +14,7 @@
 #import <Foundation/Foundation.h>
 #import <simd/simd.h>
 
-#import "LARImageInput.h"    // canonical def: lar/tracking/image_input.h
+#import "LARImage.h"         // canonical def: lar/tracking/image.h
 #import "LARSpatialQuery.h"  // canonical def: lar/core/spatial/spatial_query.h
 #import "LARMap.h"
 #import "LARFrame.h"
@@ -99,7 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @return Measurement result with success status and transform
  */
 // `image` is a grayscale (CV_8UC1) buffer; opencv stays in the .mm implementation.
-- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImageInput)image
+- (LARFilteredTrackerResult*)measurementUpdateWithImage:(LARImage)image
                                                   frame:(LARFrame*)frame
                                                   query:(LARSpatialQuery)query
     NS_SWIFT_NAME( measurementUpdate(image:frame:query:) );
