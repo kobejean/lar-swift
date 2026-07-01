@@ -285,7 +285,7 @@ class TestLocalizationService: ObservableObject {
         // The frame's recorded camera pose (map coordinates), same frame as the localized
         // transform — so positionDifference reflects the localization error vs. where the
         // frame was originally captured. extrinsics is float32; widen to double.
-        return simd_double4x4(frame.extrinsics)
+        return frame.transform
     }
     
     /// Build a column-major simd_double4x4 from the row-major [[Double]] returned by
