@@ -253,19 +253,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, CL
 		AudioServicesPlaySystemSound(SystemSoundID(1108))
 		// Convert camera transform from ARKit coordinates to map-local coordinates
 		let mapLocalTransform = mapNode.simdConvertTransform(frame.camera.transform, from: sceneView.scene.rootNode)
-		let intrinsics = frame.camera.intrinsics
-		let timestamp = frame.timestamp
-		// Deep-copy the pixel buffer so the ARFrame returns to ARKit's frame pool immediately,
-		// instead of being pinned for the duration of the async actor hop + disk write below
-		// (which causes "ARSessionDelegate is retaining N ARFrames" and dropped camera frames).
-		guard let pixelBuffer = frame.capturedImage.larDeepCopy() else {
+		// Capture an owned color copy (see LARColorFrame) so the ARFrame returns to ARKit's frame
+		// pool immediately, instead of being pinned for the duration of the async actor hop + disk
+		// write below (which causes "ARSessionDelegate is retaining N ARFrames" and dropped frames).
+		guard let colorFrame = LARColorFrame(arFrame: frame, transform: mapLocalTransform) else {
 			updateConsole("ERROR: could not copy camera image for snap")
 			return
 		}
 		let mapper = self.mapper!
-		Task.detached(priority: .low) { [pixelBuffer, intrinsics, timestamp, mapLocalTransform, mapper] in
-			await mapper.mapper.addFrame(pixelBuffer: pixelBuffer, intrinsics: intrinsics,
-										 timestamp: timestamp, transform: mapLocalTransform)
+		Task.detached(priority: .low) { [colorFrame, mapper] in
+			await mapper.mapper.addFrame(colorFrame)
 //			await mapper.mapper.writeMetadata()
 		}
 	}

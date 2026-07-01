@@ -16,5 +16,17 @@ public extension LARMapper {
             addLocation(location)
         }
     }
-    
+
+#if os(iOS)
+    /// Add a captured color frame to the map. Unpacks the owned pixel buffer + pose metadata (see
+    /// `LARColorFrame`) and forwards to the pixel-buffer mapping API.
+    func addFrame(_ colorFrame: LARColorFrame) {
+        let frame = colorFrame.frame
+        addFrame(pixelBuffer: colorFrame.pixelBuffer,
+                 intrinsics: frame.intrinsics,
+                 timestamp: TimeInterval(frame.timestamp) / 1000.0,
+                 transform: frame.extrinsics)
+    }
+#endif
+
 }
