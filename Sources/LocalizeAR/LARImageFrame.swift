@@ -7,7 +7,7 @@
 
 import Foundation
 
-#if canImport(ARKit)
+#if os(iOS)
 import ARKit
 #endif
 
@@ -50,7 +50,7 @@ public struct LARImageFrame {
     }
 }
 
-#if canImport(ARKit)
+#if os(iOS)
 public extension LARImageFrame {
     /// Copy the full-resolution luma (grayscale) plane out of an `ARFrame` into an owned buffer,
     /// so the `ARFrame` can return to ARKit's pool immediately. Returns nil if the buffer's base
